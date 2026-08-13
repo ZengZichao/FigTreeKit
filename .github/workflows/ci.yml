@@ -73,7 +73,8 @@ jobs:
       run: docker build -t figtreekit-ci .
 
     - name: Test Docker image (self-test)
-      run: docker run --rm figtreekit-ci python -m figtreekit --self-test
+      # The image sets ENTRYPOINT ["figtreekit"], so just pass CLI args here.
+      run: docker run --rm figtreekit-ci --self-test
 
   benchmark:
     runs-on: ubuntu-latest
