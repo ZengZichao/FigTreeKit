@@ -2,8 +2,11 @@ FROM python:3.11-slim
 
 # Install OpenJDK and Apache Ant, which are required by figtreekit --setup-figtree
 # to download and compile the FigTree renderer (GPL-2.0-or-later) on demand.
+# Use default-jdk-headless so the package name tracks the Debian release's
+# current default JDK (e.g. OpenJDK 21 on trixie), avoiding "Unable to locate
+# package openjdk-17-jdk-headless" when python:3.11-slim moves to newer Debian.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        openjdk-17-jdk-headless \
+        default-jdk-headless \
         ant \
         curl \
     && rm -rf /var/lib/apt/lists/*
