@@ -54,6 +54,9 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: matrix.os == 'macos-latest' && matrix.python-version == '3.11'
+      # Non-blocking: tokenless uploads can fail on pushes; coverage report
+      # is still produced locally by the pytest step above.
+      continue-on-error: true
       uses: codecov/codecov-action@v4
       with:
         file: ./coverage.xml
