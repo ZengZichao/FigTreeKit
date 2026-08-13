@@ -1,0 +1,80 @@
+FigTreeKit
+Copyright (C) 2024-2026 Zeng Zichao
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+FigTreeKit is a Python library for programmatic styling of phylogenetic
+trees for FigTree visualization. It includes modified source code and
+compiled artifacts derived from FigTree.
+
+==============================================================================
+THIRD-PARTY COMPONENTS AND MODIFICATIONS
+==============================================================================
+
+1. FigTree
+   -----------
+   FigTreeKit is based in part on FigTree v1.4.4:
+
+     Copyright (C) 2006-2014 Andrew Rambaut
+     http://tree.bio.ed.ac.uk/software/figtree/
+     https://github.com/rambaut/figtree
+
+   FigTree is licensed under the GNU General Public License v2.0 or later
+   (GPL-2.0-or-later).
+
+   The following FigTree source file has been modified by Zeng Zichao to
+   support clade collapsing in FigTreeKit:
+
+     - _figtree_patch/src/figtree/treeviewer/treelayouts/RadialTreeLayout.java
+
+   The patched JAR (`figtreekit/figtree_patched.jar`) was rebuilt from the
+   official FigTree v1.4.4 source with this single modification, targeting
+   Java 8. Some class files may differ from the original JAR due to
+   recompilation with a newer JDK, but no source-level changes were made to
+   those classes.
+
+   Compiled artifacts derived from FigTree are also distributed with this
+   package, including:
+
+     - figtreekit/figtree_patched.jar
+     - _figtree_patch/figtree_patched_new.jar
+     - _figtree_patch/figtree_original.jar
+
+2. iText
+   --------
+   The FigTree JAR files bundled with FigTreeKit include the iText library
+   (com.itextpdf.text.*) for PDF export. iText is licensed under the
+   GNU Affero General Public License v3 (AGPL-3.0).
+
+   When you redistribute the patched FigTree JAR files, the AGPL-3.0 terms
+   apply to those artifacts in addition to the GPL-2.0-or-later terms that
+   apply to FigTreeKit and the FigTree modifications.
+
+3. Biopython
+   ------------
+   FigTreeKit uses Biopython as a runtime dependency. Biopython is licensed
+   under the BSD-3-Clause license.
+
+==============================================================================
+SOURCE CODE
+==============================================================================
+
+The complete source code for FigTreeKit and the modified FigTree components is
+available in this repository:
+
+    https://github.com/ZengZichao/FigTreeKit
+
+For the original FigTree source code, see:
+
+    https://github.com/rambaut/figtree
+
+==============================================================================
+DISCLAIMER
+==============================================================================
+
+This program is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the LICENSE file for the full legal terms.

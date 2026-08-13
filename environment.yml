@@ -1,0 +1,12 @@
+name: figtreekit
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python>=3.11,<3.12
+  - biopython>=1.80,<2.0
+  - openjdk>=8
+  - ant
+  - pip
+  - pip:
+    - -e .

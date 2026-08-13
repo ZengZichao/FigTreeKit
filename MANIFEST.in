@@ -1,0 +1,24 @@
+include LICENSE
+include NOTICE
+include CITATION.cff
+include codemeta.json
+include CONTRIBUTING.md
+include environment.yml
+include requirements.txt
+recursive-include _figtree_patch/src *.java
+include _figtree_patch/figtree_original.jar
+include _figtree_patch/figtree_patched_new.jar
+include _figtree_patch/README.md
+include README_EN.md
+include README_CN.md
+recursive-include figtreekit *.py *.typed *.jar
+recursive-include docs *.md *.rst
+recursive-include examples *.py
+recursive-include benchmarks *.py *.csv
+recursive-include notebooks *.ipynb
+recursive-exclude test *
+prune test
+prune .github
+prune htmlcov
+prune .pytest_cache
+prune .hypothesis

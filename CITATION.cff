@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+title: "FigTreeKit"
+message: "If you use this software, please cite it using the metadata from this file."
+type: software
+authors:
+  - family-names: "Zeng"
+    given-names: "Zichao"
+    email: "zengzichao@sjtu.edu.cn"
+    orcid: "https://orcid.org/0000-0001-6553-970X"
+    affiliation: "Shanghai Jiao Tong University, Shanghai, China"
+  - family-names: "Wang"
+    given-names: "Yinzhao"
+    orcid: "https://orcid.org/0000-0001-8715-1386"
+    affiliation: "Shanghai Jiao Tong University, Shanghai, China"
+abstract: "A Python library for programmatic styling of phylogenetic trees for FigTree visualization. FigTreeKit provides a clean API to generate publication-ready Nexus files with full FigTree annotation support, including branch coloring, clade highlighting, custom fonts, and all layout options."
+keywords:
+  - phylogenetics
+  - tree visualization
+  - newick
+  - nexus
+  - figtree
+  - bioinformatics
+  - phylogenetic tree styling
+  - evolutionary biology
+  - BEAST
+  - reproducible research
+license: GPL-2.0-or-later
+repository-code: "https://github.com/ZengZichao/FigTreeKit"
+url: "https://pypi.org/project/figtreekit/"
+version: "1.0.0"
+date-released: "2026-08-13"

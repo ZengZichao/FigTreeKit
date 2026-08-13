@@ -1,0 +1,36 @@
+{
+  "title": "FigTreeKit: A Python toolkit for programmatic FigTree styling, taxonomic analysis, and rendering of phylogenetic trees",
+  "description": "FigTreeKit is a Python library that programmatically generates FigTree-compatible Nexus annotation files for phylogenetic tree visualization. It supports taxonomic analysis with clade collapse, annotation conflict detection, and batch rendering via FigTree CLI.",
+  "creators": [
+    {
+      "name": "Zeng, Zichao",
+      "affiliation": "Shanghai Jiao Tong University",
+      "orcid": "0000-0001-6553-970X"
+    },
+    {
+      "name": "Wang, Yinzhao",
+      "affiliation": "Shanghai Jiao Tong University",
+      "orcid": "0000-0001-8715-1386"
+    }
+  ],
+  "license": "GPL-2.0-or-later",
+  "keywords": [
+    "phylogenetics",
+    "tree-visualization",
+    "newick",
+    "nexus",
+    "figtree",
+    "bioinformatics",
+    "taxonomy",
+    "BEAST",
+    "reproducible-research"
+  ],
+  "language": "eng",
+  "access_right": "open",
+  "upload_type": "software",
+  "communities": [
+    {
+      "identifier": "bioinformatics"
+    }
+  ]
+}

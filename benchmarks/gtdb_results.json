@@ -1,0 +1,27 @@
+{
+  "benchmark": "GTDB R232 real-dataset validation",
+  "timestamp": "2026-08-03T21:30:21+0800",
+  "platform": "macOS-26.6-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "python_version": "3.14.3",
+  "datasets": [
+    {
+      "file": "ar53_r232.tree",
+      "dataset": "ar53",
+      "n_taxa": 10122,
+      "parse_time_s": 0.155,
+      "export_time_s": 0.588,
+      "total_time_s": 0.743,
+      "peak_memory_mb": 13.2
+    },
+    {
+      "file": "bac120_r232.tree",
+      "dataset": "bac120",
+      "n_taxa": 189801,
+      "parse_time_s": 1.668,
+      "export_time_s": 6.599,
+      "total_time_s": 8.267,
+      "peak_memory_mb": 207.0
+    }
+  ]
+}
