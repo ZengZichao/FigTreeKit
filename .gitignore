@@ -162,7 +162,8 @@ cython_debug/
 output/
 test_output/
 examples/output/
-examples/data/
+# examples/data/ is intentionally tracked: it archives the example tree
+# referenced by the manuscript (see examples/data/README.md).
 test/data/
 docs/figures/
 DIAGNOSTIC_REPORT.md
