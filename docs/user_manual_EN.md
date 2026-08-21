@@ -1,6 +1,6 @@
 # FigTreeKit User Manual
 
-**Version**: 1.0.0 | **License**: GPL-2.0-or-later | **Python**: 3.11 | **Platform**: macOS Tahoe 26.5.2
+**Version**: 1.0.1 | **License**: GPL-2.0-or-later | **Python**: 3.11 | **Platform**: macOS Tahoe 26.5.2
 
 FigTreeKit is a Python library for programmatic styling of phylogenetic trees for FigTree visualization. It generates FigTree-compatible Nexus files with full annotation support (`[&!hilight]`, `[&!color]`, `[&!font]`), supports taxonomy-aware clade collapse, and integrates command-line image rendering.
 

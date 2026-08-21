@@ -4,7 +4,7 @@
 
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
 [![License: GPL v2+](https://img.shields.io/badge/License-GPL%20v2+-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
-[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](https://pypi.org/project/figtreekit/)
+[![Version](https://img.shields.io/badge/version-1.0.1-green.svg)](https://pypi.org/project/figtreekit/)
 [![Bioinformatics](https://img.shields.io/badge/topic-bioinformatics-green.svg)](https://github.com/ZengZichao/FigTreeKit)
 
 [English](https://github.com/ZengZichao/FigTreeKit/blob/main/README_EN.md) | [中文](#)
@@ -963,7 +963,7 @@ FigTreeKit 是根据 **GNU 通用公共许可证第 2 版或更高版本（GPL-2
 
 复现环境：
 ```bash
-pip install figtreekit==1.0.0 biopython==1.88
+pip install figtreekit==1.0.1 biopython==1.88
 figtreekit --self-test
 ```
 

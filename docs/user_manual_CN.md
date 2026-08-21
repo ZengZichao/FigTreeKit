@@ -1,6 +1,6 @@
 # FigTreeKit 用户手册
 
-**版本**: 1.0.0 | **许可证**: GPL-2.0-or-later | **Python**: 3.11 | **平台**: macOS Tahoe 26.5.2
+**版本**: 1.0.1 | **许可证**: GPL-2.0-or-later | **Python**: 3.11 | **平台**: macOS Tahoe 26.5.2
 
 FigTreeKit 是一个用于系统发育树 FigTree 可视化样式编程的 Python 库。它生成兼容 FigTree 的 Nexus 文件，完整支持 `[&!hilight]`、`[&!color]`、`[&!font]` 注解，支持分类学感知的分支折叠，并集成命令行图片渲染功能。
 
