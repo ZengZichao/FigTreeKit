@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [ main, develop ]
+    tags: [ 'v*' ]  # v* tags trigger the publish job (Trusted Publishing to PyPI)
   pull_request:
     branches: [ main ]
 
