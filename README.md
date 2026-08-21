@@ -4,7 +4,8 @@
 
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
 [![License: GPL v2+](https://img.shields.io/badge/License-GPL%20v2+-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
-[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](https://pypi.org/project/figtreekit/)
+[![PyPI version](https://img.shields.io/pypi/v/figtreekit.svg)](https://pypi.org/project/figtreekit/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22043258.svg)](https://doi.org/10.5281/zenodo.22043258)
 [![Bioinformatics](https://img.shields.io/badge/topic-bioinformatics-green.svg)](https://github.com/ZengZichao/FigTreeKit)
 
 [中文文档](https://github.com/ZengZichao/FigTreeKit/blob/main/README_CN.md) | [English](#)
@@ -951,10 +952,13 @@ If you use FigTreeKit in your research, please cite:
 
 ```bibtex
 @software{figtreekit2026,
-  author = {Zeng, Zichao},
+  author = {Zeng, Zichao and Wang, Yinzhao},
   title = {FigTreeKit: Programmatic styling of phylogenetic trees for FigTree visualization},
   year = {2026},
-  url = {https://github.com/ZengZichao/FigTreeKit}
+  publisher = {Zenodo},
+  version = {v1.0.0},
+  doi = {10.5281/zenodo.22043258},
+  url = {https://doi.org/10.5281/zenodo.22043258}
 }
 ```
 
