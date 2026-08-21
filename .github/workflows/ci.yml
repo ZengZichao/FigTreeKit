@@ -112,6 +112,7 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
+    environment: pypi  # must match the Environment name configured on PyPI's Trusted Publisher
     permissions:
       # Required for Trusted Publishing (OIDC) to PyPI
       id-token: write
