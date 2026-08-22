@@ -1,13 +1,15 @@
 {
-  "timestamp": "2026-08-03T21:27:03+0800",
+  "timestamp": "2026-08-22T16:28:32+0800",
   "figtreekit_version": "1.0.0",
-  "platform": "macOS-26.6-arm64-arm-64bit-Mach-O",
+  "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
   "machine": "arm64",
   "cpu": "Apple M5",
   "ram_gb": 32.0,
-  "python": "3.14.3",
+  "python": "3.14.6",
   "biopython": "1.87",
   "java": "java version \"1.8.0_501\"",
+  "commit": "8a75933d15ae32248deb4b2c4be8cadf37398743",
+  "git_dirty": true,
   "sizes": [
     50,
     100,

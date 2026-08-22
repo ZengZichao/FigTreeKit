@@ -367,6 +367,12 @@ def main():
     have_java = jar.exists() and subprocess.run(
         ["java", "-version"], capture_output=True).returncode == 0
 
+    commit = _git_commit()
+    dirty = _git_dirty()
+    if dirty:
+        print(f"[warn] uncommitted tracked changes present; results correspond "
+              f"to commit {commit[:12]} plus local modifications")
+
     meta = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "figtreekit_version": __version__,
@@ -377,6 +383,8 @@ def main():
         "python": platform.python_version(),
         "biopython": _biopython_version(),
         "java": _java_version() if have_java else None,
+        "commit": commit,
+        "git_dirty": dirty,
         "sizes": sizes, "repeats": repeats, "seeds": seeds,
         "aggregation": "mean±SEM over repeats; median/IQR reported per cell",
     }
@@ -421,6 +429,27 @@ def main():
     print(f"[slope] export: {slopes['export_vs_taxa_loglog']}")
     print(f"[slope] memory: {slopes['memory_vs_taxa_loglog']}")
     print("done.")
+
+
+def _git_commit() -> str:
+    try:
+        out = subprocess.run(["git", "rev-parse", "HEAD"], cwd=OUT.parent,
+                             capture_output=True, text=True, timeout=10)
+        return out.stdout.strip() if out.returncode == 0 else "unknown"
+    except Exception:
+        return "unknown"
+
+
+def _git_dirty():
+    """True if tracked files have uncommitted changes (untracked ignored)."""
+    try:
+        out = subprocess.run(["git", "status", "--porcelain",
+                              "--untracked-files=no"],
+                             cwd=OUT.parent, capture_output=True, text=True,
+                             timeout=10)
+        return bool(out.stdout.strip()) if out.returncode == 0 else None
+    except Exception:
+        return None
 
 
 def _cpu_name():
