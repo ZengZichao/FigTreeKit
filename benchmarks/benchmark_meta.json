@@ -1,6 +1,7 @@
 {
   "timestamp": "2026-08-22T16:28:32+0800",
-  "figtreekit_version": "1.0.0",
+  "figtreekit_version": "1.0.3",
+  "version_provenance": "Benchmark executed at commit 8a75933d15ae (2026-08-22); code is identical to v1.0.3 (only license/metadata changes since); version label updated at the v1.0.3 release.",
   "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
   "machine": "arm64",
   "cpu": "Apple M5",
