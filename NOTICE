@@ -25,22 +25,29 @@ THIRD-PARTY COMPONENTS AND MODIFICATIONS
    FigTree is licensed under the GNU General Public License v2.0 or later
    (GPL-2.0-or-later).
 
-   The following FigTree source file has been modified by Zeng Zichao to
-   support clade collapsing in FigTreeKit:
+   The following four FigTree source files have been modified by Zeng Zichao
+   for FigTreeKit:
 
      - _figtree_patch/src/figtree/treeviewer/treelayouts/RadialTreeLayout.java
+       (clade-collapse triangle rendering for the radial layout)
+     - _figtree_patch/src/figtree/treeviewer/painters/ScaleAxisPainter.java
+       (radial time axis for the polar layout, paintPolarAxis)
+     - _figtree_patch/src/figtree/treeviewer/decorators/DiscreteColourDecorator.java
+       (LinkedHashMap to preserve discrete colour category insertion order)
+     - _figtree_patch/src/figtree/treeviewer/decorators/AttributableDecorator.java
+       (exact annotation colour for range fills instead of Colour.brighter())
 
    The patched JAR (`figtreekit/figtree_patched.jar`) was rebuilt from the
-   official FigTree v1.4.4 source with this single modification, targeting
+   official FigTree v1.4.4 source with these four modifications, targeting
    Java 8. Some class files may differ from the original JAR due to
-   recompilation with a newer JDK, but no source-level changes were made to
-   those classes.
+   recompilation with a newer JDK, but no other source-level changes were
+   made. See `_figtree_patch/README.md` for the full patch description and
+   rebuild instructions.
 
    Compiled artifacts derived from FigTree are also distributed with this
    package, including:
 
      - figtreekit/figtree_patched.jar
-     - _figtree_patch/figtree_patched_new.jar
      - _figtree_patch/figtree_original.jar
 
 2. iText
@@ -57,6 +64,15 @@ THIRD-PARTY COMPONENTS AND MODIFICATIONS
    ------------
    FigTreeKit uses Biopython as a runtime dependency. Biopython is licensed
    under the BSD-3-Clause license.
+
+4. Other libraries bundled in the FigTree JARs
+   --------------------------------------------
+   The FigTree JARs (original and patched) additionally bundle third-party
+   libraries as distributed by the official FigTree v1.4.4 release,
+   including Apache Batik (Apache-2.0), JEBL, JAM, and JavaHelp-related
+   components. Their respective license texts are preserved inside the JARs
+   (see the `license/` and `META-INF/` entries). These components are
+   unmodified and are redistributed as part of the FigTree distribution.
 
 ==============================================================================
 SOURCE CODE

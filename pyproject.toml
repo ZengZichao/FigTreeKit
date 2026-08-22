@@ -60,7 +60,7 @@ figtreekit = ["figtree_patched.jar"]
 
 [tool.setuptools_scm]
 # Fallback version for builds without git (e.g. PyPI wheels)
-fallback_version = "1.0.0"
+fallback_version = "1.0.2"
 # Write version to _version.py during build using a custom template
 # that also captures the git commit hash and commit date.
 write_to = "figtreekit/_version.py"

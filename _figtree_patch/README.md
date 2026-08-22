@@ -24,9 +24,11 @@ from the official FigTree v1.4.4 source with these changes, targeting
 Java 8.
 
 The original unmodified JAR is preserved as `figtree_original.jar` for
-reference. The compiled patched JAR is `figtree_patched_new.jar` and is
-byte-identical to the copy shipped inside the Python package as
-`figtreekit/figtree_patched.jar`.
+reference and auditability. The authoritative patched build is the copy
+shipped inside the Python package as `figtreekit/figtree_patched.jar`
+(a former duplicate build artifact, `figtree_patched_new.jar`, was
+verified byte-identical to it by md5 and then removed to avoid
+redundancy).
 
 ## Automatic rebuild
 

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# This file is part of FigTreeKit; see LICENSE and NOTICE for licensing terms.
 """Enumerations for FigTree-compatible settings."""
 
 # Copyright (C) 2024-2026 Zeng Zichao

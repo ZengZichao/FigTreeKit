@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# This file is part of FigTreeKit; see LICENSE and NOTICE for licensing terms.
 """FigTree setup utilities for FigTreeKit.
 
 This module provides functionality to download and compile FigTree

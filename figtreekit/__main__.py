@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# This file is part of FigTreeKit; see LICENSE and NOTICE for licensing terms.
 """Allow running figtreekit as a module: python -m figtreekit."""
 
 # Copyright (C) 2024-2026 Zeng Zichao

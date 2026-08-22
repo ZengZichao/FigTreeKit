@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# This file is part of FigTreeKit; see LICENSE and NOTICE for licensing terms.
 """FigTreeKit: Programmatic styling of phylogenetic trees for FigTree visualization.
 
 >>> from figtreekit import FigTreeStyler, LayoutType
