@@ -28,5 +28,5 @@ license: GPL-2.0-or-later
 doi: "10.5281/zenodo.22043258"
 repository-code: "https://github.com/ZengZichao/FigTreeKit"
 url: "https://pypi.org/project/figtreekit/"
-version: "1.0.1"
-date-released: "2026-08-21"
+version: "1.0.2"
+date-released: "2026-08-22"

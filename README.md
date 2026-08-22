@@ -956,7 +956,7 @@ If you use FigTreeKit in your research, please cite:
   title = {FigTreeKit: Programmatic styling of phylogenetic trees for FigTree visualization},
   year = {2026},
   publisher = {Zenodo},
-  version = {v1.0.1},
+  version = {v1.0.2},
   doi = {10.5281/zenodo.22043258},
   url = {https://doi.org/10.5281/zenodo.22043258}
 }
@@ -1006,7 +1006,7 @@ This software is developed and tested on the following environment:
 
 To reproduce the exact environment:
 ```bash
-pip install figtreekit==1.0.1 biopython==1.88
+pip install figtreekit==1.0.2 biopython==1.87
 figtreekit --self-test
 ```
 

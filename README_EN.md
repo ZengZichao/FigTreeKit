@@ -4,7 +4,7 @@
 
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
 [![License: GPL v2+](https://img.shields.io/badge/License-GPL%20v2+-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
-[![Version](https://img.shields.io/badge/version-1.0.1-green.svg)](https://pypi.org/project/figtreekit/)
+[![Version](https://img.shields.io/badge/version-1.0.2-green.svg)](https://pypi.org/project/figtreekit/)
 [![Bioinformatics](https://img.shields.io/badge/topic-bioinformatics-green.svg)](https://github.com/ZengZichao/FigTreeKit)
 
 [中文文档](https://github.com/ZengZichao/FigTreeKit/blob/main/README_CN.md) | [English](#)
@@ -1002,7 +1002,7 @@ This software is developed and tested on the following environment:
 
 To reproduce the exact environment:
 ```bash
-pip install figtreekit==1.0.1 biopython==1.88
+pip install figtreekit==1.0.2 biopython==1.87
 figtreekit --self-test
 ```
 
