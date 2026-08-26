@@ -1,6 +1,6 @@
 {
   "timestamp": "2026-08-26T12:21:44+0800",
-  "figtreekit_version": "1.1.0",
+  "figtreekit_version": "1.1.1",
   "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
   "machine": "arm64",
   "cpu": "Apple M5",
@@ -33,5 +33,5 @@
   ],
   "statistical_unit": "one independently generated tree per (size, seed); repeats are technical timing replicates summarized within tree (median) before inference (review D4)",
   "aggregation": "per tree: mean±SEM and median/IQR over technical repeats; per size: tree-level summaries; scaling regression fitted on tree-level medians",
-  "version_provenance": "Benchmark executed at commit 501f7735c7b7 (2026-08-26); code is identical to v1.1.0 except version metadata; version label updated at the v1.1.0 release."
+  "version_provenance": "Benchmark executed at commit 501f7735c7b7 (2026-08-26); v1.1.1 adds only tests, examples, and documentation (no performance-relevant code changes), so the data remain valid; version label updated at the v1.1.1 release."
 }
