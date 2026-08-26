@@ -4,6 +4,12 @@ Reproducible, version-controllable replacement for the manual FigTree
 GUI workflow: colour every phylum and batch-collapse every validated
 monophyletic order of the GTDB R232 archaeal reference tree.
 
+This script is the figure-generation workflow for Figure 3: it writes
+(and optionally renders) both panels — the fully expanded radial layout
+(panel A) and the rectilinear layout with order-level collapse (panel B)
+— from two independently styled copies of the same input tree, after a
+shared completeness audit gates every downstream verdict.
+
 The script prints a full audit report (mapped/unmapped tips, per-rank
 completeness, monophyletic/non-monophyletic/skipped/collapsed counts)
 so that every biological decision is reviewable.
@@ -60,44 +66,63 @@ def main() -> int:
 
     mapping = build_two_column_mapping(meta_path)
 
-    styler = FigTreeStyler(str(tree_path))
-    styler.set_layout(LayoutType.RADIAL)
-
-    # ── Completeness audit (required before trusting any monophyly call) ──
-    comp = styler.check_taxonomy_completeness(mapping_file=mapping)
+    # ------------------------------------------------------------------
+    # Shared audit (the completeness gate precedes every verdict)
+    # ------------------------------------------------------------------
+    audit_styler = FigTreeStyler(str(tree_path))
+    comp = audit_styler.check_taxonomy_completeness(mapping_file=mapping)
     print(f"[audit] completeness summary: "
           f"{ {k: v for k, v in comp.items() if isinstance(v, (int, float))} }")
+    orders = audit_styler.analyze_taxonomy(
+        mapping_file=mapping, rank="order", style_monophyletic=False)
+    n_orders = len(orders["monophyletic"]) + len(orders["non_monophyletic"])
+    print(f"[order] groups={orders['summary'].get('total_groups', n_orders)} "
+          f"monophyletic={len(orders['monophyletic'])} "
+          f"non_monophyletic(skipped)={len(orders['non_monophyletic'])}")
 
-    # ── Phylum-level styling ──
-    phyla = styler.analyze_taxonomy(
+    # ------------------------------------------------------------------
+    # Panel A: fully expanded radial layout, phylum-level coloring
+    # (Figure 3A; no collapse applied)
+    # ------------------------------------------------------------------
+    styler_a = FigTreeStyler(str(tree_path))
+    styler_a.set_layout(LayoutType.RADIAL)
+    phyla = styler_a.analyze_taxonomy(
         mapping_file=mapping, rank="phylum", style_monophyletic=True)
     print(f"[phylum] monophyletic={len(phyla['monophyletic'])} "
           f"non_monophyletic={len(phyla['non_monophyletic'])} "
           f"unmapped_tips={len(phyla['unmapped'])}")
+    out_a_nex = outdir / "gtdb_ar53_radial_expanded.nex"
+    styler_a.export(str(out_a_nex))
+    print(f"[done] exported {out_a_nex}")
 
-    # ── Order-level batch collapse (validated monophyletic only) ──
-    orders = styler.analyze_taxonomy(
-        mapping_file=mapping, rank="order", style_monophyletic=False)
+    # ------------------------------------------------------------------
+    # Panel B: rectilinear layout with order-level clade collapse and
+    # phylum-level coloring (Figure 3B; highlighting intentionally not
+    # applied — stock FigTree 1.4.4 is unstable when rectilinear layout,
+    # collapse, and highlighting are combined)
+    # ------------------------------------------------------------------
+    styler_b = FigTreeStyler(str(tree_path))
+    styler_b.set_layout(LayoutType.RECTILINEAR)
+    styler_b.analyze_taxonomy(
+        mapping_file=mapping, rank="phylum", style_monophyletic=True)
     collapsed = 0
     for group in orders["monophyletic"]:
-        styler.collapse_by_group(group, mapping_file=mapping)
+        styler_b.collapse_by_group(group, mapping_file=mapping)
         collapsed += 1
-    print(f"[order] groups={orders['summary'].get('total_groups', '?')} "
-          f"monophyletic={len(orders['monophyletic'])} "
-          f"non_monophyletic(skipped)={len(orders['non_monophyletic'])} "
-          f"collapsed={collapsed}")
-
-    out_nex = outdir / "gtdb_ar53_styled.nex"
-    styler.export(str(out_nex))
-    print(f"[done] exported {out_nex}")
+    print(f"[order] collapsed={collapsed}")
+    out_b_nex = outdir / "gtdb_ar53_rectilinear_collapsed.nex"
+    styler_b.export(str(out_b_nex))
+    print(f"[done] exported {out_b_nex}")
 
     # Optional rendering (requires Java + bundled patched JAR)
-    try:
-        out_pdf = outdir / "gtdb_ar53_styled.pdf"
-        styler.render(str(out_pdf), format="PDF", width=2400, height=1600)
-        print(f"[done] rendered {out_pdf}")
-    except Exception as exc:  # rendering is optional
-        print(f"[skip] rendering unavailable: {exc}")
+    for styler, name in ((styler_a, "gtdb_ar53_radial_expanded.pdf"),
+                         (styler_b, "gtdb_ar53_rectilinear_collapsed.pdf")):
+        try:
+            out_pdf = outdir / name
+            styler.render(str(out_pdf), format="PDF", width=2400, height=1600)
+            print(f"[done] rendered {out_pdf}")
+        except Exception as exc:  # rendering is optional
+            print(f"[skip] rendering unavailable: {exc}")
     return 0
 
 

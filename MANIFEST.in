@@ -7,8 +7,8 @@ include environment.yml
 include requirements.txt
 recursive-include _figtree_patch/src *.java
 include _figtree_patch/figtree_original.jar
-include _figtree_patch/figtree_patched_new.jar
 include _figtree_patch/README.md
+include _figtree_patch/BUILD_PROVENANCE.md
 include README_EN.md
 include README_CN.md
 recursive-include figtreekit *.py *.typed *.jar

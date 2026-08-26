@@ -428,3 +428,56 @@ class TestRenderAcceptance:
         assert svg.exists()
         head = svg.read_bytes()[:200]
         assert head.startswith(b"<?xml") or b"<svg" in head
+
+
+# ---------------------------------------------------------------------------
+# 8. Independent acceptance by STOCK FigTree 1.4.4 (review D2/C10 oracle)
+# ---------------------------------------------------------------------------
+
+def _stock_jar_path() -> Path:
+    return Path(__file__).resolve().parents[1] / "_figtree_patch" / "figtree_original.jar"
+
+
+# SHA-256 of the preserved stock (unpatched) FigTree 1.4.4 build, pinned
+# for binary identity of the independent oracle (auditability, review C10).
+STOCK_JAR_SHA256 = (
+    "0d488f82297563a2327ced57e85bc40204f70e0d34de38d51db4da1998be0346"
+)
+
+_HAVE_STOCK = (
+    shutil.which("java") is not None
+    and _stock_jar_path().exists()
+)
+
+
+@pytest.mark.skipif(not _HAVE_STOCK, reason="java or stock FigTree JAR unavailable")
+class TestStockFigTreeAcceptance:
+    """Independent oracle (D2/C10): the preserved STOCK FigTree 1.4.4
+    binary — built without any FigTreeKit modification — must parse a
+    FigTreeKit-generated annotated NEXUS and render it.  The fixture uses
+    only !color/!hilight annotations (outside the four patched rendering
+    behaviors), so acceptance is attributable to serialization
+    compatibility rather than to the patched renderer."""
+
+    def test_stock_jar_identity(self):
+        import hashlib
+        h = hashlib.sha256(_stock_jar_path().read_bytes()).hexdigest()
+        assert h == STOCK_JAR_SHA256
+
+    @pytest.mark.parametrize("fmt", ["PDF", "PNG"])
+    def test_stock_figtree_renders_figtreekit_output(self, fmt, tmp_path):
+        styler = FigTreeStyler().load_content(
+            "(((A:0.1,B:0.2):0.3,(C:0.4,D:0.5):0.6):0.7,E:0.8);")
+        styler.set_clade_color(["A", "B"], "#ff0000")
+        styler.highlight_clade(["C", "D"], color="#00ff00")
+        nex = tmp_path / "stock_oracle_in.nex"
+        out = tmp_path / f"stock_oracle_out.{fmt.lower()}"
+        styler.export(str(nex))
+        result = subprocess.run(
+            # Stock CLI argument order: -graphic FMT <input> <output>
+            ["java", "-jar", str(_stock_jar_path()),
+             "-graphic", fmt, str(nex), str(out)],
+            capture_output=True, text=True, timeout=180,
+        )
+        assert result.returncode == 0, result.stderr[-500:]
+        assert out.is_file() and out.stat().st_size > 0
