@@ -282,6 +282,7 @@ def write_trees_block(
         tree_index: Index of the tree to replace within multi-tree input.
     """
     from ._parser import extract_trees_block_content, find_tree_declaration_spans
+    from .exceptions import ExportError
 
     out.write("begin trees;\n")
     if translate_block:
@@ -291,8 +292,14 @@ def write_trees_block(
     if is_nexus_format and tree_block and has_trees:
         trees_content = extract_trees_block_content(tree_block)
         # Character-scanner spans: quote- and comment-aware, arbitrary
-        # nesting depth (no regex nesting limit).
-        spans = find_tree_declaration_spans(trees_content)
+        # nesting depth (no regex nesting limit).  Malformed declarations
+        # surface as a typed ExportError instead of silent salvage (G2).
+        try:
+            spans = find_tree_declaration_spans(trees_content)
+        except ValueError as e:
+            raise ExportError(
+                f"Cannot serialize trees block: {e}"
+            ) from e
         clean = resolved_tree_content.rstrip(';')
         if spans and tree_index < len(spans):
             start, end = spans[tree_index]

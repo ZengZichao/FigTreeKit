@@ -107,13 +107,21 @@ def extract_trees_block_content(trees_block: str) -> str:
     return content
 
 
+# Complete tree-declaration grammar (published per review G2):
+#   tree <NAME> = <newick>;
+# where <NAME> is a single-quoted token ('' doubled-quote escaping), a
+# double-quoted token ("" doubled-quote escaping), or an unquoted
+# non-whitespace run.  Lexical precedence inside the declaration body:
+# quote state > bracket-comment depth > tree-delimiting semicolon.
 _TREE_NAME_PATTERN = re.compile(
     r"tree\s+(?:'(?:[^']|'')*'|\"(?:[^\"]|\"\")*\"|\S+)\s*=\s*",
     re.IGNORECASE,
 )
 
 
-def find_tree_declaration_spans(trees_content: str) -> List[Tuple[int, int]]:
+def find_tree_declaration_spans(
+    trees_content: str, strict: bool = True
+) -> List[Tuple[int, int]]:
     """Locate every ``tree NAME = <newick>;`` declaration via a character scan.
 
     Instead of a regular expression, this uses an explicit scanner that
@@ -128,9 +136,18 @@ def find_tree_declaration_spans(trees_content: str) -> List[Tuple[int, int]]:
     * **tree-delimiting semicolons** — only a ``;`` outside both quotes and
       comments ends a tree declaration.
 
+    Terminal-state validation (review G2): when *strict* is true (default)
+    the scanner refuses to mask malformed input and raises ``ValueError``
+    for unmatched closing brackets, unterminated quotations or comments,
+    and declarations lacking a terminating semicolon.
+
     Args:
         trees_content: The raw content of a Nexus ``begin trees; ... end;``
             block (with or without the begin/end markers).
+        strict: Validate scanner terminal states and reject malformed
+            declarations (default ``True``).  ``False`` restores the
+            historical lenient behaviour (take the remainder of the block)
+            for callers that must salvage partially damaged files.
 
     Returns:
         A list of ``(start, end)`` spans (end exclusive) covering each full
@@ -160,15 +177,40 @@ def find_tree_declaration_spans(trees_content: str) -> List[Tuple[int, int]]:
             elif char == '[':
                 bracket_depth += 1
             elif char == ']':
-                if bracket_depth > 0:
+                if bracket_depth == 0:
+                    if strict:
+                        raise ValueError(
+                            f"Malformed tree declaration near offset {j}: "
+                            f"unmatched closing bracket ']' outside any "
+                            f"bracket comment."
+                        )
+                    # Lenient mode: ignore the stray bracket (legacy).
+                else:
                     bracket_depth -= 1
             elif char == ';' and bracket_depth == 0:
                 break
             j += 1
         if j >= n:
-            # Unterminated declaration: take the remainder of the block.
-            spans.append((decl.start(), n))
-            break
+            # Declaration ended at end-of-input without a tree-delimiting
+            # semicolon: report the exact terminal state (fix G2).
+            if not strict:
+                spans.append((decl.start(), n))
+                break
+            if in_quote is not None:
+                raise ValueError(
+                    "Malformed tree declaration: unterminated "
+                    f"{('single' if in_quote == chr(39) else 'double')}-quoted "
+                    "region at end of trees block."
+                )
+            if bracket_depth > 0:
+                raise ValueError(
+                    "Malformed tree declaration: unterminated bracket "
+                    f"comment (depth {bracket_depth}) at end of trees block."
+                )
+            raise ValueError(
+                "Malformed tree declaration: missing terminating semicolon "
+                "at end of trees block."
+            )
         spans.append((decl.start(), j + 1))
         search_from = j + 1
     return spans

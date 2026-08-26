@@ -2436,6 +2436,75 @@ class TestNarrowedExceptionHandling:
             assert any("Bio.Phylo" in str(x.message) for x in w)
 
 
+class TestMRCAContractG1:
+    """G1 review fix: any-missing-fails MRCA contract.
+
+    All requested taxa must be present before MRCA resolution; partial
+    resolution is an explicit opt-in and can never trigger an implicit
+    collapse of the surviving subset.
+    """
+
+    NEWICK = "((A:0.1,B:0.2):0.3,(C:0.4,D:0.5):0.6);"
+
+    def _styler(self):
+        return FigTreeStyler().load_content(self.NEWICK)
+
+    def test_partial_missing_refused_by_default(self):
+        """{A, X} with X absent must fail, not resolve to tip A."""
+        styler = self._styler()
+        tree = styler._parse_tree_with_biopython(styler._tree_content)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            result = styler._find_mrca_clade(tree, ["A", "X"])
+        assert result is None
+        assert any("refusing partial resolution" in str(x.message) for x in w)
+
+    def test_partial_missing_resolves_with_explicit_opt_in(self):
+        """allow_missing=True restores subset resolution (internal paths)."""
+        styler = self._styler()
+        tree = styler._parse_tree_with_biopython(styler._tree_content)
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always")
+            result = styler._find_mrca_clade(tree, ["A", "X"], allow_missing=True)
+        assert result is not None
+        assert result.name == "A"
+
+    def test_check_monophyly_missing_taxon_reports_failure(self):
+        """check_monophyly with an absent target must report failure."""
+        styler = self._styler()
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always")
+            result = styler.check_monophyly(["A", "B", "X"])
+        assert result["is_monophyletic"] is False
+        assert result["mrca_found"] is False
+
+    def test_collapse_clade_missing_taxon_skipped(self):
+        """collapse_clade must refuse when a requested taxon is absent."""
+        styler = self._styler()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            styler.collapse_clade(["A", "B", "X"], label="AB")
+        assert len(styler._settings._collapses) == 0
+        assert any("absent from tree" in str(x.message) for x in w)
+
+    def test_collapse_clade_allow_partial_registers(self):
+        """allow_partial=True opts in to collapsing the present subset."""
+        styler = self._styler()
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always")
+            styler.collapse_clade(["A", "B", "X"], label="AB", allow_partial=True)
+        assert len(styler._settings._collapses) == 1
+
+    def test_collapse_clade_all_present_unaffected(self):
+        """Fully-present monophyletic requests behave as before."""
+        styler = self._styler()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            styler.collapse_clade(["A", "B"], label="AB")
+        assert len(styler._settings._collapses) == 1
+        assert not any("absent from tree" in str(x.message) for x in w)
+
+
 class TestExportSubMethods:
     """Test the refactored export sub-methods."""
 

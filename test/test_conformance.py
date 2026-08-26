@@ -332,6 +332,40 @@ class TestMultiTreeReplacementConformance:
         assert len(spans) == 2
 
 
+class TestTreeDeclarationScannerValidation:
+    """G2 review fix: the scanner validates terminal states instead of
+    silently salvaging malformed declarations."""
+
+    def _spans(self, content, strict=True):
+        from figtreekit._parser import find_tree_declaration_spans
+        return find_tree_declaration_spans(content, strict=strict)
+
+    def test_unmatched_closing_bracket_rejected(self):
+        with pytest.raises(ValueError, match="unmatched closing bracket"):
+            self._spans("tree T1 = (A:0.1,B:0.1)];")
+
+    def test_unterminated_quote_rejected(self):
+        with pytest.raises(ValueError, match="unterminated"):
+            self._spans("tree T1 = ('A:0.1,B:0.1);")
+
+    def test_unterminated_comment_rejected(self):
+        with pytest.raises(ValueError, match="unterminated bracket"):
+            self._spans("tree T1 = (A:0.1,B:0.1)[&note=unclosed;")
+
+    def test_missing_terminating_semicolon_rejected(self):
+        with pytest.raises(ValueError, match="missing terminating semicolon"):
+            self._spans("tree T1 = (A:0.1,B:0.1)")
+
+    def test_lenient_mode_preserves_legacy_salvage(self):
+        spans = self._spans("tree T1 = (A:0.1,B:0.1)", strict=False)
+        assert len(spans) == 1
+
+    def test_valid_declarations_pass_strict_scan(self):
+        spans = self._spans(
+            "tree T1 = [&lnP=-1] (A:0.1,B:0.1);\ntree 'T;2' = (A:0.2,B:0.2);")
+        assert len(spans) == 2
+
+
 # ---------------------------------------------------------------------------
 # 7. Rendering acceptance with the bundled patched FigTree JAR
 # ---------------------------------------------------------------------------

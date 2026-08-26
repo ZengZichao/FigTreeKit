@@ -413,15 +413,53 @@ class FigTreeStyler:
             )
             return None
 
-    def _find_mrca_clade(self, tree: Any, taxon_names: List[str]) -> Optional[Any]:
+    def _find_mrca_clade(
+        self,
+        tree: Any,
+        taxon_names: List[str],
+        allow_missing: bool = False,
+    ) -> Optional[Any]:
+        """Resolve the MRCA clade of *taxon_names*.
+
+        MRCA contract (G1): **all** requested taxa must be present among
+        the tree tips before MRCA resolution.  If any target is absent the
+        query fails (returns ``None`` with a warning listing the missing
+        taxa) — there is no silent partial-subset resolution, so a missing
+        taxon can never turn into a false monophyly verdict or an
+        erroneous collapse.
+
+        Args:
+            tree: Bio.Phylo tree.
+            taxon_names: Target taxon names.
+            allow_missing: Explicit opt-in to partial-set resolution.
+                Intended **only** for internal paths where targets may have
+                been legitimately removed by a prior collapse (e.g.
+                hilight/color annotation re-resolution during export).
+                Never used by topology-gated collapse or monophyly queries.
+        """
         try:
             # Bio.Phylo.common_ancestor iterates over its argument; a bare
             # string is treated as a sequence of characters.  Always pass a
             # list to avoid this.
             names = list(taxon_names)
-            # Filter out taxa not in the tree (e.g. removed by collapse)
             tips = {t.name for t in tree.get_terminals()}
-            names = [n for n in names if n in tips]
+            missing = [n for n in names if n not in tips]
+            if missing and not allow_missing:
+                # Any-missing-fails (default contract): refuse partial
+                # resolution instead of silently computing the MRCA of a
+                # filtered subset (fix G1).
+                warnings.warn(
+                    f"MRCA search failed for taxa {taxon_names}: "
+                    f"{len(missing)} target(s) absent from tree "
+                    f"(e.g. {missing[:3]}); refusing partial resolution. "
+                    f"Use allow_missing=True for explicit partial mode.",
+                    CompatibilityWarning,
+                )
+                return None
+            if missing:
+                # Explicit partial mode: keep only targets still present
+                # (e.g. removed by a prior collapse).
+                names = [n for n in names if n in tips]
             if not names:
                 # None of the requested taxa are present in the tree.  For a
                 # direct user request this is a genuine error and must be
@@ -495,13 +533,46 @@ class FigTreeStyler:
                     best = clade
         return best
 
+    @staticmethod
+    def _tree_cache_guard(tree) -> tuple:
+        """Lightweight structural fingerprint of *tree* for cache safety.
+
+        Combines object identity with observable structure (terminal count
+        and total branch length) so cached node depths are invalidated if
+        the tree is rerooted, its topology changes, or branch lengths are
+        edited after an entry was cached (fix C6).  The fingerprint is
+        computed with an explicit iterative traversal so deeply nested trees
+        never hit Python's recursion limit.
+        """
+        try:
+            n_terminals = 0
+            total_length = 0.0
+            stack = [tree.root]
+            while stack:
+                current = stack.pop()
+                total_length += current.branch_length or 0.0
+                children = getattr(current, 'clades', None)
+                if children:
+                    stack.extend(children)
+                else:
+                    n_terminals += 1
+            return (id(tree), n_terminals, round(total_length, 12))
+        except (AttributeError, ValueError):
+            return (id(tree), None, None)
+
     def _calculate_node_height(self, tree, node) -> float:
         # Memoize per (tree, node) so repeated height queries across many
         # hilight/collapse annotations don't re-run the full DFS (fix #26).
+        # Entries carry a structural guard and are dropped when the tree
+        # changes; failure results are never cached (fix C6).
         cache = self.__dict__.setdefault('_node_height_cache', {})
         key = (id(tree), id(node))
-        if key in cache:
-            return cache[key]
+        cached = cache.get(key)
+        if cached is not None:
+            result, guard = cached
+            if guard == self._tree_cache_guard(tree):
+                return result
+            del cache[key]  # stale entry: tree mutated after caching
         try:
             root = tree.root
             # Iterative DFS to find the target node and accumulate height
@@ -511,7 +582,7 @@ class FigTreeStyler:
                 current, height = stack.pop()
                 if current is node:
                     result = round(height, 10)
-                    cache[key] = result
+                    cache[key] = (result, self._tree_cache_guard(tree))
                     return result
                 if hasattr(current, 'clades'):
                     for child in current.clades:
@@ -530,7 +601,8 @@ class FigTreeStyler:
                 CompatibilityWarning,
             )
             result = 0.0
-        cache[key] = result
+        # Failure fallbacks are returned but deliberately NOT cached so a
+        # mutated/repaired tree is re-checked on the next query (fix C6).
         return result
 
     def _get_min_tip_height(self, tree, node) -> float:
@@ -1176,6 +1248,7 @@ class FigTreeStyler:
         taxon_names: List[str],
         label: Optional[str] = None,
         collapse_type: str = "collapse",
+        allow_partial: bool = False,
     ) -> "FigTreeStyler":
         """Collapse a clade defined by its constituent taxa.
 
@@ -1190,6 +1263,11 @@ class FigTreeStyler:
                 tip carries *label* (``!collapse`` annotation);
                 ``"cartoon"`` draws a triangle spanning the original tip
                 range with tip count (``!cartoon`` annotation).
+            allow_partial: Explicit opt-in (default ``False``) permitting
+                the collapse to proceed on the subset of *taxon_names*
+                still present in the tree when some targets are absent.
+                Partial collapses are labeled as such in the emitted
+                warning and are never performed implicitly (fix G1).
 
         Returns:
             self for method chaining.
@@ -1213,15 +1291,29 @@ class FigTreeStyler:
         # consistent with collapse_by_group.  Collapsing a non-monophyletic
         # set would produce a triangle that silently swallows the extra tips,
         # so we refuse (warn + skip) and report the actual terminal count.
+        # G1: all requested taxa must be present; a missing target refuses
+        # the collapse instead of silently collapsing the surviving subset.
         # If the tree is unavailable or the MRCA cannot be resolved we fall
         # back to the legacy behaviour and still register the collapse.
         if self._tree_content:
             tree = self._parse_tree_with_biopython(self._tree_content)
             if tree is not None:
                 tips = {t.name for t in tree.get_terminals()}
+                absent = [n for n in taxon_names if n not in tips]
+                if absent and not allow_partial:
+                    warnings.warn(
+                        f"collapse_clade: {len(absent)} requested taxon/taxa "
+                        f"absent from tree (e.g. {sorted(absent)[:3]}). "
+                        f"Collapse skipped — collapsing the surviving subset "
+                        f"could misrepresent the clade. Pass "
+                        f"allow_partial=True to collapse the present subset "
+                        f"explicitly.",
+                        CompatibilityWarning,
+                    )
+                    return self
                 present = [n for n in taxon_names if n in tips]
                 if present:
-                    mrca = self._find_mrca_clade(tree, present)
+                    mrca = self._find_mrca_clade(tree, present, allow_missing=True)
                     if mrca is not None:
                         mrca_terminals = [t.name for t in mrca.get_terminals()]
                         if set(mrca_terminals) != set(present):
@@ -1253,6 +1345,7 @@ class FigTreeStyler:
         self,
         taxon_names: List[str],
         label: Optional[str] = None,
+        allow_partial: bool = False,
     ) -> "FigTreeStyler":
         """Cartoon a clade (FigTree ``!cartoon`` annotation).
 
@@ -1269,7 +1362,8 @@ class FigTreeStyler:
             self for method chaining.
         """
         return self.collapse_clade(
-            taxon_names, label=label, collapse_type="cartoon"
+            taxon_names, label=label, collapse_type="cartoon",
+            allow_partial=allow_partial,
         )
 
     def collapse_by_group(
@@ -1393,16 +1487,18 @@ class FigTreeStyler:
                 # Bio.Phylo.common_ancestor.
                 mrca = self._find_mrca_of_nodes(tree, resolved_nodes)
                 # Also resolve any non-collapsed taxa by name
+                # (allow_missing=True: earlier nested collapses may
+                # have removed some targets; internal partial mode).
                 non_collapsed = [t for t in collapse.target_taxa if t not in collapsed_taxa_map]
                 if non_collapsed:
-                    name_mrca = self._find_mrca_clade(tree, non_collapsed)
+                    name_mrca = self._find_mrca_clade(tree, non_collapsed, allow_missing=True)
                     if name_mrca is not None and mrca is not None:
                         # MRCA of all = MRCA of (node_mrca, name_mrca)
                         mrca = self._find_mrca_of_nodes(tree, [mrca, name_mrca])
                     elif name_mrca is not None:
                         mrca = name_mrca
             else:
-                mrca = self._find_mrca_clade(tree, resolved_taxa)
+                mrca = self._find_mrca_clade(tree, resolved_taxa, allow_missing=True)
 
             if mrca is None:
                 warnings.warn(
@@ -2395,7 +2491,10 @@ class FigTreeStyler:
             if ann.annotation_type != 'hilight' or not ann.target_taxa:
                 continue
             try:
-                mrca = self._find_mrca_clade(tree, ann.target_taxa)
+                # allow_missing=True: at export time some targets may have
+                # been removed by a prior collapse; resolve the surviving
+                # subset (internal partial mode, fix G1).
+                mrca = self._find_mrca_clade(tree, ann.target_taxa, allow_missing=True)
                 if mrca:
                     tip_count = len(mrca.get_terminals())
                     # FigTree's !hilight height uses
@@ -2463,7 +2562,7 @@ class FigTreeStyler:
             if ann.annotation_type == 'hilight':
                 continue
             if ann.annotation_type == 'color_all' and ann.target_taxa:
-                mrca = self._find_mrca_clade(tree, ann.target_taxa)
+                mrca = self._find_mrca_clade(tree, ann.target_taxa, allow_missing=True)
                 if mrca:
                     color_value = ann.values.lower() if isinstance(ann.values, str) else ann.values
                     for clade in mrca.find_clades():
@@ -2471,7 +2570,7 @@ class FigTreeStyler:
                             continue
                         self._inject_annotation_to_node(clade, 'color', color_value)
             elif ann.annotation_type == 'color' and ann.target_taxa:
-                target_node = self._find_mrca_clade(tree, ann.target_taxa)
+                target_node = self._find_mrca_clade(tree, ann.target_taxa, allow_missing=True)
                 if target_node:
                     if id(target_node) in _hl_node_ids:
                         warnings.warn(
@@ -2509,7 +2608,7 @@ class FigTreeStyler:
             a for a in resolved
             if a.annotation_type not in ('hilight', 'color_all')
             and a.target_taxa
-            and not self._find_mrca_clade(tree, a.target_taxa)]
+            and not self._find_mrca_clade(tree, a.target_taxa, allow_missing=True)]
         if unresolved:
             warnings.warn(
                 f"{len(unresolved)} annotation(s) could not be resolved "

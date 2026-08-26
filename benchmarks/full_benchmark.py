@@ -226,29 +226,47 @@ def run_annotation_scaling(out_csv):
     return rows
 
 
-def run_competitive(sizes, repeats, out_csv):
+def run_competitive(sizes, repeats, seeds, out_csv):
+    """Serialization-overhead microbenchmark vs Bio.Phylo (review F6).
+
+    Paired measurements over independently generated trees (one tree per
+    seed); the per-size ratio is summarized across trees, so the reported
+    variability reflects cross-input uncertainty rather than technical
+    timing repeats of a single tree.
+    """
     from Bio import Phylo
     rows = []
     for n in sizes:
-        tree = gen_balanced(n, 42)
-        ftk, bio = [], []
-        for _ in range(repeats):
-            styler = FigTreeStyler().load_content(tree)
-            with tempfile.TemporaryDirectory() as tmp:
-                t0 = time.perf_counter()
-                styler.export(str(Path(tmp) / "o.nex"))
-                ftk.append(time.perf_counter() - t0)
-            t = Phylo.read(io.StringIO(tree), "newick")
-            with tempfile.TemporaryDirectory() as tmp:
-                t0 = time.perf_counter()
-                Phylo.write(t, str(Path(tmp) / "o.nex"), "nexus")
-                bio.append(time.perf_counter() - t0)
-        fm, bm = summarize(ftk), summarize(bio)
-        rows.append({"n_taxa": n,
-                     "figtreekit_export_mean_s": fm["mean"], "figtreekit_export_sem_s": fm["sem"],
-                     "biophylo_export_mean_s": bm["mean"], "biophylo_export_sem_s": bm["sem"],
-                     "ratio": fm["mean"] / bm["mean"]})
-        print(f"  competitive: n={n} ftk={fm['mean']:.4f} bio={bm['mean']:.4f}")
+        ratios, ftk_tree, bio_tree = [], [], []
+        for seed in seeds:
+            tree = gen_balanced(n, seed)
+            ftk, bio = [], []
+            for _ in range(repeats):
+                styler = FigTreeStyler().load_content(tree)
+                with tempfile.TemporaryDirectory() as tmp:
+                    t0 = time.perf_counter()
+                    styler.export(str(Path(tmp) / "o.nex"))
+                    ftk.append(time.perf_counter() - t0)
+                t = Phylo.read(io.StringIO(tree), "newick")
+                with tempfile.TemporaryDirectory() as tmp:
+                    t0 = time.perf_counter()
+                    Phylo.write(t, str(Path(tmp) / "o.nex"), "nexus")
+                    bio.append(time.perf_counter() - t0)
+            fmed, bmed = float(np.median(ftk)), float(np.median(bio))
+            ftk_tree.append(fmed); bio_tree.append(bmed)
+            ratios.append(fmed / bmed)
+        rs = summarize(ratios)
+        rows.append({"n_taxa": n, "n_trees": len(seeds),
+                     "figtreekit_export_mean_s": float(np.mean(ftk_tree)),
+                     "figtreekit_export_sem_s": summarize(ftk_tree)["sem"],
+                     "biophylo_export_mean_s": float(np.mean(bio_tree)),
+                     "biophylo_export_sem_s": summarize(bio_tree)["sem"],
+                     "ratio": float(np.mean(ratios)),
+                     "ratio_sem_s": rs["sem"],
+                     "ratio_min": min(ratios), "ratio_max": max(ratios)})
+        print(f"  competitive: n={n} ratio={rows[-1]['ratio']:.2f} "
+              f"[{rows[-1]['ratio_min']:.2f}, {rows[-1]['ratio_max']:.2f}] "
+              f"over {len(seeds)} trees")
     _write_csv(out_csv, rows)
     return rows
 
@@ -361,7 +379,13 @@ def main():
     if args.quick:
         sizes, repeats, seeds = [100, 1000], 3, [42]
     else:
-        sizes, repeats, seeds = [50, 100, 500, 1000, 5000, 10000], 10, [42, 7, 123]
+        # Statistical units (review D4): each (size, seed) pair is one
+        # independently generated tree; the `repeats` timings per tree are
+        # technical replicates summarized within-tree before inference.
+        sizes, repeats, seeds = (
+            [50, 100, 500, 1000, 5000, 10000], 10,
+            [42, 7, 123, 2024, 314, 601, 808, 917, 1337, 5555],
+        )
 
     jar = OUT.parent / "figtreekit" / "figtree_patched.jar"
     have_java = jar.exists() and subprocess.run(
@@ -386,7 +410,16 @@ def main():
         "commit": commit,
         "git_dirty": dirty,
         "sizes": sizes, "repeats": repeats, "seeds": seeds,
-        "aggregation": "mean±SEM over repeats; median/IQR reported per cell",
+        "statistical_unit": (
+            "one independently generated tree per (size, seed); repeats "
+            "are technical timing replicates summarized within tree "
+            "(median) before inference (review D4)"
+        ),
+        "aggregation": (
+            "per tree: mean±SEM and median/IQR over technical repeats; "
+            "per size: tree-level summaries; scaling regression fitted on "
+            "tree-level medians"
+        ),
     }
     (OUT / "benchmark_meta.json").write_text(json.dumps(meta, indent=2))
     print(f"[meta] {meta['platform']} | {meta['cpu']} | {meta['ram_gb']} GB | "
@@ -403,7 +436,7 @@ def main():
     run_annotation_scaling(OUT / "results_annotations.csv")
 
     print("[4/6] competitive vs Bio.Phylo...")
-    run_competitive(sizes, repeats, OUT / "competitive_results.csv")
+    run_competitive(sizes, repeats, seeds, OUT / "competitive_results.csv")
 
     print("[5/6] stage breakdown...")
     run_stage_breakdown([100, 500, 1000, 2000], jar if have_java else None,
@@ -412,19 +445,24 @@ def main():
     print("[6/6] GTDB R232...")
     run_gtdb(args.gtdb_dir, OUT / "gtdb_results.json")
 
-    # Slope summary from the main scaling curve (median export times,
-    # pooled over independent seeds).
-    by_n = {}
-    for r in main_rows:
-        by_n.setdefault(r["n_taxa"], []).append(r["export_median_s"])
-    xs = sorted(by_n)
-    ys = [float(np.median(by_n[x])) for x in xs]
-    slopes = {"export_vs_taxa_loglog": slope_ci(xs, ys)}
+    # Slope summary from the main scaling curve.  Review D4: regression is
+    # fitted at the tree level — each point is the median export time of one
+    # independently generated tree (technical repeats already summarized).
+    tree_points = [(r["n_taxa"], r["export_median_s"]) for r in main_rows]
+    xs_all = [p[0] for p in tree_points]
+    ys_all = [p[1] for p in tree_points]
+    export_slope = slope_ci(xs_all, ys_all)
+    export_slope["unit"] = "tree-level median over technical replicates"
+    export_slope["n_points"] = len(tree_points)
+    slopes = {"export_vs_taxa_loglog": export_slope}
     mem_by_n = {}
     for r in main_rows:
         mem_by_n.setdefault(r["n_taxa"], []).append(r["peak_memory_bytes"])
+    xs = sorted(mem_by_n)
     my = [float(np.max(mem_by_n[x])) for x in xs]
-    slopes["memory_vs_taxa_loglog"] = slope_ci(xs, my)
+    mem_slope = slope_ci(xs, my)
+    mem_slope["unit"] = "per-size maximum over independent trees"
+    slopes["memory_vs_taxa_loglog"] = mem_slope
     (OUT / "slope_summary.json").write_text(json.dumps(slopes, indent=2))
     print(f"[slope] export: {slopes['export_vs_taxa_loglog']}")
     print(f"[slope] memory: {slopes['memory_vs_taxa_loglog']}")

@@ -316,13 +316,20 @@ class TestNestedBracketTreeDecl:
 
     def test_tree_decl_deep_nesting_beyond_regex_limit(self):
         # The legacy regex tolerated only 3 nesting levels; the character
-        # scanner handles arbitrary depth.
+        # scanner handles arbitrary depth (balanced comments, fix G2).
         from figtreekit._parser import find_tree_declaration_spans
-        block = 'tree t1 = (A[&n=[a=[b=[c=[d;e]]]]]]:0.1,B:0.2);\ntree t2 = (C:0.3,D:0.4);'
+        block = 'tree t1 = (A[&n=[a=[b=[c=[d;e]]]]]:0.1,B:0.2);\ntree t2 = (C:0.3,D:0.4);'
         spans = find_tree_declaration_spans(block)
         assert len(spans) == 2
-        assert block[spans[0][0]:spans[0][1]].endswith("(A[&n=[a=[b=[c=[d;e]]]]]]:0.1,B:0.2);")
+        assert block[spans[0][0]:spans[0][1]].endswith("(A[&n=[a=[b=[c=[d;e]]]]]:0.1,B:0.2);")
         assert block[spans[1][0]:spans[1][1]] == 'tree t2 = (C:0.3,D:0.4);'
+
+    def test_tree_decl_deep_unmatched_bracket_rejected(self):
+        # A stray ']' outside any comment is rejected even at depth (G2).
+        from figtreekit._parser import find_tree_declaration_spans
+        block = 'tree t1 = (A[&n=[a=[b=[c=[d;e]]]]]]:0.1,B:0.2);'
+        with pytest.raises(ValueError, match="unmatched closing bracket"):
+            find_tree_declaration_spans(block)
 
     def test_tree_decl_quoted_name_with_semicolon(self):
         from figtreekit._parser import find_tree_declaration_spans
