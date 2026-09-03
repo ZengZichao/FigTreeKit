@@ -4,7 +4,8 @@
 
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
 [![License: GPL v2+](https://img.shields.io/badge/License-GPL%20v2+-blue.svg)](https://spdx.org/licenses/GPL-2.0-or-later.html)
-[![Version](https://img.shields.io/badge/version-1.1.1-green.svg)](https://pypi.org/project/figtreekit/)
+[![Version](https://img.shields.io/badge/version-1.1.2-green.svg)](https://pypi.org/project/figtreekit/)
+[![DOI](https://img.shields.io/badge/DOI-10.64898/2026.08.27.747475-blue.svg)](https://doi.org/10.64898/2026.08.27.747475)
 [![Bioinformatics](https://img.shields.io/badge/topic-bioinformatics-green.svg)](https://github.com/ZengZichao/FigTreeKit)
 
 [中文文档](https://github.com/ZengZichao/FigTreeKit/blob/main/README_CN.md) | [English](#)
@@ -949,14 +950,22 @@ See [docs/user_manual_EN.md](docs/user_manual_EN.md) for detailed compilation in
 
 If you use FigTreeKit in your research, please cite:
 
+> Zeng, Zichao & Wang, Yinzhao (2026). *FigTreeKit: A Python toolkit for programmatic FigTree styling, taxonomy-aware clade auditing, and phylogenetic tree rendering.* August 2026. DOI: [10.64898/2026.08.27.747475](https://doi.org/10.64898/2026.08.27.747475). License: CC BY-NC-ND 4.0.
+
 ```bibtex
 @software{figtreekit2026,
-  author = {Zeng, Zichao},
-  title = {FigTreeKit: Programmatic styling of phylogenetic trees for FigTree visualization},
-  year = {2026},
-  url = {https://github.com/ZengZichao/FigTreeKit}
+  author       = {Zeng, Zichao and Wang, Yinzhao},
+  title        = {FigTreeKit: A Python toolkit for programmatic FigTree styling,
+                  taxonomy-aware clade auditing, and phylogenetic tree rendering},
+  year         = {2026},
+  month        = aug,
+  doi          = {10.64898/2026.08.27.747475},
+  url          = {https://doi.org/10.64898/2026.08.27.747475},
+  note         = {License: CC BY-NC-ND 4.0}
 }
 ```
+
+The software itself is licensed under GPL-2.0-or-later (see [License](#license) below).
 
 ---
 
@@ -1002,7 +1011,7 @@ This software is developed and tested on the following environment:
 
 To reproduce the exact environment:
 ```bash
-pip install figtreekit==1.1.1 biopython==1.87
+pip install figtreekit==1.1.2 biopython==1.87
 figtreekit --self-test
 ```
 

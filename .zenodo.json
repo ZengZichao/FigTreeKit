@@ -1,5 +1,5 @@
 {
-  "title": "FigTreeKit: A Python toolkit for programmatic FigTree styling, taxonomic analysis, and rendering of phylogenetic trees",
+  "title": "FigTreeKit: A Python toolkit for programmatic FigTree styling, taxonomy-aware clade auditing, and phylogenetic tree rendering",
   "description": "FigTreeKit is a Python library that programmatically generates FigTree-compatible Nexus annotation files for phylogenetic tree visualization. It supports taxonomic analysis with clade collapse, annotation conflict detection, and batch rendering via FigTree CLI.",
   "creators": [
     {

@@ -12,7 +12,7 @@ authors:
     given-names: "Yinzhao"
     orcid: "https://orcid.org/0000-0001-8715-1386"
     affiliation: "Shanghai Jiao Tong University, Shanghai, China"
-abstract: "A Python library for programmatic styling of phylogenetic trees for FigTree visualization. FigTreeKit provides a clean API to generate publication-ready Nexus files with full FigTree annotation support, including branch coloring, clade highlighting, custom fonts, and all layout options."
+abstract: "A Python library for programmatic styling of phylogenetic trees for FigTree visualization. FigTreeKit provides a clean API to generate publication-ready Nexus files with full FigTree annotation support, including branch coloring, clade highlighting, custom fonts, and all layout options. It also supports taxonomy-aware clade auditing and phylogenetic tree rendering."
 keywords:
   - phylogenetics
   - tree visualization
@@ -25,8 +25,8 @@ keywords:
   - BEAST
   - reproducible research
 license: GPL-2.0-or-later
-doi: "10.5281/zenodo.22043258"
+doi: "10.64898/2026.08.27.747475"
 repository-code: "https://github.com/ZengZichao/FigTreeKit"
 url: "https://pypi.org/project/figtreekit/"
-version: "1.1.1"
-date-released: "2026-08-26"
+version: "1.1.2"
+date-released: "2026-09-03"

@@ -3,9 +3,9 @@
   "@type": "SoftwareSourceCode",
   "name": "FigTreeKit",
   "description": "A Python library for programmatic styling of phylogenetic trees for FigTree visualization. FigTreeKit provides a clean API to generate publication-ready Nexus files with full FigTree annotation support, including branch coloring, clade highlighting, custom fonts, and all layout options.",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "datePublished": "2026-08-13",
-  "dateModified": "2026-08-26",
+  "dateModified": "2026-09-03",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "Python",
@@ -70,7 +70,9 @@
   },
   "citation": {
     "@type": "CreativeWork",
-    "name": "CITATION.cff",
-    "url": "https://github.com/ZengZichao/FigTreeKit/blob/main/CITATION.cff"
+    "name": "FigTreeKit: A Python toolkit for programmatic FigTree styling, taxonomy-aware clade auditing, and phylogenetic tree rendering",
+    "doi": "10.64898/2026.08.27.747475",
+    "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/",
+    "url": "https://doi.org/10.64898/2026.08.27.747475"
   }
 }

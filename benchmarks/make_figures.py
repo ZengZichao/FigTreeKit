@@ -98,7 +98,7 @@ def figure2_main():
     tree_mem = [int(r["peak_memory_bytes"]) / (1024 * 1024) for r in rows]
 
     # Size-level summaries.
-    export_medians, export_iqrs, mem_medians = [], [], []
+    export_medians, export_iqrs, mem_medians, mem_iqrs = [], [], [], []
     for n in sizes:
         pool = [float(r["export_median_s"]) for r in rows if int(r["n_taxa"]) == n]
         export_medians.append(float(np.median(pool)))
@@ -106,6 +106,7 @@ def figure2_main():
         mems = [int(r["peak_memory_bytes"]) / (1024 * 1024) for r in rows
                 if int(r["n_taxa"]) == n]
         mem_medians.append(float(np.median(mems)))
+        mem_iqrs.append(float(np.percentile(mems, 75) - np.percentile(mems, 25)))
 
     # Fit on tree-level points (technical replicates already summarized).
     log_n = np.log10(np.asarray(tree_n, float))
@@ -118,7 +119,7 @@ def figure2_main():
 
     # Panel A: export time
     ax1.scatter(tree_n, tree_t, s=18, color="#1f77b4", alpha=0.45,
-                label="Independent trees (median of technical replicates)")
+                label="Independent trees")
     ax1.errorbar(sizes, export_medians, yerr=export_iqrs, fmt="o-",
                  color="#0b3d66", ecolor="#0b3d66", capsize=4,
                  markersize=6, linewidth=1.5, label="Per-size median [Q1, Q3]")
@@ -127,20 +128,28 @@ def figure2_main():
     ax1.set_yscale("log")
     ax1.set_xlabel("Taxa", fontsize=11)
     ax1.set_ylabel("Export time (s)", fontsize=11)
-    ax1.set_title(f"tree-level log–log slope = {slope:.2f} (95% CI {lo:.2f}–{hi:.2f})",
-                  fontsize=10)
+    ax1.text(0.97, 0.03,
+             f"log–log slope = {slope:.2f} (95% CI {lo:.2f}–{hi:.2f})",
+             transform=ax1.transAxes, fontsize=9.5, va="bottom", ha="right",
+             bbox=dict(boxstyle="round,pad=0.3", facecolor="white",
+                       edgecolor="none", alpha=0.85))
+    ax1.text(-0.14, 1.04, "A", transform=ax1.transAxes, fontsize=16,
+             fontweight="bold", va="top", ha="left")
     ax1.legend(fontsize=7.5, loc="upper left")
     ax1.spines["top"].set_visible(False)
     ax1.spines["right"].set_visible(False)
 
-    # Panel B: peak memory (per independent tree + per-size median)
+    # Panel B: peak memory (per independent tree + per-size median [Q1, Q3])
     ax2.scatter(tree_n, tree_mem, s=18, color="#2ca02c", alpha=0.45,
                 label="Independent trees")
-    ax2.plot(sizes, mem_medians, "o-", color="#14612a", markersize=6,
-             linewidth=1.5, label="Per-size median")
+    ax2.errorbar(sizes, mem_medians, yerr=mem_iqrs, fmt="o-",
+                 color="#14612a", ecolor="#14612a", capsize=4,
+                 markersize=6, linewidth=1.5, label="Per-size median [Q1, Q3]")
     ax2.set_xscale("log")
     ax2.set_xlabel("Taxa", fontsize=11)
     ax2.set_ylabel("Peak memory (MB)", fontsize=11)
+    ax2.text(-0.14, 1.04, "B", transform=ax2.transAxes, fontsize=16,
+             fontweight="bold", va="top", ha="left")
     ax2.legend(fontsize=7.5, loc="upper left")
     ax2.spines["top"].set_visible(False)
     ax2.spines["right"].set_visible(False)
