@@ -3,7 +3,9 @@ include NOTICE
 include CITATION.cff
 include codemeta.json
 include CONTRIBUTING.md
+include CHANGELOG.md
 include environment.yml
+include environment-benchmark.yml
 include requirements.txt
 recursive-include _figtree_patch/src *.java
 include _figtree_patch/figtree_original.jar
@@ -15,6 +17,19 @@ recursive-include figtreekit *.py *.typed *.jar
 recursive-include docs *.md *.rst
 recursive-include examples *.py
 recursive-include benchmarks *.py *.csv
+# Canonical, machine-stamped result files the manuscript names as its data
+# source. Regenerable intermediates are excluded below.
+include benchmarks/slope_summary.json
+include benchmarks/gtdb_results.json
+include benchmarks/benchmark_meta.json
+global-exclude coverage_summary*.json
+global-exclude coverage_*.xml
+global-exclude figure_s*.png
+global-exclude figure_s*.pdf
+global-exclude figure2_main.*
+global-exclude figure2_summary.json
+global-exclude table_values.json
+recursive-include scripts *.py
 recursive-include notebooks *.ipynb
 recursive-exclude test *
 prune test
