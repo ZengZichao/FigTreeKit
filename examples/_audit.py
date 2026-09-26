@@ -1,8 +1,8 @@
 """Machine-readable audit dumps for the two archived example workflows.
 
-The manuscript refers to "the machine-readable audit archived with the release"
-for the per-clade verdicts and for the annotation accounting, so the workflows
-must emit those files rather than only printing a summary.
+Per-clade verdicts and annotation accounting have to be inspectable after the
+run, not only printed, so the workflows emit these files alongside their
+outputs.
 
 Two artefacts are written next to the workflow outputs:
 

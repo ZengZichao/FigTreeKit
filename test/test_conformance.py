@@ -7,7 +7,7 @@ conformance checks:
 * topology, tip set and branch lengths survive styling round-trips;
 * BEAST translate blocks are preserved (IDs, not names, in output);
 * bracket-comment preservation is verified per attachment position
-  (the position support matrix reported in Supplementary Section S1);
+  (the bracket-comment position support matrix);
 * node-depth semantics are pinned on a non-ultrametric tree;
 * (optionally) the bundled patched FigTree JAR accepts the annotated
   Nexus and produces valid PNG/PDF output.

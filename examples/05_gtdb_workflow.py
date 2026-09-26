@@ -1,4 +1,4 @@
-"""GTDB R232 end-to-end styling workflow (main text Section 3.4).
+"""GTDB R232 end-to-end styling workflow.
 
 Reproducible, version-controllable replacement for the manual FigTree
 GUI workflow: colour every phylum and batch-collapse every validated
@@ -116,7 +116,7 @@ def main() -> int:
     styler_b.export(str(out_b_nex))
     print(f"[done] exported {out_b_nex}")
 
-    # ── Machine-readable audit archived with the release (manuscript §3.4) ──
+    # ── Machine-readable audit emitted alongside the release outputs ────────
     try:
         from _audit import write_audit
         write_audit(out_b_nex.with_suffix(""), rank="order", groups=orders,

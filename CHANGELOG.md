@@ -37,15 +37,24 @@ and Zenodo releases.
   `background_color`, `foreground_color` and `label_color` keyword arguments.
   Vector output (PDF/SVG) is returned untouched.
 - New optional dependency extras: `[render]` (Pillow, for the appearance pass)
-  and `[benchmark]` (scipy + matplotlib, for regenerating tables and figures).
-  Both code paths degrade with a `CompatibilityWarning` rather than failing.
-- Reproducible regeneration tooling for the manuscript's reported numbers:
-  `benchmarks/coverage_report.py` (Figure S1 / component-to-module mapping),
-  `benchmarks/regenerate_summaries.py` (all summary JSONs and figures from the
-  archived CSVs), `scripts/generate_conformance_index.py` with the generated
-  `benchmarks/conformance_corpus_index.csv`, `benchmarks/gtdb_paths.py` and
-  `examples/_audit.py` for machine-readable workflow audits, and a frozen
-  `environment-benchmark.yml` for the benchmarking interpreter.
+  and `[benchmark]` (numpy + scipy, for re-running the measurement suite). The
+  render path degrades with a `CompatibilityWarning` rather than failing.
+- `benchmarks/gtdb_paths.py` resolves the GTDB reference trees from
+  `$FTK_GTDB_DIR`, so the large-tree measurements run from a clean clone
+  instead of a hard-coded local path; `benchmarks/gtdb_data/README.md` records
+  where the trees come from.
+- `examples/_audit.py` makes the two example workflows emit machine-readable
+  audit files (per-clade verdicts and annotation accounting) instead of only
+  printing a summary.
+- `scripts/generate_conformance_index.py` derives
+  `benchmarks/conformance_corpus_index.csv`, a machine-readable index of the
+  golden conformance corpus keyed to the test that exercises each branch.
+- A frozen `environment-benchmark.yml` records the benchmarking interpreter.
+
+  Article figures and the statistics tabulated in the article are produced by
+  figure-generation code supplied with the article rather than by this
+  repository; the repo ships the measurements (raw CSVs and the summary JSONs
+  recomputed from them) and the scripts that take them.
 - JPEG rendering regression tests (`test/test_render_jpeg.py`).
 
 ### Changed

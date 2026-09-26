@@ -277,8 +277,8 @@ def main():
                 "ratio": round(ratio, 3),
             })
 
-        # Persist raw competitive data alongside the main results so the
-        # manuscript's Table 3 is backed by an auditable artefact.
+        # Persist raw competitive data alongside the main results so every
+        # reported cross-tool ratio is backed by an auditable artefact.
         comp_path = out_path.parent / "competitive_results.csv"
         with open(comp_path, "w", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=competitive_rows[0].keys())

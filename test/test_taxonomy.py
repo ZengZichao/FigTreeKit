@@ -1,7 +1,7 @@
 """Tests for the taxonomy module (TaxonomyMapper, MonophylyAnalyzer)
 and FigTreeStyler taxonomy integration.
 
-Covers robustness test items #15-20, #27-28 from Supplementary Table S2.
+Covers robustness scenarios 15-20 and 27-28.
 """
 import warnings
 import os
@@ -478,11 +478,11 @@ class TestMonophylyAnalyzer:
 
 
 # ---------------------------------------------------------------------------
-# 6. FigTreeStyler taxonomy integration — Table S2 items #15-20
+# 6. FigTreeStyler taxonomy integration — robustness scenarios 15-20
 # ---------------------------------------------------------------------------
 
 class TestStylerTaxonomyIntegration:
-    """Tests for FigTreeStyler taxonomy methods (Table S2 #15-20)."""
+    """Tests for FigTreeStyler taxonomy methods (scenarios 15-20)."""
 
     def test_format_a_embedded_taxonomy(self):
         """#15: Embedded format A taxonomy is correctly parsed by FigTreeStyler."""
@@ -581,7 +581,7 @@ class TestStylerTaxonomyIntegration:
 
 
 # ---------------------------------------------------------------------------
-# 7. Conflict detection — Table S2 item #27
+# 7. Conflict detection — robustness scenario 27
 # ---------------------------------------------------------------------------
 
 class TestColorHilightConflict:
@@ -623,7 +623,7 @@ class TestColorHilightConflict:
 
 
 # ---------------------------------------------------------------------------
-# 8. Instance isolation — Table S2 item #28
+# 8. Instance isolation — robustness scenario 28
 # ---------------------------------------------------------------------------
 
 class TestHilightMarksIsolation:

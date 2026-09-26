@@ -1,5 +1,5 @@
-"""Regression tests for the JPEG render format (manuscript Fig. 1 lists four
-output formats; JPEG previously had CLI support but no test)."""
+"""Regression tests for the JPEG render format: the CLI advertises four output
+formats and JPEG previously had support but no test."""
 import os
 import shutil
 import subprocess

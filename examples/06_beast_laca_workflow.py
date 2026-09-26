@@ -1,4 +1,4 @@
-"""BEAST-style time-calibrated tree workflow (main text Code 1 caption).
+"""BEAST-style time-calibrated tree workflow on a published chronogram.
 
 Demonstrates FigTreeKit on the published 700-tip time-calibrated
 archaeal-bacterial phylogeny of Moody et al. (2025), supplied as
@@ -18,7 +18,7 @@ examples/data/README.md for the full provenance statement).
 
 The script prints a full audit report (tips, phylum-level monophyly
 counts, unmapped tips, and the 95% CI comment count before/after
-export) corresponding to Supplementary Table S11.
+export) for the annotation accounting.
 
 Usage:
     python examples/06_beast_laca_workflow.py [TREE] [OUTDIR]
@@ -92,7 +92,7 @@ def main() -> int:
           f"95% CI comments in -> out: {ci_in} -> {ci_out} "
           f"({'no loss' if ci_in == ci_out else 'LOSS DETECTED'})")
 
-    # ── Machine-readable audit archived with the release (manuscript §3.4) ──
+    # ── Machine-readable audit emitted alongside the release outputs ────────
     try:
         from _audit import write_audit
         write_audit(outdir / "beast_laca", rank="phylum", groups=phyla,

@@ -48,11 +48,11 @@ figtreekit = "figtreekit._cli:main"
 render = [
     "pillow>=10.0",
 ]
-# Required to regenerate the manuscript's tables and figures from the archived
-# benchmark CSVs; both imports degrade gracefully when absent.
+# Needed to re-run the measurement suite in benchmarks/. numpy is imported
+# directly by full_benchmark.py; scipy replaces an asymptotic fallback for
+# exact Student-t critical values and is optional.
 benchmark = [
     "scipy>=1.10",
-    "matplotlib>=3.7",
 ]
 dev = [
     "pytest>=7.0",

@@ -2,8 +2,8 @@
 
 Measures parse time, export time, and peak memory on the GTDB R232
 archaeal (ar53) and bacterial (bac120) reference trees, and writes the
-results to ``benchmarks/gtdb_results.json`` so the manuscript's Section
-on real-dataset validation is backed by an auditable artefact.
+results to ``benchmarks/gtdb_results.json`` so real-dataset validation
+is backed by an auditable artefact.
 
 Usage:
     python benchmarks/gtdb_benchmark.py [--gtdb-dir PATH] [--output PATH]

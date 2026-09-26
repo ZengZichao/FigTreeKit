@@ -22,6 +22,7 @@ curl -O https://data.gtdb.ecogenomic.org/releases/release232/232.0/ar53_metadata
 gunzip ar53_metadata_r232.tsv.gz && mv ar53_metadata_r232.tsv ar53_r232_metadata.tsv
 ```
 
-The release is designated **R11-RS232** in GTDB's own release notes. GTDB data
-are not redistributed with FigTreeKit; see the Data availability statement of
-the manuscript.
+GTDB designates this release **r232** (directory ``release232/232.0``, its
+``VERSION.txt`` reads ``v232``, released 15 April 2026); the ``GB_`` and ``RS_``
+prefixes on the tip labels mark GenBank- and RefSeq-sourced genomes and are not
+part of the release number. GTDB data are not redistributed with FigTreeKit.

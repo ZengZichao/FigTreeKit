@@ -2,7 +2,7 @@
 # This is deliberately separate from environment.yml, which pins the supported
 # deployment interpreter (Python 3.11). The scaling ladder (50-10,000 taxa) and
 # the GTDB reference trees were measured in the frozen environment recorded in
-# benchmarks/benchmark_meta.json; reproducing the manuscript numbers requires
+# benchmarks/benchmark_meta.json; reproducing the published numbers requires
 # this environment, not the deployment one.
 name: figtreekit-benchmark
 channels:

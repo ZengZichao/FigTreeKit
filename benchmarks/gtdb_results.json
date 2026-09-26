@@ -30,7 +30,7 @@
       "heap_per_taxon_kB": 1.14
     }
   ],
-  "mb_definition": "1 MB = 10^6 bytes; 1 kB = 10^3 bytes (SI, as in Table 2)",
+  "mb_definition": "1 MB = 10^6 bytes; 1 kB = 10^3 bytes (SI)",
   "memory_unit_note": "peak_memory_MB is the tracemalloc heap peak converted from the originally stored MiB figure (exact factor 1048576/1000000); the raw MiB value is retained as peak_memory_mb_legacy_mib.",
   "run_relationship": "measured in the same frozen environment as the synthetic benchmark (benchmark_meta.json) in a separate pass 4 minutes later; one timed run per dataset, so no dispersion is assessed",
   "cpu": "Apple M5",
