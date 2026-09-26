@@ -51,8 +51,15 @@ def count_written_annotations(nexus_path: Path) -> dict:
 
 
 def write_audit(prefix: Path, *, rank: str, groups: dict, completeness: dict,
-                nexus_path: Path, extra: dict | None = None) -> dict:
-    """Write ``<prefix>_audit.json`` and ``<prefix>_groups.csv``."""
+                nexus_path: Path, collapsed=None,
+                extra: dict | None = None) -> dict:
+    """Write ``<prefix>_audit.json`` and ``<prefix>_groups.csv``.
+
+    *collapsed* is the collection of group names the workflow actually
+    submitted for collapse.  Pass an empty collection for a colour-only
+    workflow; omit it (None) only when the distinction is not meaningful.
+    """
+    collapsed_set = None if collapsed is None else {str(c) for c in collapsed}
     mono = groups.get("monophyletic", {}) or {}
     nonmono = groups.get("non_monophyletic", {}) or {}
     unmapped = groups.get("unmapped", {}) or {}
@@ -66,12 +73,13 @@ def write_audit(prefix: Path, *, rank: str, groups: dict, completeness: dict,
 
     rows = []
     for name, info in items(mono):
-        rows.append(_group_row(name, "exclusive", info, accepted=True))
+        rows.append(_group_row(name, "exclusive", info, accepted=True,
+                               collapsed=collapsed_set))
     for name, info in items(nonmono):
-        rows.append(_group_row(name, "non-exclusive", info, accepted=False,
+        rows.append(_group_row(name, "non-exclusive", info, accepted=False, collapsed=collapsed_set,
                                intruders=intruders_by_group.get(name, [])))
     for name, info in items(unmapped):
-        rows.append(_group_row(name, "unmapped", info, accepted=False))
+        rows.append(_group_row(name, "unmapped", info, accepted=False, collapsed=collapsed_set))
 
     csv_path = Path(f"{prefix}_groups.csv")
     with csv_path.open("w", newline="", encoding="utf-8") as fh:
@@ -81,10 +89,11 @@ def write_audit(prefix: Path, *, rank: str, groups: dict, completeness: dict,
         w.writeheader()
         w.writerows(rows)
 
+    written = count_written_annotations(nexus_path)
+    exclusive_rows = [r for r in rows if r["verdict"] == "exclusive"]
     payload = {
         "workflow": str(extra.get("workflow_script", "")) if extra else "",
         "rank": rank,
-    "workflow_script": "examples/06_beast_laca_workflow.py",
         "environment": environment_stamp(),
         "completeness_audit": {
             k: v for k, v in (completeness or {}).items()
@@ -98,22 +107,35 @@ def write_audit(prefix: Path, *, rank: str, groups: dict, completeness: dict,
         "groups_exclusive": len(mono),
         "groups_non_exclusive": len(nonmono),
         "groups_unmapped": len(unmapped),
-        "multi_tip_exclusive_groups": sum(1 for r in rows
-                                          if r["collapse_applied"] and r["tip_count"] > 1),
-        "singleton_exclusive_groups": sum(1 for r in rows
-                                          if r["collapse_applied"] and r["tip_count"] == 1),
-        "annotations_written_to_nexus": count_written_annotations(nexus_path),
-        "nexus_path": str(nexus_path),
-        "per_group_csv": str(csv_path),
+        "multi_tip_exclusive_groups": sum(1 for r in exclusive_rows
+                                          if r["tip_count"] > 1),
+        "singleton_exclusive_groups": sum(1 for r in exclusive_rows
+                                          if r["tip_count"] == 1),
+        "collapse_requested": (None if collapsed_set is None else len(collapsed_set)),
+        "annotations_written_to_nexus": written,
+        "nexus_path": _rel(nexus_path),
+        "per_group_csv": _rel(csv_path),
         "note": (
-            "groups_assessed counts taxa mapped at this rank; collapse_applied marks "
-            "groups whose MRCA test passed and for which a collapse/colour annotation "
-            "was emitted. Singleton groups are trivially exclusive and are reported "
-            "but change nothing in the display."
+            "groups_assessed counts taxa mapped at this rank. collapse_applied means "
+            "the workflow submitted that group for collapse, which is narrower than "
+            "the monophyly verdict: single-taxon groups are trivially exclusive, and "
+            "the styler skips a collapse whose MRCA has no children, so they are "
+            "reported as exclusive but not collapsed. annotations_written_to_nexus is "
+            "counted from the exported NEXUS, not from the verdicts, so "
+            "collapse_requested and !collapse can be compared directly."
         ),
     }
     if extra:
         payload.update(extra)
+    if collapsed_set is not None:
+        mismatch = written["!collapse"] - len(collapsed_set)
+        payload["collapse_annotation_difference"] = mismatch
+        if mismatch:
+            print(f"[audit] WARNING {abs(mismatch)} group(s) submitted for collapse "
+                  f"produced no !collapse annotation (requested {len(collapsed_set)}, "
+                  f"written {written['!collapse']}); a group whose single tip is "
+                  f"already inside an earlier collapse can resolve to an unintended "
+                  f"node, so this difference must be explained, not ignored")
     json_path = Path(f"{prefix}_audit.json")
     json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False),
                          encoding="utf-8")
@@ -141,16 +163,30 @@ def _intruders_from_warnings(warnings) -> dict:
     return out
 
 
-def _group_row(name: str, verdict: str, info, accepted: bool, intruders=None) -> dict:
+def _rel(path) -> str:
+    """Record artefacts by name, not by this machine's absolute path."""
+    try:
+        return Path(path).name
+    except Exception:
+        return str(path)
+
+
+def group_tip_count(info) -> int:
+    """Number of mapped tips a group covers, as the analyzer reported it."""
     d = info if isinstance(info, dict) else {}
     tips = (d.get("tips") or d.get("tip_count") or d.get("n_tips")
             or d.get("clade_size") or d.get("taxa") or d.get("members"))
     if isinstance(tips, (list, set, tuple)):
-        tip_count = len(tips)
-    elif isinstance(tips, (int, float, str)) and str(tips).strip() != "":
-        tip_count = _as_int(tips, 0)
-    else:
-        tip_count = 0
+        return len(tips)
+    if isinstance(tips, (int, float, str)) and str(tips).strip() != "":
+        return _as_int(tips, 0)
+    return 0
+
+
+def _group_row(name: str, verdict: str, info, accepted: bool, intruders=None,
+               collapsed=None) -> dict:
+    d = info if isinstance(info, dict) else {}
+    tip_count = group_tip_count(info)
     if intruders is None:
         intruders = (d.get("intruders") or d.get("intruder_taxa")
                      or d.get("extra_taxa") or [])
@@ -159,7 +195,12 @@ def _group_row(name: str, verdict: str, info, accepted: bool, intruders=None) ->
         "group": name,
         "tip_count": tip_count,
         "verdict": verdict,
-        "collapse_applied": "yes" if accepted else "no",
+        # "was a collapse actually requested for this group" -- NOT "did the
+        # monophyly test pass".  A group can be exclusive and still be left
+        # expanded (single-taxon groups, or a colour-only workflow), and the
+        # exported NEXUS is the arbiter.
+        "collapse_applied": "yes" if (collapsed is not None
+                                      and name in collapsed) else "no",
         "intruder_taxa": ";".join(map(str, intruders)) if isinstance(intruders, (list, tuple, set)) else str(intruders or ""),
         "unmapped_tips_in_mrca": ";".join(map(str, unmapped_in)) if isinstance(unmapped_in, (list, tuple, set)) else str(unmapped_in or ""),
         "colour": d.get("colour") or d.get("color") or "",

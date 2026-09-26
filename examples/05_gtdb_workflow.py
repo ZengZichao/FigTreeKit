@@ -30,6 +30,9 @@ from pathlib import Path
 
 from figtreekit import FigTreeStyler, LayoutType
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from _audit import group_tip_count
+
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DIR = os.environ.get("FTK_GTDB_DIR") or str(REPO_ROOT / "benchmarks" / "gtdb_data")
 DEFAULT_TREE = Path(DEFAULT_DIR) / "ar53_r232.tree"
@@ -107,20 +110,28 @@ def main() -> int:
     styler_b.set_layout(LayoutType.RECTILINEAR)
     styler_b.analyze_taxonomy(
         mapping_file=mapping, rank="phylum", style_monophyletic=True)
-    collapsed = 0
-    for group in orders["monophyletic"]:
+    # A single mapped tip makes a group trivially exclusive; collapsing it is
+    # meaningless and the styler skips a collapse whose MRCA has no children,
+    # so only multi-tip groups are submitted.  Anything whose size the analyzer
+    # did not report is still collapsed, so an unknown shape can never be
+    # silently dropped.
+    to_collapse = [g for g, info in orders["monophyletic"].items()
+                   if group_tip_count(info) >= 2 or group_tip_count(info) == 0]
+    singletons = len(orders["monophyletic"]) - len(to_collapse)
+    for group in to_collapse:
         styler_b.collapse_by_group(group, mapping_file=mapping)
-        collapsed += 1
-    print(f"[order] collapsed={collapsed}")
+    print(f"[order] collapsed={len(to_collapse)} "
+          f"(trivially exclusive single-tip groups left expanded: {singletons})")
     out_b_nex = outdir / "gtdb_ar53_rectilinear_collapsed.nex"
     styler_b.export(str(out_b_nex))
     print(f"[done] exported {out_b_nex}")
 
     # ── Machine-readable audit emitted alongside the release outputs ────────
     try:
-        from _audit import write_audit
+        from _audit import group_tip_count, write_audit
         write_audit(out_b_nex.with_suffix(""), rank="order", groups=orders,
                     completeness=comp, nexus_path=out_b_nex,
+                    collapsed=to_collapse,
                     extra={"workflow_script": "examples/05_gtdb_workflow.py",
                            "expanded_nexus": str(out_a_nex)})
     except Exception as exc:

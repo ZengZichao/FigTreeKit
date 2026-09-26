@@ -97,7 +97,9 @@ def main() -> int:
         from _audit import write_audit
         write_audit(outdir / "beast_laca", rank="phylum", groups=phyla,
                     completeness=comp, nexus_path=out_nex,
-                    extra={"tips": n_tips,
+                    collapsed=(),          # colour-only workflow: no collapses
+                    extra={"workflow_script": "examples/06_beast_laca_workflow.py",
+                           "tips": n_tips,
                            "hpd_annotations_in": ci_in,
                            "hpd_annotations_out": ci_out})
     except Exception as exc:  # audit files are diagnostic, never fatal
