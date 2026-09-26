@@ -52,6 +52,7 @@ render = [
 # directly by full_benchmark.py; scipy replaces an asymptotic fallback for
 # exact Student-t critical values and is optional.
 benchmark = [
+    "numpy>=1.24",
     "scipy>=1.10",
 ]
 dev = [
