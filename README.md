@@ -5,7 +5,8 @@
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
 [![License: GPL v2+](https://img.shields.io/badge/License-GPL%20v2+-blue.svg)](https://spdx.org/licenses/GPL-2.0-or-later.html)
 [![PyPI version](https://img.shields.io/pypi/v/figtreekit.svg)](https://pypi.org/project/figtreekit/)
-[![DOI](https://img.shields.io/badge/DOI-10.64898/2026.08.27.747475-blue.svg)](https://doi.org/10.64898/2026.08.27.747475)
+[![Software DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.22043258-green.svg)](https://doi.org/10.5281/zenodo.22043258)
+[![Preprint DOI](https://img.shields.io/badge/preprint-10.64898/2026.08.27.747475-blue.svg)](https://doi.org/10.64898/2026.08.27.747475)
 [![Bioinformatics](https://img.shields.io/badge/topic-bioinformatics-green.svg)](https://github.com/ZengZichao/FigTreeKit)
 
 [中文文档](https://github.com/ZengZichao/FigTreeKit/blob/main/README_CN.md) | [English](#)
@@ -34,7 +35,7 @@ Typical use cases include:
 - **Real-Time Logging**: ISO 8601 timestamps, stdout flush, optional log file output
 - **Self-Test Mode**: `--self-test` verifies dependencies, parsing, taxonomy, and monophyly logic
 - **Batch Processing**: Process multiple tree files via CLI
-- **Image Rendering**: Export to PNG/PDF/SVG without opening FigTree GUI (requires FigTree JAR); for command-line rendering of very large trees, [TreeViewer](https://doi.org/10.1002/ece3.10873) is also worth considering.
+- **Image Rendering**: Export to PNG/PDF/SVG/JPEG without opening FigTree GUI (requires FigTree JAR); for command-line rendering of very large trees, [TreeViewer](https://doi.org/10.1002/ece3.10873) is also worth considering.
 
 ---
 
@@ -48,7 +49,7 @@ Typical use cases include:
 | Taxonomy-aware collapse / monophyly check | ✅ | manual | ⚠️ partial | ⚠️ partial | ❌ |
 | Deep input validation (brackets, negative branches, malicious chars) | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Batch CLI processing | ✅ | ❌ | ❌ | ✅ | ✅ |
-| Image rendering (PNG/PDF/SVG) | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Image rendering (PNG/PDF/SVG/JPEG) | ✅ | ✅ | ❌ | ✅ | ✅ |
 
 See [docs/comparison_EN.md](docs/comparison_EN.md) for the full comparison matrix and reproduction instructions.
 
@@ -60,6 +61,10 @@ See [docs/comparison_EN.md](docs/comparison_EN.md) for the full comparison matri
 
 ```bash
 pip install figtreekit
+
+# Also apply the requested --background-color/--foreground-color to raster
+# output (the post-render appearance pass needs Pillow):
+pip install "figtreekit[render]"
 ```
 
 ### From Source
@@ -75,7 +80,7 @@ pip install -e .
 
 - **Required**: Python 3.11, Biopython (>=1.80, <2.0)
 - **Optional**: psutil (for memory logging), Java 8+ (for rendering)
-- **Tested on**: macOS Tahoe 26.5.2 (Apple Silicon)
+- **Tested on**: macOS (Apple Silicon) and Ubuntu Linux, Python 3.11, in continuous integration
 
 ### Self-Test
 
@@ -457,7 +462,7 @@ Input File
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│  Export / Render │  (Nexus output, optional PNG/PDF/SVG)
+│  Export / Render │  (Nexus output, optional PNG/PDF/SVG/JPEG)
 └─────────────────┘
 ```
 
@@ -870,7 +875,7 @@ Press `Ctrl+C` to gracefully terminate — progress is displayed, temporary file
 - **Paths**: `pathlib.Path` throughout (platform-independent path handling)
 - **Temporary files**: Auto-cleaned on exit, permissions set to 0o600 (HPC-safe), including Ctrl+C
 
-> **Note**: Although the codebase uses platform-independent patterns, FigTreeKit has only been tested on macOS Tahoe 26.5.2. Compatibility with Windows or Linux is not guaranteed.
+> **Note**: The full test suite runs on macOS and Ubuntu (Python 3.11) in continuous integration, and both are supported deployment environments. Windows is **not** verified: it has never been run in CI or locally, so compatibility with Windows is not claimed.
 
 ---
 
@@ -1005,9 +1010,11 @@ This software is developed and tested on the following environment:
 
 | OS | Python | Biopython | Status |
 |----|--------|-----------|--------|
-| macOS Tahoe 26.5.2 (Apple Silicon) | 3.11 | 1.88 | ✅ Pass |
+| macOS (Apple Silicon) | 3.11 | 1.87 / 1.88 | ✅ Pass (CI) |
+| Ubuntu Linux (CI runner) | 3.11 | 1.87 / 1.88 | ✅ Pass (CI) |
+| Windows | – | – | ⚠️ Not verified |
 
-> **Note**: FigTreeKit has only been developed and tested on macOS Tahoe 26.5.2 with Python 3.11. Compatibility with other operating systems (Windows, Linux) or Python versions has not been verified.
+> **Note**: Deployment environments verified in CI are macOS and Ubuntu with Python 3.11. The published benchmark and coverage figures were produced in a separate frozen environment (see `benchmarks/benchmark_meta.json`: macOS, Apple M5, Python 3.14.6, Biopython 1.87, Java 1.8.0_501) because the benchmark ladder needs a newer interpreter than the deployment pin; both environment files ship in the release (`environment.yml` for deployment, `environment-benchmark.yml` for the benchmark). Compatibility with Windows, and with Python versions other than 3.11 (deployment) and 3.14.6 (benchmark), has not been verified.
 
 To reproduce the exact environment:
 ```bash
