@@ -996,7 +996,7 @@ When you redistribute FigTreeKit or the patched FigTree JAR, the copyleft terms 
 
 - **Repository**: https://github.com/ZengZichao/FigTreeKit
 - **PyPI**: https://pypi.org/project/figtreekit/
-- **Zenodo Archive**: [![DOI](https://zenodo.org/badge/latestdoi/https://github.com/ZengZichao/FigTreeKit.svg)](https://zenodo.org/badge/latestdoi/https://github.com/ZengZichao/FigTreeKit) (auto-generated on each GitHub Release; see [.zenodo.json](.zenodo.json))
+- **Zenodo Archive**: [![Zenodo DOI](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.22043258-green)](https://doi.org/10.5281/zenodo.22043258) (auto-generated on each GitHub Release; see [.zenodo.json](.zenodo.json))
 - **Documentation**: [docs/user_manual_EN.md](docs/user_manual_EN.md)
 - **FigTree**: http://tree.bio.ed.ac.uk/software/figtree/
 - **TreeViewer**: https://doi.org/10.1002/ece3.10873

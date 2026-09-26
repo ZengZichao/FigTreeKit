@@ -957,7 +957,7 @@ FigTreeKit 是根据 **GNU 通用公共许可证第 2 版或更高版本（GPL-2
 
 - **代码仓库**：https://github.com/ZengZichao/FigTreeKit
 - **PyPI**：https://pypi.org/project/figtreekit/
-- **Zenodo 归档**：[![DOI](https://zenodo.org/badge/latestdoi/https://github.com/ZengZichao/FigTreeKit.svg)](https://zenodo.org/badge/latestdoi/https://github.com/ZengZichao/FigTreeKit)（每次 GitHub Release 自动生成，详见 [.zenodo.json](.zenodo.json)）
+- **Zenodo 归档**：[![Zenodo DOI](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.22043258-green)](https://doi.org/10.5281/zenodo.22043258)（每次 GitHub Release 自动生成，详见 [.zenodo.json](.zenodo.json)）
 - **文档**：[docs/user_manual_CN.md](docs/user_manual_CN.md)
 - **FigTree**：http://tree.bio.ed.ac.uk/software/figtree/
 - **TreeViewer**：https://doi.org/10.1002/ece3.10873
