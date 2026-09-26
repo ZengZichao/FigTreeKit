@@ -176,13 +176,18 @@ def _parse_taxonomy_embedded(
     Handles format A: ``..._d_Bacteria_p_Cyanobacteriota_c_...``
 
     Supports three parsing modes:
-      - ``reverse`` (default): scan markers right-to-left, require strict
-        descending rank order (g→f→o→c→p→d).  Safest for labels whose
-        prefix may contain spurious ``_d_`` etc.
-      - ``greedy``: left-to-right scan, take the first occurrence of each
-        marker.
-      - ``segment``: from the first ``_d_`` onward, extract all markers
-        in the suffix segment only.
+      - ``reverse`` (default): order-independent scan of every recognised
+        ``_<rank>_`` marker; the first occurrence of each rank wins, and a
+        :class:`~figtreekit.exceptions.CompatibilityWarning` is emitted when
+        markers are dropped (duplicate or unrecognised prefixes).  Named
+        ``reverse`` for historical reasons: it replaced a strictly
+        right-to-left scan that silently dropped all but the deepest rank
+        on ascending-order labels.
+      - ``greedy``: left-to-right scan, first occurrence of each rank prefix,
+        no warning on dropped duplicates.
+      - ``segment``: restrict the scan to the substring starting at the first
+        ``_d_`` (so markers appearing before it are ignored), then apply the
+        greedy scan.
 
     Args:
         text: Full label string.
@@ -1163,8 +1168,11 @@ class MonophylyAnalyzer:
         mono_count = len(monophyletic)
         non_mono_count = len(non_monophyletic)
         # A single-taxon "group" is trivially mono but provides no signal;
-        # exclude single-taxon groups from the monophyly rate denominator.
+        # exclude single-taxon groups from BOTH sides of the monophyly rate.
+        # (Previously the numerator still counted them while the denominator
+        # removed them, which could report a rate above 100%.)
         comparable_groups = total_groups - single_taxon_count
+        comparable_mono = max(0, mono_count - single_taxon_count)
 
         summary = {
             "total_labels": len(labels),
@@ -1174,9 +1182,11 @@ class MonophylyAnalyzer:
             "single_taxon_groups": single_taxon_count,
             "monophyletic": mono_count,
             "non_monophyletic": non_mono_count,
+            "multi_tip_groups": comparable_groups,
+            "multi_tip_monophyletic": comparable_mono,
             "monophyly_rate": (
-                mono_count / comparable_groups * 100
-                if comparable_groups > 0 else 0
+                comparable_mono / comparable_groups * 100
+                if comparable_groups > 0 else 0.0
             ),
         }
 

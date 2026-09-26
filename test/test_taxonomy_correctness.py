@@ -207,3 +207,57 @@ class TestIncompleteMapping:
         # The completeness report must expose that one tip lacks mapping.
         text = str(comp)
         assert "mystery" in text or comp.get("unmapped") or comp.get("missing")
+
+
+class TestMonophylyRateAccounting:
+    """The monophyly rate must exclude single-taxon groups from both sides.
+
+    Regression for a denominator-only exclusion that reported rates above
+    100% on trees with many singleton groups (e.g. the 700-tip LACA test
+    tree: 125 groups, 66 singletons, 119 exclusive -> 119/59 = 201.7%).
+    """
+
+    def _analyse(self, newick, labels):
+        import tempfile, os
+        from figtreekit import FigTreeStyler
+        with tempfile.TemporaryDirectory() as tmp:
+            tree = os.path.join(tmp, "t.nwk")
+            with open(tree, "w", encoding="utf-8") as fh:
+                fh.write(newick)
+            styler = FigTreeStyler(tree)
+            mapping = os.path.join(tmp, "map.tsv")
+            with open(mapping, "w", encoding="utf-8") as fh:
+                fh.write("taxon\ttaxonomy\n")
+                for name, tax in labels.items():
+                    fh.write(f"{name}\td__Bacteria;p__{tax}\n")
+            return styler.analyze_taxonomy(mapping_file=mapping, rank="phylum")["summary"]
+
+    def test_rate_never_exceeds_100(self):
+        newick = "((A1,A2)X,B,C,D,E,F)R;"
+        labels = {"A1": "Alpha", "A2": "Alpha", "B": "Beta", "C": "Gamma",
+                  "D": "Delta", "E": "Epsilon", "F": "Zeta"}
+        s = self._analyse(newick, labels)
+        assert s["monophyly_rate"] <= 100.0
+        assert s["total_groups"] == 6
+        assert s["single_taxon_groups"] == 5
+        assert s["multi_tip_groups"] == 1
+        assert s["monophyly_rate"] == pytest.approx(100.0)
+
+    def test_singleton_and_multi_tip_counts_are_consistent(self):
+        newick = "((A1,A2)X,(B1,B2)Y,Z)R;"
+        labels = {"A1": "Alpha", "A2": "Alpha", "B1": "Beta", "B2": "Beta",
+                  "Z": "Gamma"}
+        s = self._analyse(newick, labels)
+        assert s["multi_tip_groups"] == 2
+        assert s["multi_tip_monophyletic"] == 2
+        assert s["monophyly_rate"] == pytest.approx(100.0)
+        # raw counts are preserved so nothing is hidden by the rate
+        assert s["monophyletic"] == 3
+        assert s["single_taxon_groups"] == 1
+
+    def test_rate_is_zero_when_every_group_is_a_singleton(self):
+        newick = "(A,B,C)R;"
+        labels = {"A": "Alpha", "B": "Beta", "C": "Gamma"}
+        s = self._analyse(newick, labels)
+        assert s["multi_tip_groups"] == 0
+        assert s["monophyly_rate"] == 0.0

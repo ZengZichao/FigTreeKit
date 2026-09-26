@@ -1,3 +1,6 @@
+# Deployment environment (supported interpreter: Python 3.11 on macOS/Ubuntu).
+# The published benchmark and coverage figures were produced in a different,
+# frozen environment - see environment-benchmark.yml.
 name: figtreekit
 channels:
   - conda-forge

@@ -1034,7 +1034,7 @@ def apply_cli_args(styler: FigTreeStyler, args: argparse.Namespace) -> FigTreeSt
         ('font_name',       'set_tip_labels', {'font_name': None}),
         ('font_size',       'set_tip_labels', {'font_size': None}),
         ('font_style',      'set_tip_labels', {'font_style': None}),
-        ('label_color',     'set_tip_labels', {'color_attribute': None}),
+        ('label_color',     'set_tip_label_colors', {'color': None}),
         ('node_labels_show',       'set_node_labels', {'is_shown': None}),
         ('node_labels_hide',       'set_node_labels', {'is_shown': False}),
         ('node_display_attribute', 'set_node_labels', {'display_attribute': None, 'is_shown': True}),

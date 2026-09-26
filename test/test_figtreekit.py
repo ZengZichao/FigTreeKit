@@ -2086,12 +2086,24 @@ class TestCLICoverageGaps:
         assert styler._settings.layout["zoom"] == 2.5
 
     def test_apply_cli_args_label_color(self):
+        """``--label-color`` must produce annotation FigTree actually honours.
+
+        FigTree 1.4.4's headless renderer ignores a literal colour in
+        ``tipLabels.colorAttribute``; the supported encoding is a per-tip
+        ``[&!color=...]`` annotation plus ``colorAttribute="!color"``. The
+        previous assertion encoded the non-working form.
+        """
         from figtreekit._cli import create_cli_parser, apply_cli_args
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--label-color", "#FF0000"])
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
         apply_cli_args(styler, args)
-        assert styler._settings.tipLabels["colorAttribute"] == "#FF0000"
+        assert styler._settings.tipLabels["colorAttribute"] == "!color"
+        colors = [a for a in styler._settings._node_annotations
+                  if a.annotation_type == "color"]
+        assert len(colors) == 2, "one !color annotation per tip expected"
+        assert {c.values for c in colors} == {"#FF0000"}
+        assert styler._tip_label_colour == "#FF0000"
 
     def test_apply_cli_args_font_style(self):
         from figtreekit._cli import create_cli_parser, apply_cli_args

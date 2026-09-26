@@ -22,6 +22,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
     "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
@@ -41,6 +42,18 @@ Repository = "https://github.com/ZengZichao/FigTreeKit"
 figtreekit = "figtreekit._cli:main"
 
 [project.optional-dependencies]
+# Post-render appearance pass for raster output (--background-color /
+# --foreground-color). The pass degrades with a CompatibilityWarning when
+# Pillow is absent, so it stays optional rather than a hard requirement.
+render = [
+    "pillow>=10.0",
+]
+# Required to regenerate the manuscript's tables and figures from the archived
+# benchmark CSVs; both imports degrade gracefully when absent.
+benchmark = [
+    "scipy>=1.10",
+    "matplotlib>=3.7",
+]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
@@ -60,7 +73,7 @@ figtreekit = ["figtree_patched.jar"]
 
 [tool.setuptools_scm]
 # Fallback version for builds without git (e.g. PyPI wheels)
-fallback_version = "1.1.2"
+fallback_version = "1.1.3"
 # Write version to _version.py during build using a custom template
 # that also captures the git commit hash and commit date.
 write_to = "figtreekit/_version.py"

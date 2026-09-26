@@ -140,6 +140,9 @@ def render_with_figtree(
     jar_path: Optional[str] = None,
     java_opts: str = "-Xmx512m",
     timeout: int = 120,
+    background_color: Optional[str] = None,
+    foreground_color: Optional[str] = None,
+    label_color: Optional[str] = None,
 ) -> bool:
     """Render a Nexus file to an image using FigTree.
 
@@ -158,6 +161,15 @@ def render_with_figtree(
             (default ``120``).  Increase this for very large trees (e.g.
             >100,000 taxa), where layout and rasterization can exceed the
             default.
+        background_color: ``#RRGGBB`` background for raster output.  FigTree's
+            headless renderer ignores the global appearance background, so
+            FigTreeKit applies it as a post-render pass (see
+            :mod:`figtreekit._appearance_post`).
+        foreground_color: ``#RRGGBB`` for FigTree's default-black drawing
+            elements; applied by the same post-render pass.
+        label_color: ``#RRGGBB`` already honoured by FigTree through
+            ``[&!color=...]`` tip annotations; passed to the post-render pass
+            only so those pixels are protected from the foreground recolour.
 
     Returns:
         ``True`` if successful.
@@ -218,6 +230,12 @@ def render_with_figtree(
         )
 
         if success:
+            _apply_requested_appearance(
+                output_file, format,
+                background_color=background_color,
+                foreground_color=foreground_color,
+                label_color=label_color,
+            )
             return True
 
         # Rendering did not produce a valid output. Surface a helpful error,
@@ -254,6 +272,41 @@ def render_with_figtree(
         raise
     except Exception as e:
         raise RenderError(f"FigTree rendering failed: {e}")
+
+
+def _apply_requested_appearance(
+    output_file: str,
+    format: str,
+    *,
+    background_color: Optional[str] = None,
+    foreground_color: Optional[str] = None,
+    label_color: Optional[str] = None,
+) -> None:
+    """Run the post-render appearance pass and warn when it could not run."""
+    if not (background_color or foreground_color):
+        return
+    import warnings
+
+    from ._appearance_post import apply_appearance_pass, appearance_pass_supported
+    from .exceptions import CompatibilityWarning
+
+    if not appearance_pass_supported():
+        warnings.warn(
+            "Global appearance colours (--background-color/--foreground-color) "
+            "were requested but Pillow is not installed, so the raster output "
+            "keeps FigTree's headless defaults. Install Pillow to obtain the "
+            "same pixels the styled settings describe.",
+            CompatibilityWarning,
+            stacklevel=3,
+        )
+        return
+    apply_appearance_pass(
+        output_file,
+        background_color=background_color,
+        foreground_color=foreground_color,
+        protected_color=label_color,
+        image_format=format,
+    )
 
 
 def render_multiple(

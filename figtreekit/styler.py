@@ -201,6 +201,9 @@ class FigTreeStyler:
         self._tree_index: int = tree_index
         self._strict: bool = strict
         self._hilight_marks: List[Tuple[Any, int, float, str]] = []
+        #: colour set through set_tip_label_colors(); protects those
+        #: pixels from the post-render foreground recolour
+        self._tip_label_colour: Optional[str] = None
         # Taxonomy parsing configuration
         self._taxonomy_delimiter_mode: str = "reverse"
         self._taxonomy_table_sep: str = ";"
@@ -2098,6 +2101,39 @@ class FigTreeStyler:
         self._apply_mapped_kwargs(self._settings.tipLabels, kwargs, self._LABEL_MAPPING)
         return self
 
+    def set_tip_label_colors(self, color: str) -> "FigTreeStyler":
+        """Colour every tip label by writing a ``!color`` annotation per tip.
+
+        FigTree 1.4.4's headless renderer does not honour a literal
+        ``tipLabels.color`` value, but it does honour per-node
+        ``[&!color=...]`` annotations combined with
+        ``tipLabels.colorAttribute="!color"``.  This is the supported way to
+        set label colour from either the scripted or the graphical route, so a
+        front end does not have to reimplement it (and an exported command line
+        therefore reproduces what the interface showed).
+
+        Args:
+            color: Hex RGB colour, e.g. ``"#FF0000"``.
+
+        Returns:
+            self for method chaining.
+
+        Raises:
+            ValidationError: If the colour is not a valid hex RGB value or no
+                tree is loaded.
+        """
+        if not TreeValidator.validate_color(color):
+            raise ValidationError(f"Invalid hex color: {color}")
+        tree = self._parse_tree_with_biopython(self._tree_content)
+        if tree is None:
+            raise ValidationError("No tree loaded; load a tree before setting label colours")
+        for tip in tree.get_terminals():
+            if tip.name:
+                self.set_clade_color([tip.name], color)
+        self.set_tip_labels(color_attribute="!color")
+        self._tip_label_colour = color
+        return self
+
     def set_node_labels(self, **kwargs: Any) -> "FigTreeStyler":
         self._apply_mapped_kwargs(self._settings.nodeLabels, kwargs, self._LABEL_MAPPING)
         return self
@@ -2924,9 +2960,13 @@ class FigTreeStyler:
                 raise
 
         try:
+            appearance = self._settings.appearance or {}
             render_with_figtree(
                 nex_file, output_file, format, width, height, jar_path,
                 timeout=timeout,
+                background_color=appearance.get("backgroundColour") or None,
+                foreground_color=appearance.get("foregroundColour") or None,
+                label_color=self._tip_label_colour,
             )
         finally:
             if not keep_nex and os.path.exists(nex_file):
