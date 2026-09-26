@@ -50,11 +50,6 @@ and Zenodo releases.
   `benchmarks/conformance_corpus_index.csv`, a machine-readable index of the
   golden conformance corpus keyed to the test that exercises each branch.
 - A frozen `environment-benchmark.yml` records the benchmarking interpreter.
-
-  Article figures and the statistics tabulated in the article are produced by
-  figure-generation code supplied with the article rather than by this
-  repository; the repo ships the measurements (raw CSVs and the summary JSONs
-  recomputed from them) and the scripts that take them.
 - JPEG rendering regression tests (`test/test_render_jpeg.py`).
 
 ### Changed
@@ -66,17 +61,23 @@ and Zenodo releases.
   earlier result files labelled mebibyte values as `mb`.
 - Added the `Operating System :: POSIX :: Linux` classifier; Linux is exercised
   continuously in CI alongside macOS.
+- Article figures and the statistics tabulated in the article are produced by
+  figure-generation code supplied with the article rather than by this
+  repository, which ships the measurements they read (raw CSVs and the summary
+  JSONs recomputed from them) and the scripts that take them.
 
-**Test count:** 796 collected (v1.1.1, v1.1.2) → **803** collected. The seven
+**Test count:** 801 collected (v1.1.1, v1.1.2) → **808** collected. The seven
 additional tests are the three monophyly-rate accounting regressions and the
-four JPEG rendering tests.
+four JPEG rendering tests. Both counts include the five property-based tests in
+`test/test_hypothesis.py`, which are collected only when Hypothesis is
+installed; without it the suite collects 796 and 803 respectively.
 
 ## [1.1.2] - 2026-09-03
 
 Publication DOI and citation metadata updates; removal of redundant files,
 including the `benchmarks_frozen_backup_2026-08-26/` provenance directory.
 Fixed the memory-IQR error bars in `benchmarks/make_figures.py`. No change to
-the installed package's behaviour; 796 tests collected.
+the installed package's behaviour; 801 tests collected.
 
 ## [1.1.1] - 2026-08-26
 
