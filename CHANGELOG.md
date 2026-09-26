@@ -86,6 +86,5 @@ Initial public releases: core styling, taxonomy-aware auditing, headless
 rendering integration, Docker self-test and tag-triggered PyPI publishing.
 See the `v1.0.0`–`v1.0.3` git tags for details.
 
-[1.1.3]: https://github.com/ZengZichao/FigTreeKit/compare/v1.1.2...v1.1.3
 [1.1.2]: https://github.com/ZengZichao/FigTreeKit/releases/tag/v1.1.2
 [1.1.1]: https://github.com/ZengZichao/FigTreeKit/releases/tag/v1.1.1

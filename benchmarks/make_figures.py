@@ -370,10 +370,17 @@ def _coverage_measure(xml_path: str | None = None) -> List[Dict[str, float]]:
 
     Source resolution order: the ``xml_path`` argument, the
     ``FIGTREEKIT_COVERAGE_XML`` environment variable, ``coverage.xml`` in the
-    repository root, ``benchmarks/coverage_*.xml``, then the binary
-    ``.coverage`` data file.  There is deliberately no hard-coded fallback: a
-    figure that looks like a measurement but is typed in by hand cannot be
-    audited, so this function raises if no measurement is available.
+    repository root, then the binary ``.coverage`` data file.  Versioned
+    snapshots (``benchmarks/coverage_v*.xml``) are deliberately *not* on the
+    implicit path: they document a past revision, so picking one silently would
+    relabel an old measurement as the current one.  Pass ``--xml`` or set
+    ``FIGTREEKIT_COVERAGE_XML`` to render a snapshot on purpose.
+
+    There is deliberately no hard-coded fallback: a figure that looks like a
+    measurement but is typed in by hand cannot be audited, so this function
+    raises if no measurement is available.  Returns the per-component rows and
+    a description of the source actually used, so that whatever is written out
+    can say which revision it measured.
     """
     root = OUT.parent
     candidates = [
@@ -381,7 +388,6 @@ def _coverage_measure(xml_path: str | None = None) -> List[Dict[str, float]]:
         Path(os.environ["FIGTREEKIT_COVERAGE_XML"])
         if os.environ.get("FIGTREEKIT_COVERAGE_XML") else None,
         root / "coverage.xml",
-        *sorted(OUT.glob("coverage_*.xml")),
     ]
     chosen = next((c for c in candidates if c and Path(c).exists()), None)
     dot_path = root / ".coverage"
@@ -456,16 +462,20 @@ def _coverage_measure(xml_path: str | None = None) -> List[Dict[str, float]]:
     if unmapped:
         print("[coverage] modules excluded from the nine-component figure: "
               + ", ".join(unmapped))
-    return rows
+    source = str(chosen) if chosen is not None else str(dot_path)
+    return rows, source
 
 
-def _coverage_summary(rows: List[Dict[str, float]]) -> Dict[str, object]:
+def _coverage_summary(rows: List[Dict[str, float]], source: str = "",
+                      revision: str = "working copy") -> Dict[str, object]:
     """Statement-weighted total over the mapped components plus the all-file total."""
     st = sum(int(r["statements"]) for r in rows)
     miss = sum(int(r["missed"]) for r in rows)
     weighted = _pct(st - miss, st)
     unweighted = sum(float(r["percent"]) for r in rows) / len(rows)
     return {
+        "revision": revision,
+        "source_xml": source,
         "components": rows,
         "component_statement_weighted_overall": round(weighted, 2),
         "component_arithmetic_mean": round(unweighted, 1),
@@ -479,9 +489,9 @@ def _coverage_summary(rows: List[Dict[str, float]]) -> Dict[str, object]:
 
 def _coverage_from_dotfile() -> List[Tuple[str, float]]:
     """Coverage bar data, always measured (see :func:`_coverage_measure`)."""
-    rows = _coverage_measure()
+    rows, source = _coverage_measure()
     (OUT / "coverage_summary.json").write_text(
-        json.dumps(_coverage_summary(rows), indent=2, ensure_ascii=False),
+        json.dumps(_coverage_summary(rows, source), indent=2, ensure_ascii=False),
         encoding="utf-8")
     return [(r["label"], float(r["percent"])) for r in rows]
 

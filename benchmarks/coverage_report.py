@@ -35,14 +35,14 @@ from make_figures import COVERAGE_COMPONENTS, OUT, _coverage_measure  # noqa: E4
 
 
 def build_summary(xml: str | None, revision: str) -> Dict[str, object]:
-    rows = _coverage_measure(xml)
+    rows, source = _coverage_measure(xml)
     st = sum(int(r["statements"]) for r in rows)
     miss = sum(int(r["missed"]) for r in rows)
     weighted = (st - miss) / st * 100 if st else 0.0
     percents = [float(r["percent"]) for r in rows]
     return {
         "revision": revision,
-        "source_xml": str(Path(xml).resolve()) if xml else "auto-detected",
+        "source_xml": source,
         "mapping": [[label, list(mods)] for label, mods in COVERAGE_COMPONENTS],
         "components": rows,
         "component_statement_weighted_overall": round(weighted, 2),
