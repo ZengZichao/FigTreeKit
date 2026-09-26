@@ -56,6 +56,30 @@ jobs:
       run: |
         python -m figtreekit --self-test
 
+    - name: Run the shipped example workflow
+      # This example carries its own tree, so it is the one end-to-end workflow
+      # CI can execute without external data. It exercises examples/_audit.py,
+      # which the GTDB workflow shares: a scoping bug there once shipped
+      # undetected because no job ever ran an example.
+      run: |
+        python examples/06_beast_laca_workflow.py \
+          examples/data/FigTree_withLACA_CLK_95CI.tree.recover \
+          examples/output
+
+    - name: Check the example audit accounting
+      # Pins the two numbers the article quotes for this workflow.
+      run: |
+        python - <<'PY'
+        import json
+        a = json.load(open("examples/output/beast_laca_audit.json"))
+        assert a["groups_assessed"] == 125, a["groups_assessed"]
+        assert a["groups_non_exclusive"] == 6, a["groups_non_exclusive"]
+        assert a["groups_exclusive"] == 119, a["groups_exclusive"]
+        assert a["hpd_annotations_in"] == a["hpd_annotations_out"] == 699, a
+        print("example audit:", a["groups_assessed"], "groups,",
+              a["groups_non_exclusive"], "non-exclusive")
+        PY
+
     - name: Upload coverage to Codecov
       if: matrix.os == 'macos-latest' && matrix.python-version == '3.11'
       # Non-blocking: tokenless uploads can fail on pushes; coverage report

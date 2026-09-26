@@ -128,7 +128,9 @@ def main() -> int:
 
     # ── Machine-readable audit emitted alongside the release outputs ────────
     try:
-        from _audit import group_tip_count, write_audit
+        # group_tip_count is imported at module scope; re-importing it here
+        # would make it local to main() and break the comprehension above.
+        from _audit import write_audit
         write_audit(out_b_nex.with_suffix(""), rank="order", groups=orders,
                     completeness=comp, nexus_path=out_b_nex,
                     collapsed=to_collapse,

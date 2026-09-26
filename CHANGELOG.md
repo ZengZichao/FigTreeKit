@@ -7,6 +7,24 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Version numbers below match the `vX.Y.Z` git tags and the corresponding PyPI
 and Zenodo releases.
 
+## [Unreleased]
+
+### Fixed
+
+- `examples/05_gtdb_workflow.py` raised `NameError` at the order-level collapse
+  step. The audit block re-imported `group_tip_count` inside `main()`, which
+  made the name local to that function, so the comprehension that selects the
+  multi-tip groups could not see it even though the module already imports it.
+  The example therefore crashed before writing panel B on every run, including
+  the tagged v1.1.3 archive.
+- CI never executed anything under `examples/`, which is why the above shipped.
+  The workflow now runs `examples/06_beast_laca_workflow.py` end to end — it
+  carries its own tree, so no external data are needed — and asserts the group
+  counts the article quotes.
+- The test job installs `[render]`, so the post-render appearance pass is
+  exercised in CI and the coverage the pipeline reports matches the coverage
+  the article publishes.
+
 ## [1.1.3] - 2026-09-26
 
 ### Fixed
