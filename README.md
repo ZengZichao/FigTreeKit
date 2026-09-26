@@ -1018,7 +1018,7 @@ This software is developed and tested on the following environment:
 
 To reproduce the exact environment:
 ```bash
-pip install figtreekit==1.1.2 biopython==1.87
+pip install figtreekit==1.1.3 biopython==1.87
 figtreekit --self-test
 ```
 

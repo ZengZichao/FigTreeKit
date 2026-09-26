@@ -7,7 +7,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Version numbers below match the `vX.Y.Z` git tags and the corresponding PyPI
 and Zenodo releases.
 
-## [1.1.3] - Unreleased
+## [1.1.3] - 2026-09-26
 
 ### Fixed
 
@@ -95,5 +95,6 @@ Initial public releases: core styling, taxonomy-aware auditing, headless
 rendering integration, Docker self-test and tag-triggered PyPI publishing.
 See the `v1.0.0`–`v1.0.3` git tags for details.
 
+[1.1.3]: https://github.com/ZengZichao/FigTreeKit/releases/tag/v1.1.3
 [1.1.2]: https://github.com/ZengZichao/FigTreeKit/releases/tag/v1.1.2
 [1.1.1]: https://github.com/ZengZichao/FigTreeKit/releases/tag/v1.1.1
