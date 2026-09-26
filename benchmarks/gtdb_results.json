@@ -12,7 +12,10 @@
       "parse_time_s": 0.059,
       "export_time_s": 0.157,
       "total_time_s": 0.215,
-      "peak_memory_mb": 11.0
+      "peak_memory_mb_legacy_mib": 11.0,
+      "peak_memory_bytes_recorded": 11534336,
+      "peak_memory_MB": 11.5,
+      "heap_per_taxon_kB": 1.14
     },
     {
       "file": "bac120_r232.tree",
@@ -21,7 +24,21 @@
       "parse_time_s": 1.331,
       "export_time_s": 4.135,
       "total_time_s": 5.466,
-      "peak_memory_mb": 207.0
+      "peak_memory_mb_legacy_mib": 207.0,
+      "peak_memory_bytes_recorded": 217055232,
+      "peak_memory_MB": 217.1,
+      "heap_per_taxon_kB": 1.14
     }
-  ]
+  ],
+  "mb_definition": "1 MB = 10^6 bytes; 1 kB = 10^3 bytes (SI, as in Table 2)",
+  "memory_unit_note": "peak_memory_MB is the tracemalloc heap peak converted from the originally stored MiB figure (exact factor 1048576/1000000); the raw MiB value is retained as peak_memory_mb_legacy_mib.",
+  "run_relationship": "measured in the same frozen environment as the synthetic benchmark (benchmark_meta.json) in a separate pass 4 minutes later; one timed run per dataset, so no dispersion is assessed",
+  "cpu": "Apple M5",
+  "ram_gb": 32.0,
+  "biopython": "1.87",
+  "java": "java version \"1.8.0_501\"",
+  "commit": "501f7735c7b71b16aaaf2c331555fd300f4c0d00",
+  "git_dirty": false,
+  "figtreekit_version": "1.1.1",
+  "stamp_source": "cpu/ram/interpreter/biopython/java/commit back-filled from benchmarks/benchmark_meta.json, the machine-stamped record of the same frozen benchmark session (timestamp differs by ~4 min)"
 }

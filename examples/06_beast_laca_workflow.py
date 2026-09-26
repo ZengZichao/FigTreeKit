@@ -92,6 +92,17 @@ def main() -> int:
           f"95% CI comments in -> out: {ci_in} -> {ci_out} "
           f"({'no loss' if ci_in == ci_out else 'LOSS DETECTED'})")
 
+    # ── Machine-readable audit archived with the release (manuscript §3.4) ──
+    try:
+        from _audit import write_audit
+        write_audit(outdir / "beast_laca", rank="phylum", groups=phyla,
+                    completeness=comp, nexus_path=out_nex,
+                    extra={"tips": n_tips,
+                           "hpd_annotations_in": ci_in,
+                           "hpd_annotations_out": ci_out})
+    except Exception as exc:  # audit files are diagnostic, never fatal
+        print(f"[audit] skipped: {exc}")
+
     # Optional rendering (requires Java + bundled patched JAR)
     try:
         out_pdf = outdir / "beast_laca_styled.pdf"

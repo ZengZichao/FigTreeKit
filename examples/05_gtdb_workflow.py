@@ -18,11 +18,12 @@ Usage:
     python examples/05_gtdb_workflow.py [TREE] [METADATA] [OUTDIR]
 
 Defaults assume the repository layout:
-    TREE     = ../../参考数据-GTDB-R232/ar53_r232.tree
-    METADATA = ../../参考数据-GTDB-R232/ar53_r232_metadata.tsv
+    TREE     = benchmarks/gtdb_data/ar53_r232.tree   (or $FTK_GTDB_DIR)
+    METADATA = benchmarks/gtdb_data/ar53_r232_metadata.tsv
 """
 
 import csv
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -30,8 +31,9 @@ from pathlib import Path
 from figtreekit import FigTreeStyler, LayoutType
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_TREE = REPO_ROOT.parent / "参考数据-GTDB-R232" / "ar53_r232.tree"
-DEFAULT_META = REPO_ROOT.parent / "参考数据-GTDB-R232" / "ar53_r232_metadata.tsv"
+DEFAULT_DIR = os.environ.get("FTK_GTDB_DIR") or str(REPO_ROOT / "benchmarks" / "gtdb_data")
+DEFAULT_TREE = Path(DEFAULT_DIR) / "ar53_r232.tree"
+DEFAULT_META = Path(DEFAULT_DIR) / "ar53_r232_metadata.tsv"
 
 
 def build_two_column_mapping(metadata_tsv: Path) -> str:
@@ -113,6 +115,16 @@ def main() -> int:
     out_b_nex = outdir / "gtdb_ar53_rectilinear_collapsed.nex"
     styler_b.export(str(out_b_nex))
     print(f"[done] exported {out_b_nex}")
+
+    # ── Machine-readable audit archived with the release (manuscript §3.4) ──
+    try:
+        from _audit import write_audit
+        write_audit(out_b_nex.with_suffix(""), rank="order", groups=orders,
+                    completeness=comp, nexus_path=out_b_nex,
+                    extra={"workflow_script": "examples/05_gtdb_workflow.py",
+                           "expanded_nexus": str(out_a_nex)})
+    except Exception as exc:
+        print(f"[audit] skipped: {exc}")
 
     # Optional rendering (requires Java + bundled patched JAR)
     for styler, name in ((styler_a, "gtdb_ar53_radial_expanded.pdf"),

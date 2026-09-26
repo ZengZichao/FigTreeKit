@@ -3,19 +3,53 @@
     "slope": 0.9612665260384369,
     "se": 0.026051099202083372,
     "ci95": [
-      0.9102063716023535,
-      1.0123266804745203
+      0.9091195852844246,
+      1.0134134667924493
     ],
-    "unit": "tree-level median over technical replicates",
-    "n_points": 60
+    "critical_value": 2.0017174841452356,
+    "r_squared": 0.9591421565455792,
+    "n_points": 60,
+    "df": 58,
+    "unit": "tree-level median over technical replicates"
+  },
+  "export_vs_taxa_loglog_per_size_medians": {
+    "slope": 1.028025145367562,
+    "se": 0.05380882640457319,
+    "ci95": [
+      0.878627892680147,
+      1.177422398054977
+    ],
+    "critical_value": 2.7764451051977934,
+    "r_squared": 0.9891600785163309,
+    "n_points": 6,
+    "df": 4,
+    "unit": "per-size median of tree-level export medians"
   },
   "memory_vs_taxa_loglog": {
-    "slope": 0.7040545049834729,
-    "se": 0.07176787877158103,
+    "slope": 0.7040545049834723,
+    "se": 0.0717678787715811,
     "ci95": [
-      0.5048268735135639,
-      0.9032821364533818
+      0.5047949292576874,
+      0.9033140807092572
     ],
+    "critical_value": 2.7764451051977934,
+    "r_squared": 0.9600954815928031,
+    "n_points": 6,
+    "df": 4,
     "unit": "per-size maximum over independent trees"
-  }
+  },
+  "memory_vs_taxa_loglog_per_size_medians": {
+    "slope": 0.7200701956489235,
+    "se": 0.06442492797484115,
+    "ci95": [
+      0.5411979197204554,
+      0.8989424715773916
+    ],
+    "critical_value": 2.7764451051977934,
+    "r_squared": 0.9689736857479405,
+    "n_points": 6,
+    "df": 4,
+    "unit": "per-size median over independent trees"
+  },
+  "aggregation_note": "All intervals are Student-t on n-2 degrees of freedom (two-sided 95%). Pooled fits use one point per independent tree; per-size fits use one point per taxon count. Intervals ignore the nesting of trees within size levels. Replaces the previous table-lookup critical values, which fell back to the normal quantile 1.96 for df outside 4-9."
 }

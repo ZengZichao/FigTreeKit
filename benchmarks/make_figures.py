@@ -15,16 +15,32 @@ import json
 import math
 import os
 import statistics
+import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
+import matplotlib
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib import ticker as mticker
 from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 
+# Ignore any machine-local matplotlib style (a user stylelib file otherwise
+# changes line widths, colours and fonts silently), so a regenerated figure
+# depends only on this file and on the measurement artefacts.
+matplotlib.rcdefaults()
+
 OUT = Path(__file__).parent
+
+# Unit convention shared with the manuscript: 1 MB = 10^6 bytes, 1 kB = 10^3
+# bytes (SI, as declared in Table 2 of the main text and required by the
+# journal's units guideline).  All memory values plotted or summarised by
+# this module use these divisors; ``peak_memory_bytes`` is the raw source of
+# truth and no MiB (1024*1024) conversion is performed anywhere.
+MB = 1_000_000
+kB = 1_000
+
 
 
 # ---------------------------------------------------------------------------
@@ -45,10 +61,48 @@ def _pct(part: float, whole: float) -> float:
     return (part / whole * 100) if whole else 0.0
 
 
+def _t_crit(df: int, alpha: float = 0.05) -> float:
+    """Two-sided 95% Student-t critical value for ``df`` degrees of freedom.
+
+    Uses ``scipy.stats.t.ppf`` when available.  The previous implementation
+    looked values up in a small table and silently fell back to the standard
+    normal quantile (1.96) for any df outside that table, which produced
+    confidence intervals that were narrower than the t-based ones reported in
+    the manuscript.  A normal approximation with a first-order correction is
+    kept only as a last resort so this function never returns 1.96 for a
+    small-sample fit.
+    """
+    df = max(1, int(df))
+    try:
+        from scipy import stats as _st  # type: ignore
+        return float(_st.t.ppf(1.0 - alpha / 2.0, df))
+    except Exception:
+        if df <= 30:
+            table = {1: 12.706, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571,
+                     6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228,
+                     11: 2.201, 12: 2.179, 13: 2.160, 14: 2.145,
+                     15: 2.131, 16: 2.120, 17: 2.110, 18: 2.101,
+                     19: 2.093, 20: 2.086, 21: 2.080, 22: 2.074,
+                     23: 2.069, 24: 2.064, 25: 2.060, 26: 2.056,
+                     27: 2.052, 28: 2.048, 29: 2.045, 30: 2.042}
+            return table[df]
+        z = 1.959964
+        g1 = (z ** 3 + z) / 4.0
+        g2 = (5 * z ** 5 + 16 * z ** 3 + 3 * z) / 96.0
+        g3 = (3 * z ** 7 + 19 * z ** 5 + 17 * z ** 3 - 15 * z) / 384.0
+        g4 = (79 * z ** 9 + 776 * z ** 7 + 1482 * z ** 5 - 1920 * z ** 3 - 945 * z) / 92160.0
+        inv = 1.0 / df
+        return z + g1 * inv + g2 * inv**2 + g3 * inv**3 + g4 * inv**4
+
+
 def _linregress_ci(
     x: np.ndarray, y: np.ndarray, alpha: float = 0.05
 ) -> Tuple[float, float, float, float]:
-    """Simple OLS on (x, y); returns (slope, intercept, lower, upper)."""
+    """Simple OLS on (x, y); returns (slope, intercept, lower, upper).
+
+    The interval is a Student-t interval on ``n - 2`` degrees of freedom
+    (see :func:`_t_crit`).
+    """
     x = np.asarray(x, dtype=float)
     y = np.asarray(y, dtype=float)
     n = len(x)
@@ -61,12 +115,27 @@ def _linregress_ci(
     ss_res = np.sum(resid ** 2)
     df = max(1, n - 2)
     se = math.sqrt(ss_res / df / ss_xx) if ss_xx else 0.0
-    # t critical values for common dfs (95% two-sided)
-    t_table = {1: 12.71, 2: 4.303, 3: 3.182, 4: 2.776, 5: 2.571,
-               6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262, 10: 2.228}
-    t = t_table.get(df, 2.0)
-    margin = t * se
+    margin = _t_crit(df, alpha) * se
     return float(slope), float(intercept), float(slope - margin), float(slope + margin)
+
+
+def _linregress_full(x, y, alpha: float = 0.05) -> Dict[str, float]:
+    """OLS summary with slope, SE, t-based 95% CI, R^2 and degrees of freedom."""
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    n = len(x)
+    slope, intercept, lo, hi = _linregress_ci(x, y, alpha)
+    df = max(1, n - 2)
+    ss_xx = float(np.sum((x - x.mean()) ** 2))
+    ss_res = float(np.sum((y - (slope * x + intercept)) ** 2))
+    ss_tot = float(np.sum((y - y.mean()) ** 2))
+    se = math.sqrt(ss_res / df / ss_xx) if ss_xx else 0.0
+    return {
+        "n": n, "df": df, "slope": slope, "intercept": intercept,
+        "std_error": se, "ci95_low": lo, "ci95_high": hi,
+        "r2": (1.0 - ss_res / ss_tot) if ss_tot else 0.0,
+        "critical_value": _t_crit(df, alpha),
+    }
 
 
 def _savefig(fig, stem: str, dpi: int = 300):
@@ -95,25 +164,49 @@ def figure2_main():
     # Tree-level points (one per row = one independent tree).
     tree_n = [int(r["n_taxa"]) for r in rows]
     tree_t = [float(r["export_median_s"]) for r in rows]
-    tree_mem = [int(r["peak_memory_bytes"]) / (1024 * 1024) for r in rows]
+    tree_mem = [int(r["peak_memory_bytes"]) / MB for r in rows]
 
     # Size-level summaries.
-    export_medians, export_iqrs, mem_medians, mem_iqrs = [], [], [], []
+    export_medians, export_iqrs, mem_medians, mem_iqrs, mem_maxima = [], [], [], [], []
     for n in sizes:
         pool = [float(r["export_median_s"]) for r in rows if int(r["n_taxa"]) == n]
         export_medians.append(float(np.median(pool)))
         export_iqrs.append(float(np.percentile(pool, 75) - np.percentile(pool, 25)))
-        mems = [int(r["peak_memory_bytes"]) / (1024 * 1024) for r in rows
+        mems = [int(r["peak_memory_bytes"]) / MB for r in rows
                 if int(r["n_taxa"]) == n]
         mem_medians.append(float(np.median(mems)))
         mem_iqrs.append(float(np.percentile(mems, 75) - np.percentile(mems, 25)))
+        mem_maxima.append(float(np.max(mems)))
 
-    # Fit on tree-level points (technical replicates already summarized).
+    # Fits on tree-level points (technical replicates already summarized).
     log_n = np.log10(np.asarray(tree_n, float))
     log_t = np.log10(np.asarray(tree_t, float))
     slope, intercept, lo, hi = _linregress_ci(log_n, log_t)
     fit_x = np.array(sizes)
     fit_y = 10 ** (slope * np.log10(fit_x) + intercept)
+
+    # Machine-readable fit summary consumed by the figure legend and the
+    # manuscript, so no quoted statistic is hand-entered anywhere.
+    log_sz = np.log10(np.asarray(sizes, float))
+    summary = {
+        "unit": "log10(taxon count) vs log10(quantity)",
+        "mb_definition": "1 MB = 10^6 bytes (SI), as declared in Table 2",
+        "source_file": "benchmarks/results.csv",
+        "export_time_pooled_tree_level": _linregress_full(log_n, log_t),
+        "export_time_per_size_medians": _linregress_full(log_sz, np.log10(np.asarray(export_medians))),
+        "memory_per_size_maxima": _linregress_full(log_sz, np.log10(np.asarray(mem_maxima))),
+        "memory_per_size_medians": _linregress_full(log_sz, np.log10(np.asarray(mem_medians))),
+        "per_size": {
+            "taxa": sizes,
+            "export_median_s": export_medians,
+            "export_iqr_s": export_iqrs,
+            "memory_median_MB": mem_medians,
+            "memory_maximum_MB": mem_maxima,
+        },
+    }
+    (OUT / "figure2_summary.json").write_text(
+        json.dumps(summary, indent=2, sort_keys=True), encoding="utf-8")
+    print(f"  written {OUT/'figure2_summary.json'}")
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.0, 3.5))
 
@@ -139,15 +232,28 @@ def figure2_main():
     ax1.spines["top"].set_visible(False)
     ax1.spines["right"].set_visible(False)
 
-    # Panel B: peak memory (per independent tree + per-size median [Q1, Q3])
+    # Panel B: peak memory (per independent tree + per-size median [Q1, Q3]
+    # + per-size maximum, the series the memory scaling slope is fitted to).
     ax2.scatter(tree_n, tree_mem, s=18, color="#2ca02c", alpha=0.45,
                 label="Independent trees")
     ax2.errorbar(sizes, mem_medians, yerr=mem_iqrs, fmt="o-",
                  color="#14612a", ecolor="#14612a", capsize=4,
                  markersize=6, linewidth=1.5, label="Per-size median [Q1, Q3]")
+    mem_slope, mem_icpt, mem_lo, mem_hi = _linregress_ci(
+        log_sz, np.log10(np.asarray(mem_maxima)))
+    ax2.plot(fit_x, 10 ** (mem_slope * np.log10(fit_x) + mem_icpt), "--",
+             color="#14612a", alpha=0.7)
+    ax2.scatter(sizes, mem_maxima, marker="^", s=42, color="#8b0000",
+                zorder=5, label="Per-size maximum (fitted series)")
+    ax2.text(0.97, 0.03,
+             f"maxima fit: slope {mem_slope:.3f}\n"
+             f"95% CI {mem_lo:.3f}-{mem_hi:.3f}",
+             transform=ax2.transAxes, fontsize=9, va="bottom", ha="right",
+             bbox=dict(boxstyle="round,pad=0.3", facecolor="white",
+                       edgecolor="none", alpha=0.85))
     ax2.set_xscale("log")
     ax2.set_xlabel("Taxa", fontsize=11)
-    ax2.set_ylabel("Peak memory (MB)", fontsize=11)
+    ax2.set_ylabel("Traced heap allocation (MB, 10$^6$ bytes)", fontsize=11)
     ax2.text(-0.14, 1.04, "B", transform=ax2.transAxes, fontsize=16,
              fontweight="bold", va="top", ha="left")
     ax2.legend(fontsize=7.5, loc="upper left")
@@ -160,63 +266,235 @@ def figure2_main():
 
 
 # ---------------------------------------------------------------------------
+# Manuscript table values (Table 2 / Table 3) — emitted so the tables cannot
+# drift from the archived data.
+# ---------------------------------------------------------------------------
+
+def table_values():
+    """Write ``table_values.json`` with the exact quantities behind Tables 2-3.
+
+    Dispersion definitions are stated explicitly because the two tables use
+    different levels: Table 2 reports tree-level summaries over the 10
+    independent trees per taxon count, while each tree's own technical
+    replicates are summarized within the tree first.
+    """
+    rows = _read_csv(OUT / "results.csv")
+    sizes = sorted({int(r["n_taxa"]) for r in rows})
+    table2 = []
+    for n in sizes:
+        sub = [r for r in rows if int(r["n_taxa"]) == n]
+        exp = [float(r["export_median_s"]) for r in sub]
+        tot = [float(r["total_mean_s"]) for r in sub]
+        tot_sem_within = [float(r["total_sem_s"]) for r in sub]
+        mem = [int(r["peak_memory_bytes"]) / MB for r in sub]
+        table2.append({
+            "taxa": n,
+            "n_trees": len(sub),
+            "export_median_s": float(np.median(exp)),
+            "export_iqr_s": float(np.percentile(exp, 75) - np.percentile(exp, 25)),
+            "total_mean_s": float(np.mean(tot)),
+            # Tree-level SEM: SD over the n independent trees / sqrt(n).
+            "total_sem_tree_level_s": (
+                float(np.std(tot, ddof=1) / math.sqrt(len(tot))) if len(tot) > 1 else 0.0
+            ),
+            # Kept for transparency: the mean of the within-tree (technical
+            # replicate) SEMs. This is NOT the tree-level SEM and must not be
+            # labelled as such.
+            "total_sem_mean_of_within_tree_s": float(np.mean(tot_sem_within)),
+            "heap_median_MB": float(np.median(mem)),
+            "heap_maximum_MB": float(np.max(mem)),
+        })
+
+    comp = _read_csv(OUT / "competitive_results.csv")
+    table3 = [{
+        "taxa": int(r["n_taxa"]), "n_trees": int(r["n_trees"]),
+        "figtreekit_mean_s": float(r["figtreekit_export_mean_s"]),
+        "figtreekit_sem_tree_level_s": float(r["figtreekit_export_sem_s"]),
+        "biophylo_mean_s": float(r["biophylo_export_mean_s"]),
+        "biophylo_sem_tree_level_s": float(r["biophylo_export_sem_s"]),
+        "ratio_mean_of_per_tree": float(r["ratio"]),
+        "ratio_sem_s": float(r["ratio_sem_s"]),
+        "ratio_min": float(r["ratio_min"]), "ratio_max": float(r["ratio_max"]),
+    } for r in comp]
+
+    payload = {
+        "units": {"time_s": "seconds", "memory_MB": "1 MB = 10^6 bytes (SI)"},
+        "sem_definition": (
+            "SEM in both tables is the tree-level standard error: the standard "
+            "deviation (ddof=1) over the n independent trees divided by sqrt(n). "
+            "Within-tree technical-replicate SEMs are summarized per tree before "
+            "any tree-level statistic is formed."
+        ),
+        "table2_source": "benchmarks/results.csv",
+        "table3_source": "benchmarks/competitive_results.csv",
+        "table2": table2,
+        "table3": table3,
+    }
+    (OUT / "table_values.json").write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"  written {OUT/'table_values.json'}")
+    for r in table2:
+        print(f"  Table2 {r['taxa']:>6}: total {r['total_mean_s']:.4f} "
+              f"± tree-level SEM {r['total_sem_tree_level_s']:.4f} "
+              f"(mean of within-tree SEM {r['total_sem_mean_of_within_tree_s']:.4f})")
+    return payload
+
+
+# ---------------------------------------------------------------------------
 # Figure S1 – test coverage
 # ---------------------------------------------------------------------------
 
-def _coverage_dynamic() -> List[Tuple[str, float]]:
-    """Read current .coverage; may differ from the frozen manuscript snapshot."""
-    import coverage  # type: ignore
-    dotfile = OUT.parent / ".coverage"
-    ordered_names = [
-        "__init__.py", "_cli.py", "_parser.py", "_serializer.py", "styler.py",
-        "taxonomy.py", "validators.py", "_renderer.py", "_figtree_setup.py",
+# Manuscript component label -> module file, in the order Figure S1 lists them.
+# Declared once here so the figure, the machine-readable summary and the
+# manuscript cannot drift apart.
+COVERAGE_COMPONENTS: List[Tuple[str, List[str]]] = [
+    ("Package interface", ["__init__.py"]),
+    ("Command-line interface", ["_cli.py"]),
+    ("Tree parsing", ["_parser.py"]),
+    ("NEXUS serialization", ["_serializer.py"]),
+    ("Styling layer", ["styler.py"]),
+    ("Taxonomy analysis", ["taxonomy.py"]),
+    ("Input validation", ["validators.py"]),
+    ("Rendering", ["_renderer.py", "_appearance_post.py"]),
+    ("Environment setup", ["_figtree_setup.py"]),
+]
+
+# Modules that only exist from a given revision onwards.  When a coverage
+# snapshot predates them they are skipped (and reported), so the same mapping
+# can be applied to the archived v1.1.1 measurement and to a current run.
+COVERAGE_OPTIONAL = {"_appearance_post.py"}
+
+
+def _coverage_measure(xml_path: str | None = None) -> List[Dict[str, float]]:
+    """Measure statement coverage from a real coverage run.
+
+    Source resolution order: the ``xml_path`` argument, the
+    ``FIGTREEKIT_COVERAGE_XML`` environment variable, ``coverage.xml`` in the
+    repository root, ``benchmarks/coverage_*.xml``, then the binary
+    ``.coverage`` data file.  There is deliberately no hard-coded fallback: a
+    figure that looks like a measurement but is typed in by hand cannot be
+    audited, so this function raises if no measurement is available.
+    """
+    root = OUT.parent
+    candidates = [
+        Path(xml_path) if xml_path else None,
+        Path(os.environ["FIGTREEKIT_COVERAGE_XML"])
+        if os.environ.get("FIGTREEKIT_COVERAGE_XML") else None,
+        root / "coverage.xml",
+        *sorted(OUT.glob("coverage_*.xml")),
     ]
-    cov = coverage.Coverage(data_file=str(dotfile))
-    cov.load()
-    measured = {Path(f).name: f for f in cov.get_data().measured_files()
-                if "figtreekit" in f and f.endswith(".py")}
-    rows = []
-    total_st, total_miss = 0, 0
-    for name in ordered_names:
-        pct = 0.0
-        if name in measured:
-            analysis = cov.analysis2(measured[name])
-            statements, missing = analysis[1], analysis[2]
-            st, miss = len(statements), len(missing)
-            total_st += st
-            total_miss += miss
-            pct = _pct(st - miss, st)
-        rows.append((name, pct))
-    rows.append(("Total", _pct(total_st - total_miss, total_st)))
+    chosen = next((c for c in candidates if c and Path(c).exists()), None)
+    dot_path = root / ".coverage"
+    ordered = {fname for _label, fnames in COVERAGE_COMPONENTS for fname in fnames}
+    rows: List[Dict[str, float]] = []
+    all_files: Dict[str, Dict[str, int]] = {}
+
+    if chosen is not None and str(chosen).endswith(".xml"):
+        import xml.etree.ElementTree as ET
+        tree = ET.parse(str(chosen))
+        for cls in tree.iter("class"):
+            fn = cls.get("filename") or ""
+            name = os.path.basename(fn)
+            if not name.endswith(".py"):
+                continue
+            lines = cls.find("lines")
+            total = len(lines) if lines is not None else 0
+            covered = sum(1 for ln in lines if ln.get("hits", "0") != "0") if lines is not None else 0
+            prev = all_files.get(name)
+            if prev:  # merge duplicate class entries for the same module
+                total += prev["statements"]
+                covered += prev["statements"] - prev["missed"]
+            all_files[name] = {"statements": total, "missed": total - covered}
+    elif dot_path.exists():
+        try:
+            import coverage  # type: ignore
+        except ImportError as exc:  # pragma: no cover
+            raise RuntimeError(
+                "coverage.py is required to build Figure S1; install it or "
+                "produce coverage.xml first"
+            ) from exc
+        cov = coverage.Coverage(data_file=str(dot_path))
+        cov.load()
+        measured = {Path(f).name: f for f in cov.get_data().measured_files()
+                    if "figtreekit" in f and f.endswith(".py")}
+        for name, path in measured.items():
+            _s, stmts, _e, missing, _ex = cov.analysis2(path)
+            all_files[name] = {"statements": len(stmts), "missed": len(missing)}
+    else:
+        raise RuntimeError(
+            "No coverage measurement found. Run:\n"
+            "  python3 -m pytest --cov=figtreekit --cov-report=xml\n"
+            "from the repository root (this produces coverage.xml), or set "
+            "FIGTREEKIT_COVERAGE_XML to an existing coverage.xml. "
+            "Figure S1 is never rendered from hard-coded values."
+        )
+
+    for label, fnames in COVERAGE_COMPONENTS:
+        st = miss = 0
+        present: List[str] = []
+        for fname in fnames:
+            d = all_files.get(fname)
+            if d is None:
+                if fname in COVERAGE_OPTIONAL:
+                    continue          # module added after this snapshot
+                raise RuntimeError(f"coverage data does not contain figtreekit/{fname}")
+            present.append(fname)
+            st += d["statements"]
+            miss += d["missed"]
+        if not present:
+            raise RuntimeError(f"no measured module left for component {label!r}")
+        rows.append({
+            "label": label, "modules": present,
+            "statements": st, "missed": miss,
+            "percent": _pct(st - miss, st),
+        })
+
+    # Honest bookkeeping: every measured figtreekit module is either mapped to a
+    # component or reported here as excluded from the nine-component figure.
+    measured = {n for n, v in all_files.items() if v["statements"]}
+    unmapped = sorted(measured - ordered)
+    if unmapped:
+        print("[coverage] modules excluded from the nine-component figure: "
+              + ", ".join(unmapped))
     return rows
 
 
-def _coverage_from_dotfile() -> List[Tuple[str, float]]:
-    """Coverage bar data.
-
-    Defaults to the frozen snapshot that matches the current manuscript S1.
-    Set ``FIGTREEKIT_DYNAMIC_COVERAGE=1`` to use the current ``.coverage`` file.
-    """
-    ordered_names = [
-        "__init__.py", "_cli.py", "_parser.py", "_serializer.py", "styler.py",
-        "taxonomy.py", "validators.py", "_renderer.py", "_figtree_setup.py",
-    ]
-    fallback = {
-        "__init__.py": 78.0, "_cli.py": 83.0, "_parser.py": 84.0,
-        "_serializer.py": 91.0, "styler.py": 82.0, "taxonomy.py": 81.0,
-        "validators.py": 86.0, "_renderer.py": 72.0,
-        "_figtree_setup.py": 38.0, "Total": 81.0,
+def _coverage_summary(rows: List[Dict[str, float]]) -> Dict[str, object]:
+    """Statement-weighted total over the mapped components plus the all-file total."""
+    st = sum(int(r["statements"]) for r in rows)
+    miss = sum(int(r["missed"]) for r in rows)
+    weighted = _pct(st - miss, st)
+    unweighted = sum(float(r["percent"]) for r in rows) / len(rows)
+    return {
+        "components": rows,
+        "component_statement_weighted_overall": round(weighted, 2),
+        "component_arithmetic_mean": round(unweighted, 1),
+        "component_statements_total": st,
+        "note": ("percent = statement coverage of the component's mapped "
+                 "module(s), aggregated over statements; the statement-weighted "
+                 "overall value is the manuscript headline, the arithmetic mean "
+                 "is reported alongside so the weighting is visible."),
     }
-    if os.environ.get("FIGTREEKIT_DYNAMIC_COVERAGE"):
-        return _coverage_dynamic()
-    return [(n, fallback[n]) for n in ordered_names + ["Total"]]
+
+
+def _coverage_from_dotfile() -> List[Tuple[str, float]]:
+    """Coverage bar data, always measured (see :func:`_coverage_measure`)."""
+    rows = _coverage_measure()
+    (OUT / "coverage_summary.json").write_text(
+        json.dumps(_coverage_summary(rows), indent=2, ensure_ascii=False),
+        encoding="utf-8")
+    return [(r["label"], float(r["percent"])) for r in rows]
 
 
 def figure_s1():
-    """Statement coverage per module and overall total."""
+    """Statement coverage per mapped component and the statement-weighted total."""
     data = _coverage_from_dotfile()
     labels = [d[0] for d in data]
     values = [d[1] for d in data]
+    summary = _read_json(OUT / "coverage_summary.json")
+    overall = float(summary["component_statement_weighted_overall"])
+    labels.append("Overall (statement-weighted)")
+    values.append(overall)
     colors = ["#ff9f43" if v < 80 else "#17a2b8" for v in values]
 
     fig, ax = plt.subplots(figsize=(9, 4.5))
@@ -339,7 +617,7 @@ def figure_s6():
     names = [f"{d['dataset']}\n({d['n_taxa']:,} taxa)" for d in datasets]
     parse_t = [d["parse_time_s"] for d in datasets]
     export_t = [d["export_time_s"] for d in datasets]
-    mem_mb = [d["peak_memory_mb"] for d in datasets]
+    mem_mb = [d["peak_memory_MB"] for d in datasets]
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8.0, 3.5))
     x = np.arange(len(names))
@@ -434,11 +712,38 @@ def figure_s7():
     _savefig(fig, "figure_s7")
 
 
+REGENERATORS = {
+    "table_values": table_values,
+    "figure2": figure2_main,
+    "s1": figure_s1,
+    "s2": figure_s2,
+    "s5": figure_s5,
+    "s6": figure_s6,
+    "s7": figure_s7,
+}
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    """Regenerate every figure, or only the named ones.
+
+    ``python benchmarks/make_figures.py`` regenerates all of them (the
+    documented single command).  ``python benchmarks/make_figures.py s1 s6``
+    regenerates the named subset, which is useful when one input artifact was
+    refreshed.
+    """
+    argv = list(sys.argv[1:] if argv is None else argv)
+    names = argv or list(REGENERATORS)
+    unknown = [n for n in names if n not in REGENERATORS]
+    if unknown:
+        print(f"unknown target(s): {', '.join(unknown)}\n"
+              f"available: {', '.join(REGENERATORS)}", file=sys.stderr)
+        return 2
+    for name in names:
+        print(f"[make_figures] {name}")
+        REGENERATORS[name]()
+    print("Benchmark figure regeneration finished.")
+    return 0
+
+
 if __name__ == "__main__":
-    figure2_main()
-    figure_s1()
-    figure_s2()
-    figure_s5()
-    figure_s6()
-    figure_s7()
-    print("All benchmark figures regenerated.")
+    sys.exit(main())

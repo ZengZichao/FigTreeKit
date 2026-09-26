@@ -38,6 +38,8 @@ sys.setrecursionlimit(60000)  # caterpillar trees > 1,000 levels (see main text)
 
 import numpy as np
 
+from gtdb_paths import gtdb_data_dir
+
 from figtreekit import FigTreeStyler, LayoutType
 from figtreekit._version import __version__
 
@@ -143,17 +145,43 @@ def summarize(values):
     }
 
 
+def _t_crit(df: int, alpha: float = 0.05) -> float:
+    """Two-sided Student-t critical value for ``df`` degrees of freedom.
+
+    Replaces a small lookup table that silently fell back to the standard
+    normal quantile (1.96) for any df outside 4-9, which made the archived
+    confidence intervals narrower than the t-based intervals quoted in the
+    manuscript.
+    """
+    df = max(1, int(df))
+    try:
+        from scipy import stats as _st
+        return float(_st.t.ppf(1.0 - alpha / 2.0, df))
+    except Exception:
+        z = 1.959964
+        g1 = (z ** 3 + z) / 4.0
+        g2 = (5 * z ** 5 + 16 * z ** 3 + 3 * z) / 96.0
+        g3 = (3 * z ** 7 + 19 * z ** 5 + 17 * z ** 3 - 15 * z) / 384.0
+        g4 = (79 * z ** 9 + 776 * z ** 7 + 1482 * z ** 5 - 1920 * z ** 3 - 945 * z) / 92160.0
+        i = 1.0 / df
+        return z + g1 * i + g2 * i ** 2 + g3 * i ** 3 + g4 * i ** 4
+
+
 def slope_ci(xs, ys):
-    """Log-log OLS slope with 95% CI."""
+    """Log-log OLS slope with a t-based 95% CI, plus R^2 and degrees of freedom."""
     lx, ly = np.log(np.asarray(xs, float)), np.log(np.asarray(ys, float))
     n = len(lx)
     slope, intercept = np.polyfit(lx, ly, 1)
     resid = ly - (slope * lx + intercept)
     dof = max(n - 2, 1)
-    se = math.sqrt(float((resid ** 2).sum()) / dof / float(((lx - lx.mean()) ** 2).sum()))
-    tcrit = {4: 2.776, 5: 2.571, 6: 2.447, 7: 2.365, 8: 2.306, 9: 2.262}.get(dof, 1.96)
+    ss_res = float((resid ** 2).sum())
+    ss_tot = float(((ly - ly.mean()) ** 2).sum())
+    se = math.sqrt(ss_res / dof / float(((lx - lx.mean()) ** 2).sum()))
+    tcrit = _t_crit(dof)
     return {"slope": float(slope), "se": float(se),
-            "ci95": [float(slope - tcrit * se), float(slope + tcrit * se)]}
+            "ci95": [float(slope - tcrit * se), float(slope + tcrit * se)],
+            "critical_value": tcrit, "r_squared": (1.0 - ss_res / ss_tot) if ss_tot else 0.0,
+            "n_points": n, "df": dof}
 
 
 # ---------------------------------------------------------------------------
@@ -189,7 +217,15 @@ def run_scaling(sizes, repeats, seeds, out_csv):
 
 
 def run_shapes(sizes, repeats, seeds, out_csv):
+    """Topology-shape sweep.
+
+    Writes two files: the per-cell aggregates used by Table S13 (``out_csv``)
+    and the per-tree timings (``<stem>_per_tree.csv``) so the cell medians and
+    the "10 independent trees x N repeats" provenance can be re-derived from
+    the archive instead of being taken on trust.
+    """
     rows = []
+    per_tree = []
     for shape, gen in GENERATORS.items():
         for n in sizes:
             exports = []
@@ -198,12 +234,19 @@ def run_shapes(sizes, repeats, seeds, out_csv):
                 for r in range(repeats):
                     _, e, _ = _run_pipeline(tree, 0, seed + r)
                     exports.append(e)
+                    per_tree.append({
+                        "shape": shape, "n_taxa": n, "seed": seed,
+                        "repeat": r, "export_s": e,
+                    })
             s = summarize(exports)
-            rows.append({"n_taxa": n, "shape": shape,
+            rows.append({"n_taxa": n, "shape": shape, "n_trees": len(seeds),
+                         "repeats_per_tree": repeats,
                          "export_mean_s": s["mean"], "export_sem_s": s["sem"],
                          "export_median_s": s["median"], "export_iqr_s": s["iqr"]})
             print(f"  shapes: {shape} n={n} median={s['median']:.4f}s")
     _write_csv(out_csv, rows)
+    per_tree_csv = out_csv.with_name(out_csv.stem + "_per_tree.csv")
+    _write_csv(per_tree_csv, per_tree)
     return rows
 
 
@@ -343,16 +386,34 @@ def run_gtdb(gtdb_dir, out_json):
             "file": name, "dataset": name.split("_r232")[0], "n_taxa": n_taxa,
             "parse_time_s": round(t_parse, 3), "export_time_s": round(t_export, 3),
             "total_time_s": round(t_parse + t_export, 3),
-            "peak_memory_mb": round(peak / 1024 / 1024, 1),
+            "peak_memory_MB": round(peak / 1_000_000, 1),
+            "peak_memory_bytes": int(peak),
+            "heap_per_taxon_kB": round(peak / 1_000 / n_taxa, 2),
         })
         print(f"  gtdb: {name} parse={t_parse:.2f}s export={t_export:.2f}s "
-              f"mem={peak / 1048576:.1f}MB")
+              f"mem={peak / 1_000_000:.1f}MB")
     payload = {
         "benchmark": "GTDB R232 real-dataset validation",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "platform": platform.platform(),
         "machine": platform.machine(),
         "python_version": platform.python_version(),
+        # Full machine stamp, identical in shape to benchmark_meta.json, so the
+        # large-data pass carries its own provenance instead of borrowing the
+        # synthetic benchmark's record.
+        "cpu": _cpu_name(),
+        "ram_gb": round(_ram_bytes() / 2 ** 30, 1),
+        "figtreekit_version": __version__,
+        "biopython": _biopython_version(),
+        "java": _java_version(),
+        "commit": _git_commit(),
+        "git_dirty": _git_dirty(),
+        "mb_definition": "1 MB = 10^6 bytes; 1 kB = 10^3 bytes (SI, as in Table 2)",
+        "run_relationship": (
+            "measured in the same frozen environment as the synthetic "
+            "benchmark (see benchmark_meta.json) but in a separate pass; "
+            "one timed run per dataset, so no dispersion is assessed"
+        ),
         "datasets": datasets,
     }
     out_json.write_text(json.dumps(payload, indent=2))
@@ -373,7 +434,10 @@ def _write_csv(path, rows):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true", help="reduced sizes for smoke runs")
-    ap.add_argument("--gtdb-dir", default=str(OUT.parent.parent / "参考数据-GTDB-R232"))
+    ap.add_argument("--gtdb-dir", default=gtdb_data_dir(),
+                    help=("directory holding ar53_r232.tree / bac120_r232.tree; "
+                          "defaults to $FTK_GTDB_DIR, then benchmarks/gtdb_data "
+                          "(see benchmarks/gtdb_data/README.md)"))
     args = ap.parse_args()
 
     if args.quick:
@@ -456,13 +520,27 @@ def main():
     export_slope["n_points"] = len(tree_points)
     slopes = {"export_vs_taxa_loglog": export_slope}
     mem_by_n = {}
+    exp_med_by_n = {}
     for r in main_rows:
         mem_by_n.setdefault(r["n_taxa"], []).append(r["peak_memory_bytes"])
+        exp_med_by_n.setdefault(r["n_taxa"], []).append(r["export_median_s"])
     xs = sorted(mem_by_n)
     my = [float(np.max(mem_by_n[x])) for x in xs]
     mem_slope = slope_ci(xs, my)
     mem_slope["unit"] = "per-size maximum over independent trees"
     slopes["memory_vs_taxa_loglog"] = mem_slope
+    mem_median_slope = slope_ci(xs, [float(np.median(mem_by_n[x])) for x in xs])
+    mem_median_slope["unit"] = "per-size median over independent trees"
+    slopes["memory_vs_taxa_loglog_per_size_medians"] = mem_median_slope
+    exp_median_slope = slope_ci(xs, [float(np.median(exp_med_by_n[x])) for x in xs])
+    exp_median_slope["unit"] = "per-size median of tree-level export medians"
+    slopes["export_vs_taxa_loglog_per_size_medians"] = exp_median_slope
+    slopes["aggregation_note"] = (
+        "pooled fits use one point per independent tree (n = number of trees); "
+        "per-size fits use one point per taxon count. All intervals are "
+        "Student-t on n-2 degrees of freedom and ignore the nesting of trees "
+        "within size levels."
+    )
     (OUT / "slope_summary.json").write_text(json.dumps(slopes, indent=2))
     print(f"[slope] export: {slopes['export_vs_taxa_loglog']}")
     print(f"[slope] memory: {slopes['memory_vs_taxa_loglog']}")

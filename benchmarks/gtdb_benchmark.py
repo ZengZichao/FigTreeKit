@@ -12,6 +12,8 @@ The GTDB R232 trees are distributed separately (https://gtdb.ecogenomic.org)
 and are not part of this repository.
 """
 
+from gtdb_paths import gtdb_data_dir
+
 import argparse
 import csv
 import gc
@@ -63,7 +65,7 @@ def main():
     parser = argparse.ArgumentParser(description="FigTreeKit GTDB benchmark")
     parser.add_argument(
         "--gtdb-dir",
-        default=str(Path(__file__).parent.parent.parent / "参考-GTDB-R232"),
+        default=str(gtdb_data_dir()),
         help="Directory containing ar53_r232.tree and bac120_r232.tree",
     )
     parser.add_argument(
