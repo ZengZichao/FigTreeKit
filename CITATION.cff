@@ -25,14 +25,16 @@ keywords:
   - BEAST
   - reproducible research
 license: GPL-2.0-or-later
-# This block describes the most recent *published* release, so that every DOI
-# and version below resolves today. Bump version/date-released/doi together when
-# the next tag is published to PyPI and archived on Zenodo.
-doi: "10.5281/zenodo.22273864"
+# This block describes the most recent published release; every DOI below
+# resolves. Bump version/date-released/doi together at the next release.
+doi: "10.5281/zenodo.22977789"
 identifiers:
   - type: doi
+    value: "10.5281/zenodo.22977789"
+    description: "Version-specific Zenodo DOI for release 1.1.3"
+  - type: doi
     value: "10.5281/zenodo.22273864"
-    description: "Version-specific Zenodo DOI for release 1.1.2"
+    description: "Version-specific Zenodo DOI for release 1.1.2 (superseded)"
   - type: doi
     value: "10.5281/zenodo.22106051"
     description: "Version-specific Zenodo DOI for release 1.1.1 (superseded)"
@@ -44,5 +46,5 @@ identifiers:
     description: "Preprint (bioRxiv); cite the Zenodo record for the software"
 repository-code: "https://github.com/ZengZichao/FigTreeKit"
 url: "https://pypi.org/project/figtreekit/"
-version: "1.1.2"
-date-released: "2026-09-03"
+version: "1.1.3"
+date-released: "2026-09-26"
