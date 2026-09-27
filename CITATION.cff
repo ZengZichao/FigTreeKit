@@ -35,6 +35,9 @@ identifiers:
     value: "10.5281/zenodo.22043258"
     description: "Zenodo concept DOI (all releases)"
   - type: doi
+    value: "10.5281/zenodo.22988773"
+    description: "Version-specific Zenodo DOI for release 1.1.4"
+  - type: doi
     value: "10.5281/zenodo.22977789"
     description: "Version-specific Zenodo DOI for release 1.1.3 (superseded)"
   - type: doi
