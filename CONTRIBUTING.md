@@ -330,7 +330,7 @@ Knowing this saves a lot of surprise:
 | `pytest` with a 60% coverage floor | **yes** | The only substantive test gate. |
 | `flake8` syntax / undefined-name pass | **yes** | `--select=E9,F63,F7,F82` only. |
 | `flake8` style pass (line length, complexity) | no | `--exit-zero`; reports without failing. |
-| `black --check` | no | 37 of 42 files predate the current black style. Reported, not enforced. |
+| `black --check` | no | Clean since the 2026-10-01 black 26 reformat (37 files). Still reported-only, so a future black stable-style change cannot block PRs. |
 | `mypy` | no | Just over a hundred pre-existing `disallow_untyped_defs` errors. Reported, not enforced. |
 | CodeQL analysis (`Analyze (python)`) | **yes** | Required via the `require-main-checks` branch ruleset. |
 | Docker image build and self-test | **yes** (PRs) | Required on pull requests; runs non-gated on pushes to `main`. |

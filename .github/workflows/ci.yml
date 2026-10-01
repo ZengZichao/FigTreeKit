@@ -131,10 +131,12 @@ jobs:
         pip install -e ".[dev,render]"
 
     - name: Check formatting with black
-      # Non-blocking, same treatment as the mypy step below: 37 of the 42
-      # Python files predate the current black stable style and would need a
-      # formatting-only commit. The step is here so the debt is visible and
-      # the count shrinks over time, not so it blocks. See CONTRIBUTING.md.
+      # Non-blocking, same treatment as the mypy step below. The tree was
+      # reformatted to the black 26 stable style on 2026-10-01 (a
+      # formatting-only commit over 37 files), so the check is currently
+      # clean; it stays continue-on-error so a future black stable-style
+      # change reports in the log instead of blocking every open PR.
+      # See CONTRIBUTING.md.
       continue-on-error: true
       run: |
         black --check --diff figtreekit/ test/ benchmarks/ examples/ scripts/

@@ -1,0 +1,49 @@
+name: Format
+
+# Formatter bot. Run it manually (Actions -> Format -> Run workflow) on a
+# working branch; it applies the pinned black and commits the result to that
+# branch, so a mechanical reformat is always a bot-made, reviewable,
+# formatting-only PR rather than hand-edited files. It never runs on main.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: format-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  black:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        ref: ${{ github.ref }}
+
+    - uses: actions/setup-python@v7
+      with:
+        python-version: '3.11'
+
+    - name: Install black
+      # Same bound as the dev extra in pyproject.toml, so the style the bot
+      # writes is the style CI's `black --check` judges.
+      run: pip install "black>=26,<27"
+
+    - name: Apply black
+      run: black figtreekit/ test/ benchmarks/ examples/ scripts/
+
+    - name: Commit the reformat
+      run: |
+        git config user.name "figtreekit-format-bot"
+        git config user.email "zengzichao@sjtu.edu.cn"
+        git add -A
+        if git diff --cached --quiet; then
+          echo "black made no changes; nothing to commit"
+          exit 0
+        fi
+        git commit -m "style: apply black - formatting only" \
+          -m "Committed by the Format workflow; black>=26,<27 (same bound as the dev extra), no behavioural change."
+        git push
