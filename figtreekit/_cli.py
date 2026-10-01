@@ -20,6 +20,7 @@
 
 import argparse
 import atexit
+import contextlib
 from enum import IntEnum
 import json
 import logging
@@ -30,7 +31,7 @@ import signal
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
 
 from .enums import LayoutType, OrderType, RootingType, TransformType
 from .exceptions import CompatibilityWarning, ExportError, ParseError, RenderError, ValidationError
@@ -91,10 +92,10 @@ class _GracefulTerminator:
     def unregister(self) -> None:
         """Restore original signal handlers."""
         for sig, handler in self._original_handlers.items():
-            try:
+            # Best effort: a handler that no longer exists or a signal outside
+            # the main thread must not abort the shutdown path.
+            with contextlib.suppress(OSError, ValueError):
                 signal.signal(sig, handler)
-            except (OSError, ValueError):
-                pass
 
     def track_temp(self, path: str) -> None:
         """Register a temporary file for cleanup on abort."""
@@ -117,11 +118,11 @@ class _GracefulTerminator:
 
     def _cleanup_temps(self) -> None:
         for path in list(self._temp_files):
-            try:
+            # Best effort: a temp file already removed by its owner must not
+            # abort cleanup of the remaining ones.
+            with contextlib.suppress(OSError):
                 if os.path.exists(path):
                     os.unlink(path)
-            except OSError:
-                pass
         self._temp_files.clear()
 
 
@@ -265,7 +266,7 @@ def _get_version_string() -> str:
     # Git commit hash (prefer setuptools_scm, fall back to git subprocess)
     git_hash = __git_hash__
     if not git_hash:
-        try:
+        with contextlib.suppress(Exception):
             import subprocess
 
             result = subprocess.run(
@@ -277,8 +278,6 @@ def _get_version_string() -> str:
             )
             if result.returncode == 0 and result.stdout.strip():
                 git_hash = result.stdout.strip()
-        except Exception:
-            pass
     if git_hash:
         parts.append(f"commit: {git_hash}")
     if __version_date__:
@@ -286,12 +285,10 @@ def _get_version_string() -> str:
 
     # Dependency versions
     deps = []
-    try:
+    with contextlib.suppress(Exception):
         import Bio
 
         deps.append(f"biopython {Bio.__version__}")
-    except Exception:
-        pass
     parts.append(f"python {sys.version.split()[0]}")
     if deps:
         parts.append(f"deps: {', '.join(deps)}")
@@ -1752,13 +1749,13 @@ def _process_single_tree(
                         clade_color = (
                             color_map.get(parent_phylum, "#999999") if parent_phylum else "#999999"
                         )
-                        try:
+                        # Best effort: a taxonomy rename can make a mapped
+                        # taxon unresolvable; styling continues with the rest.
+                        with contextlib.suppress(Exception):
                             styler.set_clade_color_all(
                                 taxon_names=actual_taxa,
                                 color=clade_color,
                             )
-                        except Exception:
-                            pass
 
     # Apply clade collapses (requires taxonomy-aware pattern or mapping)
     clade_names = getattr(args, "clade", None)
@@ -2264,9 +2261,9 @@ def _run_self_test() -> None:
         styler.highlight_clade(
             [
                 "GB_GCA_000252485.1_d_Bacteria_p_Cyanobacteriota_c_Cyanobacteriia"
-                "_o_Cyanobacteriales_f_Prochloraceae_g_Prochloron",
+                + "_o_Cyanobacteriales_f_Prochloraceae_g_Prochloron",
                 "GB_GCA_000317225.1_d_Bacteria_p_Cyanobacteriota_c_Cyanobacteriia"
-                "_o_Cyanobacteriales_f_Prochloraceae_g_Prochlorococcus",
+                + "_o_Cyanobacteriales_f_Prochloraceae_g_Prochlorococcus",
             ],
             color="#FF0000",
         )
@@ -2275,7 +2272,8 @@ def _run_self_test() -> None:
         os.chmod(path, 0o600)
         try:
             styler.export(path)
-            content = open(path, encoding="utf-8").read()
+            with open(path, encoding="utf-8") as fh:
+                content = fh.read()
             ok = "#NEXUS" in content and "begin figtree;" in content
             return ok, f"exported {len(content)} bytes, has Nexus structure"
         finally:
@@ -2319,7 +2317,6 @@ def _run_self_test() -> None:
     print()
 
     max_name = max(len(r[0]) for r in results)
-    max_detail = max(len(r[2]) for r in results)
 
     for name, status, detail in results:
         status_str = f"[{status}]"

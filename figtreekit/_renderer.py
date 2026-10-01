@@ -32,12 +32,13 @@ Note:
 # with this program; if not, write to the Free Software Foundation, Inc.,
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
+import contextlib
 import os
 import shlex
 import shutil
 import subprocess
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from .exceptions import ExportError, RenderError
 
@@ -63,14 +64,12 @@ def find_figtree_jar() -> Optional[str]:
         return env_jar
 
     # 2. Saved path from setup-figtree
-    try:
+    with contextlib.suppress(ImportError):
         from ._figtree_setup import get_saved_figtree_path
 
         saved = get_saved_figtree_path()
         if saved and saved.is_file():
             return str(saved)
-    except ImportError:
-        pass
 
     # 3. Bundled patched FigTree JAR shipped with FigTreeKit
     bundled_jar = Path(__file__).with_name("figtree_patched.jar")

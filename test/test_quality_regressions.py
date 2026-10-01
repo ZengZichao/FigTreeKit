@@ -20,7 +20,6 @@ Run with::
 
 import warnings
 import re
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -39,7 +38,6 @@ from figtreekit import (
 )
 from figtreekit.taxonomy import get_domain_rank_name
 from figtreekit.validators import scan_node_names_for_anomalous
-from figtreekit.exceptions import ValidationError
 
 # ===========================================================================
 # 数字末端名必须在 Newick 往返中保留

@@ -19,6 +19,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 import bisect
+import contextlib
 import os
 import re
 import warnings
@@ -26,7 +27,6 @@ from pathlib import Path
 from typing import Dict, Iterable, Iterator, List, Optional, Sequence, Set, Tuple, Union
 
 from ._parser import strip_square_bracket_comments
-from .exceptions import ValidationError
 
 TREE_EXTENSIONS = {
     ".newick",
@@ -1098,14 +1098,14 @@ def deep_validate_newick(
     # ── Negative branch lengths (CRITICAL) ──
     neg_bl = re.findall(r"([A-Za-z0-9_.\'\]\)]*):(-[\d.eE+]+)", text)
     for node_ctx, bl_str in neg_bl:
-        try:
+        # The regex admits "..."-style garbage that float() rejects; that is
+        # not a negative branch length, it is not our finding — skip it.
+        with contextlib.suppress(ValueError):
             bl = float(bl_str)
             if bl < 0:
                 errors.append(
                     f"{label}: CRITICAL — negative branch length {bl} " f"near '{node_ctx[-30:]}'"
                 )
-        except ValueError:
-            pass
 
     # ── Extract node names and separate terminals from internal nodes ──
     # Prefer Bio.Phylo for an accurate terminal/internal split so that

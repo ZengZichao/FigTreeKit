@@ -1,7 +1,5 @@
 """Regression tests for renderer, CLI, and styler fixes."""
 
-import os
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest

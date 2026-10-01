@@ -6,7 +6,6 @@ These tests generate random valid inputs and verify round-trip properties.
 import re
 import tempfile
 import os
-import warnings
 
 import pytest
 
@@ -18,7 +17,7 @@ try:
 except ImportError:
     HAS_HYPOTHESIS = False
 
-from figtreekit import FigTreeStyler, LayoutType, CompatibilityWarning
+from figtreekit import FigTreeStyler, LayoutType
 
 if HAS_HYPOTHESIS:
 
@@ -178,9 +177,9 @@ if HAS_HYPOTHESIS:
             if len(taxa) >= 2:
                 styler.highlight_clade(taxa[:2], color="#FF0000")
 
-            path1 = tempfile.mktemp(suffix=".nex")
-            path2 = tempfile.mktemp(suffix=".nex")
-            try:
+            with tempfile.TemporaryDirectory() as tmp:
+                path1 = os.path.join(tmp, "first.nex")
+                path2 = os.path.join(tmp, "second.nex")
                 styler.export(path1)
                 styler.export(path2)
                 with open(path1) as f:
@@ -188,7 +187,3 @@ if HAS_HYPOTHESIS:
                 with open(path2) as f:
                     content2 = f.read()
                 assert content1 == content2
-            finally:
-                for p in (path1, path2):
-                    if os.path.exists(p):
-                        os.unlink(p)

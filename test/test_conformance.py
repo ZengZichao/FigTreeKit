@@ -374,9 +374,9 @@ class TestTreeDeclarationScannerValidation:
 
 
 def _jar_path() -> Path:
-    import figtreekit
-
-    return Path(figtreekit.__file__).parent / "figtree_patched.jar"
+    # The bundled jar sits in the package directory next to this checkout's
+    # test/ folder; same convention test_render_jpeg.py uses.
+    return Path(__file__).parent.parent / "figtreekit" / "figtree_patched.jar"
 
 
 _HAVE_JAVA = shutil.which("java") is not None and _jar_path().exists()

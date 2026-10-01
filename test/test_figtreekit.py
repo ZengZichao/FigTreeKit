@@ -396,10 +396,12 @@ class TestIntegration:
         styler.load_content(newick)
         styler.highlight_clade(["A", "B"], color="#FF0000")
 
-        path1 = tempfile.mktemp(suffix=".nex")
-        path2 = tempfile.mktemp(suffix=".nex")
+        # A per-test TemporaryDirectory instead of mktemp: collision-free by
+        # construction and cleaned up with the block.
+        with tempfile.TemporaryDirectory() as tmp:
+            path1 = os.path.join(tmp, "first.nex")
+            path2 = os.path.join(tmp, "second.nex")
 
-        try:
             styler.export(path1)
             styler.export(path2)
 
@@ -409,10 +411,6 @@ class TestIntegration:
                 content2 = f.read()
 
             assert content1 == content2
-        finally:
-            for p in (path1, path2):
-                if os.path.exists(p):
-                    os.unlink(p)
 
     def test_complete_workflow(self):
         """Test complete styling workflow."""
@@ -762,8 +760,6 @@ class TestBugFixes:
             with open(path) as f:
                 content = f.read()
             # Should contain 1.0, not 1.2999999999999998 or similar
-            import re
-
             hilight_match = re.search(r"\[&!hilight=\{(\d+),([^,]+),", content)
             assert hilight_match is not None
             height_str = hilight_match.group(2)
@@ -921,15 +917,11 @@ class TestBugFixes:
 
     def test_branch_ordering_enum_removed(self):
         """BranchOrdering enum should no longer exist."""
-        import figtreekit
-
-        assert not hasattr(figtreekit, "BranchOrdering")
+        assert not hasattr(sys.modules["figtreekit"], "BranchOrdering")
 
     def test_hilight_info_class_removed(self):
         """HilightInfo class should no longer exist."""
-        import figtreekit
-
-        assert not hasattr(figtreekit, "HilightInfo")
+        assert not hasattr(sys.modules["figtreekit"], "HilightInfo")
 
 
 class TestNewExceptionHierarchy:
@@ -2576,16 +2568,12 @@ class TestAuthorInfo:
     """Test that author info is properly set."""
 
     def test_author_not_todo(self):
-        import figtreekit
-
-        assert "TODO" not in figtreekit.__author__
-        assert "TODO" not in figtreekit.__email__
+        assert "TODO" not in sys.modules["figtreekit"].__author__
+        assert "TODO" not in sys.modules["figtreekit"].__email__
 
     def test_author_values(self):
-        import figtreekit
-
-        assert figtreekit.__author__ == "Zeng Zichao"
-        assert figtreekit.__email__ == "zengzichao@sjtu.edu.cn"
+        assert sys.modules["figtreekit"].__author__ == "Zeng Zichao"
+        assert sys.modules["figtreekit"].__email__ == "zengzichao@sjtu.edu.cn"
 
 
 class TestValidatorRGBRange:
@@ -2949,7 +2937,7 @@ class TestDiagnosticFixes:
         (tmp_path / "a.tre").write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_dir = tmp_path / "styled"
 
-        import figtreekit._cli as cli_mod
+        from figtreekit import _cli as cli_mod
 
         original_import = (
             __builtins__.__import__ if hasattr(__builtins__, "__import__") else __import__
@@ -3298,7 +3286,7 @@ class TestStylerAnnotationPaths:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             # Pass None to trigger failure
-            result = styler._serialize_tree_to_newick(None)
+            styler._serialize_tree_to_newick(None)
             # May or may not warn depending on Bio.Phylo behavior
             # But should not crash
 
@@ -4090,8 +4078,8 @@ end;"""
         styler.highlight_clade(["A", "B"], color="#FF0000")
         styler.set_clade_color(["C", "D"], color="#00FF00")
 
-        paths = [tempfile.mktemp(suffix=".nex") for _ in range(3)]
-        try:
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = [os.path.join(tmp, f"copy{i}.nex") for i in range(3)]
             for p in paths:
                 styler.export(p)
             contents = []
@@ -4102,10 +4090,6 @@ end;"""
             # Original tree content must be unchanged
             assert "[&!hilight=" not in (styler._tree_content or "")
             assert "[&!color=" not in (styler._tree_content or "")
-        finally:
-            for p in paths:
-                if os.path.exists(p):
-                    os.unlink(p)
 
     def test_extract_taxa_catches_specific_exceptions(self):
         """extract_taxa_from_newick should catch only specific exceptions, not bare Exception."""

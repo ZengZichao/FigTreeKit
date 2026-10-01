@@ -5,8 +5,6 @@ Covers robustness scenarios 15-20 and 27-28.
 """
 
 import warnings
-import os
-import csv
 from io import StringIO
 
 import pytest
