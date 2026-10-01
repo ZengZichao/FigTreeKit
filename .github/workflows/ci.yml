@@ -1,16 +1,71 @@
 name: CI
 
+# ---------------------------------------------------------------------------
+# Action versions awaiting a manual major-bump review
+# ---------------------------------------------------------------------------
+# .github/dependabot.yml deliberately ignores `version-update:semver-major`
+# for the github-actions ecosystem, so Dependabot will propose minor and
+# patch bumps but never a new major. Dependabot has already detected these
+# as available (the PRs were opened on 2026-10-01 and closed once the ignore
+# rule landed):
+#
+#   actions/checkout        v4 -> v7
+#   actions/setup-python    v5 -> v7
+#   actions/upload-artifact v4 -> v7
+#   codecov/codecov-action  v4 -> v7
+#
+# The ignore rule is the right default: a major bump swaps the action's
+# Node runtime and the upgrade is not safe to merge unreviewed. The cost is
+# that a fix published only in a new major will never arrive on its own.
+# Review these roughly monthly; codecov-action is the one to look at first,
+# because v4's tokenless upload for public repositories is the behaviour the
+# "tokenless uploads can fail on pushes" comment below is working around.
+#
+# actions/setup-java and github/codeql-action are deliberately *not* in that
+# list: both were introduced by this change, and both were pinned to their
+# current major on arrival rather than to whatever major the surrounding
+# actions happen to sit on. A new dependency should not start two majors
+# behind on day one.
+# ---------------------------------------------------------------------------
+
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
     tags: [ 'v*' ]  # v* tags trigger the publish job (Trusted Publishing to PyPI)
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+
+# Least privilege by default. The publish job is the only one that needs
+# more, and it escalates for itself (id-token: write) rather than widening
+# the token for every other job on the run.
+permissions:
+  contents: read
+
+# Superseded runs are cancelled. Without this, a burst of Dependabot PRs each
+# expand a full two-OS matrix plus docker, and the runner queue backs up:
+# on 2026-10-01 four dependabot PRs landed within ten seconds and one
+# docker job waited 22 minutes for a runner while another run sat queued
+# for over an hour.
+#
+# Tag runs are exempt: cancelling one mid-flight could abort a PyPI publish
+# that has already started, and two release tags in quick succession is a
+# real (if rare) workflow.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     strategy:
+      # Report both platforms even if one fails, so a single red matrix leg
+      # does not hide the other's result.
+      fail-fast: false
+      # Bound the fan-out. macOS runners are the scarce resource here and an
+      # unbounded matrix is what produced the queue backlog above.
+      max-parallel: 2
       matrix:
         os: [macos-latest, ubuntu-latest]
         python-version: ['3.11']
@@ -25,6 +80,30 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    # Pinned deliberately. The suite shells out to `java` in
+    # test_conformance.py and test_rendering_mock.py, and
+    # figtreekit/_figtree_setup.py resolves it with shutil.which("java").
+    # Without this step the JDK is whatever the runner image happens to ship,
+    # which drifts between image updates with no commit to explain it.
+    #
+    # 8 is the floor: figtreekit/figtree_patched.jar is compiled for Java 8
+    # and _figtree_patch/BUILD_PROVENANCE.md records the frozen measurement
+    # environment as java 1.8.0_501, so this also makes CI agree with the
+    # provenance record.
+    #
+    # Note that this is the floor, not the only supported JDK. The Dockerfile
+    # installs Debian's current default JDK (21 on trixie) and end users will
+    # have something newer still, so nothing in CI currently exercises the
+    # render path on a modern JVM. Widening this to a java-version matrix
+    # would close that gap, but it would double an already runner-constrained
+    # matrix, so it is deliberately left as a follow-up rather than done
+    # here.
+    - name: Set up Java 8
+      uses: actions/setup-java@v6
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
     - name: Install dependencies
       # [render] is installed so the post-render appearance pass is exercised
       # here and the coverage this job reports is the coverage the article
@@ -32,6 +111,15 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -e ".[dev,render]"
+
+    - name: Check formatting with black
+      # Non-blocking, same treatment as the mypy step below: 37 of the 42
+      # Python files predate the current black stable style and would need a
+      # formatting-only commit. The step is here so the debt is visible and
+      # the count shrinks over time, not so it blocks. See CONTRIBUTING.md.
+      continue-on-error: true
+      run: |
+        black --check --diff figtreekit/ test/ benchmarks/ examples/ scripts/
 
     - name: Lint with flake8
       run: |
@@ -41,9 +129,11 @@ jobs:
         flake8 figtreekit/ --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
 
     - name: Type check with mypy
-      # Non-blocking: 118 pre-existing untyped-def errors exist. Report them
-      # in the log without failing the build; re-enable strict gating once the
-      # codebase is incrementally typed.
+      # Non-blocking: just over a hundred pre-existing untyped-def errors
+      # exist (124 under the mypy 2.x series; the exact count drifts as the
+      # code changes, so treat it as approximate). Report them in the log
+      # without failing the build; re-enable strict gating once the codebase
+      # is incrementally typed.
       continue-on-error: true
       run: |
         mypy figtreekit/ --ignore-missing-imports
@@ -94,6 +184,7 @@ jobs:
 
   docker:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: test
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
 
@@ -109,25 +200,48 @@ jobs:
 
   benchmark:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # full_benchmark.py stamps the commit into its output
 
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 
+    - name: Set up Java 8
+      uses: actions/setup-java@v6
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
     - name: Install dependencies
+      # The [benchmark] extra is the point of this step. full_benchmark.py is
+      # the only module that imports numpy (and optionally scipy), and it is
+      # the script whose extra was once missing numpy from the package
+      # metadata. Installing the extra here means a break in it fails this job
+      # instead of being found by hand.
       run: |
         python -m pip install --upgrade pip
-        pip install -e "."
+        pip install -e ".[benchmark]"
 
-    - name: Run benchmarks
+    - name: Run the scaling benchmark
       run: |
         python benchmarks/performance.py --sizes 10 50 100 500 --repeats 10
+
+    # Exercises every numpy/scipy code path, including the Student-t critical
+    # values that scipy replaces. --quick keeps it to two sizes and one seed;
+    # the full matrix is the maintainer's local measurement run, not CI's.
+    # Missing GTDB inputs are skipped by run_gtdb(), so this needs no
+    # external data.
+    - name: Smoke-run the full benchmark suite
+      run: |
+        python benchmarks/full_benchmark.py --quick
 
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
@@ -138,6 +252,7 @@ jobs:
   publish:
     needs: test
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     if: startsWith(github.ref, 'refs/tags/v')
     environment: pypi  # must match the Environment name configured on PyPI's Trusted Publisher
     permissions:

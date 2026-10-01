@@ -193,6 +193,11 @@ benchmarks/table_values.json
 benchmarks/coverage_summary*.json
 benchmarks/coverage_*.xml
 benchmarks/audit_*.json
+# run_shapes() writes this next to results_shapes.csv on every run - the
+# per-tree timings the cell medians are computed from (see its docstring).
+# The canonical files it backs are tracked deliberately; this one is a
+# per-run byproduct, so a benchmark run should not leave the checkout dirty.
+benchmarks/*_per_tree.csv
 
 # Editor/agent session state
 .mimosa/
