@@ -125,7 +125,13 @@ def _load_json(path):
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        pytest.fail(f"{path.relative_to(REPO_ROOT)} is not valid JSON: {exc}")
+        # raise, not pytest.fail: this function has a return on the success path,
+        # so a failure branch that merely called pytest.fail would leave the
+        # function able to fall off the end, and CodeQL reports that as
+        # "explicit returns mixed with implicit (fall through) returns".
+        # pytest.fail does raise, but saying so explicitly keeps the control
+        # flow checkable instead of relying on that.
+        raise AssertionError(f"{path.relative_to(REPO_ROOT)} is not valid JSON: {exc}") from exc
 
 
 def _load_csv(path):

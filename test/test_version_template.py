@@ -95,15 +95,19 @@ class TestVersionTemplateSurvivesMissingScm:
         try:
             rendered = _render(config, _NoScm())
         except TypeError as exc:
-            pytest.fail(
+            raise AssertionError(
                 "version_file_template raises when setuptools_scm falls back "
                 f"to fallback_version: {exc}\n"
                 "A format specifier such as {scm_version.node_date:%Y-%m-%d} "
                 "cannot survive node_date being None. Either drop the "
                 "specifier or move the derivation into figtreekit/__init__.py, "
                 "but do not leave it in the template."
-            )
-        assert "__version__" in rendered
+            ) from exc
+        else:
+            # else, not a statement after except: on the except path `rendered`
+            # was never bound, and CodeQL reports reaching the assert with it
+            # uninitialised ("Potentially uninitialized local variable").
+            assert "__version__" in rendered
 
     def test_no_format_specifier_on_optional_scm_attributes(self):
         """Prose form of the same rule, to keep the failure readable."""
