@@ -49,7 +49,6 @@ from figtreekit._cli import (
 )
 import argparse
 
-
 # ── Fixtures ──────────────────────────────────────────────────────────────
 
 SIMPLE_NEWICK = "((A_d__Bacteria_p__Firmicutes:0.1,B_d__Bacteria_p__Firmicutes:0.2):0.3,C_d__Archaea_p__Euryarchaeota:0.4);"
@@ -116,6 +115,7 @@ def fasta_file_mismatch(tmp_path):
 
 # ── parse_taxonomy tests ──────────────────────────────────────────────────
 
+
 class TestParseTaxonomy:
     def test_format_b_basic(self):
         result = parse_taxonomy("d__Bacteria;p__Proteobacteria;c__Gamma")
@@ -145,6 +145,7 @@ class TestParseTaxonomy:
 
 
 # ── is_monophyletic tests ─────────────────────────────────────────────────
+
 
 class TestIsMonophyletic:
     def test_with_styler_instance(self, taxonomy_tree_file):
@@ -177,6 +178,7 @@ class TestIsMonophyletic:
 
 # ── load_tree tests ───────────────────────────────────────────────────────
 
+
 class TestLoadTree:
     def test_load_newick(self, simple_tree_file):
         styler = load_tree(simple_tree_file)
@@ -208,6 +210,7 @@ class TestLoadTree:
 
 # ── cross_validate tests ──────────────────────────────────────────────────
 
+
 class TestCrossValidate:
     def test_matching(self, simple_tree_file, fasta_file):
         result = cross_validate(simple_tree_file, fasta_file, strict=False)
@@ -235,6 +238,7 @@ class TestCrossValidate:
 
 
 # ── CLI type validator tests ──────────────────────────────────────────────
+
 
 class TestCLITypeValidators:
     def test_positive_int_valid(self):
@@ -295,6 +299,7 @@ class TestCLITypeValidators:
 
 # ── _parse_collapse_taxa_spec tests ───────────────────────────────────────
 
+
 class TestParseCollapseTaxaSpec:
     def test_basic_taxa(self):
         taxa, label, ctype = _parse_collapse_taxa_spec("A,B,C")
@@ -345,6 +350,7 @@ class TestParseCollapseTaxaSpec:
 
 # ── _coerce_value tests ───────────────────────────────────────────────────
 
+
 class TestCoerceValue:
     def test_bool_true(self):
         assert _coerce_value("true") is True
@@ -381,6 +387,7 @@ class TestCoerceValue:
 
 # ── _looks_like_taxon tests ───────────────────────────────────────────────
 
+
 class TestLooksLikeTaxon:
     def test_normal_name(self):
         assert _looks_like_taxon("Escherichia_coli") is True
@@ -395,13 +402,18 @@ class TestLooksLikeTaxon:
 
 # ── _color_groups_by_result tests ─────────────────────────────────────────
 
+
 class TestColorGroupsByResult:
     def test_monophyletic_coloring(self, taxonomy_tree_file):
         styler = FigTreeStyler(taxonomy_tree_file)
         result = {
             "monophyletic": {
-                "Proteobacteria": {"taxa": ["tax1_d__Bacteria_p__Proteobacteria_c__Gamma_o__Enter_f__Ent_g__Esch",
-                                             "tax2_d__Bacteria_p__Proteobacteria_c__Gamma_o__Enter_f__Ent_g__Sal"]},
+                "Proteobacteria": {
+                    "taxa": [
+                        "tax1_d__Bacteria_p__Proteobacteria_c__Gamma_o__Enter_f__Ent_g__Esch",
+                        "tax2_d__Bacteria_p__Proteobacteria_c__Gamma_o__Enter_f__Ent_g__Sal",
+                    ]
+                },
             },
             "non_monophyletic": {},
         }
@@ -414,7 +426,9 @@ class TestColorGroupsByResult:
         result = {
             "monophyletic": {},
             "non_monophyletic": {
-                "Firmicutes": {"taxa": ["tax3_d__Bacteria_p__Firmicutes_c__Bacilli_o__Lacto_f__Lacto_g__Lacto"]},
+                "Firmicutes": {
+                    "taxa": ["tax3_d__Bacteria_p__Firmicutes_c__Bacilli_o__Lacto_f__Lacto_g__Lacto"]
+                },
             },
         }
         test_logger = logging.getLogger("test_color2")
@@ -440,6 +454,7 @@ class TestColorGroupsByResult:
 
 
 # ── setup_logger tests ────────────────────────────────────────────────────
+
 
 class TestSetupLogger:
     def test_default_level(self):
@@ -469,6 +484,7 @@ class TestSetupLogger:
 
 # ── _StepTimer tests ──────────────────────────────────────────────────────
 
+
 class TestStepTimer:
     def test_basic_timing(self):
         test_logger = logging.getLogger("test_timer")
@@ -485,6 +501,7 @@ class TestStepTimer:
 
 
 # ── _GracefulTerminator tests ─────────────────────────────────────────────
+
 
 class TestGracefulTerminator:
     def test_initial_state(self):
@@ -520,12 +537,18 @@ class TestGracefulTerminator:
 
 # ── _FlushStreamHandler and _FigTreeKitFormatter tests ─────────────────────
 
+
 class TestLoggingComponents:
     def test_formatter_output(self):
         formatter = _FigTreeKitFormatter()
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="", lineno=0,
-            msg="test message", args=(), exc_info=None,
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="test message",
+            args=(),
+            exc_info=None,
         )
         output = formatter.format(record)
         assert "test message" in output
@@ -534,18 +557,25 @@ class TestLoggingComponents:
 
     def test_flush_handler(self):
         import io
+
         stream = io.StringIO()
         handler = _FlushStreamHandler(stream)
         handler.setFormatter(_FigTreeKitFormatter())
         record = logging.LogRecord(
-            name="test", level=logging.INFO, pathname="", lineno=0,
-            msg="flush test", args=(), exc_info=None,
+            name="test",
+            level=logging.INFO,
+            pathname="",
+            lineno=0,
+            msg="flush test",
+            args=(),
+            exc_info=None,
         )
         handler.emit(record)
         assert "flush test" in stream.getvalue()
 
 
 # ── create_cli_parser tests ───────────────────────────────────────────────
+
 
 class TestCreateCLIParser:
     def test_parser_creation(self):
@@ -625,12 +655,17 @@ class TestCreateCLIParser:
 
     def test_parse_font_options(self, simple_tree_file):
         parser = create_cli_parser()
-        args = parser.parse_args([
-            simple_tree_file,
-            "--font-name", "Arial",
-            "--font-size", "12",
-            "--font-style", "1",
-        ])
+        args = parser.parse_args(
+            [
+                simple_tree_file,
+                "--font-name",
+                "Arial",
+                "--font-size",
+                "12",
+                "--font-style",
+                "1",
+            ]
+        )
         assert args.font_name == "Arial"
         assert args.font_size == 12
         assert args.font_style == 1

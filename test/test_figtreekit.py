@@ -149,7 +149,7 @@ class TestFigTreeStyler:
 
     def test_load_file(self, simple_newick):
         """Test loading from file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.tre', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".tre", delete=False) as f:
             f.write(simple_newick)
             temp_path = f.name
 
@@ -206,21 +206,23 @@ class TestFigTreeStyler:
 
     def test_method_chaining(self, simple_newick):
         """Test method chaining."""
-        styler = FigTreeStyler() \
-            .load_content(simple_newick) \
-            .set_layout(LayoutType.POLAR) \
+        styler = (
+            FigTreeStyler()
+            .load_content(simple_newick)
+            .set_layout(LayoutType.POLAR)
             .set_tip_labels(is_shown=True)
+        )
         assert styler._tree_content is not None
 
     def test_export_newick(self, styler):
         """Test exporting Newick tree."""
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             temp_path = f.name
 
         try:
             styler.export(temp_path)
             assert os.path.exists(temp_path)
-            with open(temp_path, 'r') as f:
+            with open(temp_path, "r") as f:
                 content = f.read()
             assert "#NEXUS" in content
             assert "begin trees;" in content
@@ -232,12 +234,12 @@ class TestFigTreeStyler:
         """Test exporting with hilight annotation."""
         styler.highlight_clade(["A", "B"], color="#FF0000")
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             temp_path = f.name
 
         try:
             styler.export(temp_path)
-            with open(temp_path, 'r') as f:
+            with open(temp_path, "r") as f:
                 content = f.read()
             assert "[&!hilight=" in content
             assert "#ff0000" in content
@@ -248,12 +250,12 @@ class TestFigTreeStyler:
         """Test exporting with color annotation."""
         styler.set_clade_color(["A", "B"], color="#00FF00")
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             temp_path = f.name
 
         try:
             styler.export(temp_path)
-            with open(temp_path, 'r') as f:
+            with open(temp_path, "r") as f:
                 content = f.read()
             assert "[&!color=" in content
             assert "#00ff00" in content
@@ -332,12 +334,12 @@ class TestIntegration:
         styler.load_content(newick)
         styler.set_clade_hilight("MRCA(A,B)", tip_count=2, height=0.3, color="#FF0000")
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             temp_path = f.name
 
         try:
             styler.export(temp_path)
-            with open(temp_path, 'r') as f:
+            with open(temp_path, "r") as f:
                 content = f.read()
             assert "[&!hilight=" in content
         finally:
@@ -353,7 +355,7 @@ class TestIntegration:
 
         original_content = styler._tree_content
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             temp_path = f.name
 
         try:
@@ -383,8 +385,8 @@ class TestIntegration:
         styler.highlight_clade(["A", "B"], color="#FF0000", width=6, offset=0.5)
 
         annotation = styler._settings._node_annotations[0]
-        assert annotation.extra_params['width'] == 6
-        assert annotation.extra_params['offset'] == 0.5
+        assert annotation.extra_params["width"] == 6
+        assert annotation.extra_params["offset"] == 0.5
 
     def test_double_export_produces_same_output(self):
         """Test that exporting the same styler twice produces identical output."""
@@ -394,8 +396,8 @@ class TestIntegration:
         styler.load_content(newick)
         styler.highlight_clade(["A", "B"], color="#FF0000")
 
-        path1 = tempfile.mktemp(suffix='.nex')
-        path2 = tempfile.mktemp(suffix='.nex')
+        path1 = tempfile.mktemp(suffix=".nex")
+        path2 = tempfile.mktemp(suffix=".nex")
 
         try:
             styler.export(path1)
@@ -424,37 +426,26 @@ class TestIntegration:
 
         # Set appearance
         styler.set_appearance(
-            branch_line_width=2.0,
-            background_color="#FFFFFF",
-            foreground_color="#000000"
+            branch_line_width=2.0, background_color="#FFFFFF", foreground_color="#000000"
         )
 
         # Set labels
-        styler.set_tip_labels(
-            is_shown=True,
-            font_name="Arial",
-            font_size=12,
-            font_style=1
-        )
+        styler.set_tip_labels(is_shown=True, font_name="Arial", font_size=12, font_style=1)
 
-        styler.set_node_labels(
-            is_shown=True,
-            display_attribute="height",
-            font_size=10
-        )
+        styler.set_node_labels(is_shown=True, display_attribute="height", font_size=10)
 
         # Highlight clades
         styler.highlight_clade(["A", "B"], color="#FF0000")
         styler.set_clade_color(["C", "D"], color="#00FF00")
 
         # Export
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             temp_path = f.name
 
         try:
             styler.export(temp_path)
 
-            with open(temp_path, 'r') as f:
+            with open(temp_path, "r") as f:
                 content = f.read()
 
             # Verify content
@@ -480,7 +471,7 @@ begin trees;
     tree TREE1 = ((A:0.1,B:0.2):0.3,C:0.4);
 end;
 """
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".nex", delete=False) as f:
             f.write(nexus)
             input_path = f.name
 
@@ -488,10 +479,10 @@ end;
             styler = FigTreeStyler(input_path)
             styler.set_layout(LayoutType.POLAR)
 
-            output_path = input_path.replace('.nex', '_styled.nex')
+            output_path = input_path.replace(".nex", "_styled.nex")
             styler.export(output_path)
 
-            with open(output_path, 'r') as f:
+            with open(output_path, "r") as f:
                 content = f.read()
 
             assert "#NEXUS" in content
@@ -515,13 +506,13 @@ end;
         styler.highlight_clade(["C", "D"], color="#00FF00")
         styler.highlight_clade(["A", "B", "C", "D"], color="#0000FF")
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             temp_path = f.name
 
         try:
             styler.export(temp_path)
 
-            with open(temp_path, 'r') as f:
+            with open(temp_path, "r") as f:
                 content = f.read()
 
             # Count hilight annotations
@@ -562,9 +553,7 @@ class TestDataClasses:
     def test_node_annotation(self):
         """Test NodeAnnotation data class."""
         annotation = NodeAnnotation(
-            annotation_type="hilight",
-            values=[3, 0.5, "#FF0000"],
-            target_taxa=["A", "B"]
+            annotation_type="hilight", values=[3, 0.5, "#FF0000"], target_taxa=["A", "B"]
         )
         assert annotation.annotation_type == "hilight"
         assert annotation.target_taxa == ["A", "B"]
@@ -587,25 +576,50 @@ class TestBugFixes:
         """CLI --font-size 0 should not be silently dropped."""
         from figtreekit import apply_cli_args
         import argparse
+
         styler = FigTreeStyler().load_content(simple_newick)
         args = argparse.Namespace(
-            config=None, branch_width=None, branch_color_attribute=None,
-            background_color=None, foreground_color=None, selection_color=None,
-            layout=None, expansion=None, zoom=None,
-            rooted=False, unrooted=False, rooting_type=None,
-            transform=None, order=None, order_branches=False,
-            tip_labels_show=False, tip_labels_hide=False,
-            font_name=None, font_size=0, font_style=None, label_color=None,
-            node_labels_show=False, node_labels_hide=False,
+            config=None,
+            branch_width=None,
+            branch_color_attribute=None,
+            background_color=None,
+            foreground_color=None,
+            selection_color=None,
+            layout=None,
+            expansion=None,
+            zoom=None,
+            rooted=False,
+            unrooted=False,
+            rooting_type=None,
+            transform=None,
+            order=None,
+            order_branches=False,
+            tip_labels_show=False,
+            tip_labels_hide=False,
+            font_name=None,
+            font_size=0,
+            font_style=None,
+            label_color=None,
+            node_labels_show=False,
+            node_labels_hide=False,
             node_display_attribute=None,
-            branch_labels_show=False, branch_labels_hide=False,
+            branch_labels_show=False,
+            branch_labels_hide=False,
             branch_display_attribute=None,
-            scale_bar_show=False, scale_bar_hide=False,
-            scale_axis_show=False, scale_axis_hide=False,
-            root_age=None, scale_factor=None,
-            angular_range=None, root_angle=None, align_tip_labels=False,
-            radial_spread=None, curvature=None, root_length=None,
-            legend_show=False, legend_position=None,
+            scale_bar_show=False,
+            scale_bar_hide=False,
+            scale_axis_show=False,
+            scale_axis_hide=False,
+            root_age=None,
+            scale_factor=None,
+            angular_range=None,
+            root_angle=None,
+            align_tip_labels=False,
+            radial_spread=None,
+            curvature=None,
+            root_length=None,
+            legend_show=False,
+            legend_position=None,
         )
         apply_cli_args(styler, args)
         settings = styler.get_settings()
@@ -615,25 +629,50 @@ class TestBugFixes:
         """CLI --branch-width 0.0 should not be silently dropped."""
         from figtreekit import apply_cli_args
         import argparse
+
         styler = FigTreeStyler().load_content(simple_newick)
         args = argparse.Namespace(
-            config=None, branch_width=0.0, branch_color_attribute=None,
-            background_color=None, foreground_color=None, selection_color=None,
-            layout=None, expansion=None, zoom=None,
-            rooted=False, unrooted=False, rooting_type=None,
-            transform=None, order=None, order_branches=False,
-            tip_labels_show=False, tip_labels_hide=False,
-            font_name=None, font_size=None, font_style=None, label_color=None,
-            node_labels_show=False, node_labels_hide=False,
+            config=None,
+            branch_width=0.0,
+            branch_color_attribute=None,
+            background_color=None,
+            foreground_color=None,
+            selection_color=None,
+            layout=None,
+            expansion=None,
+            zoom=None,
+            rooted=False,
+            unrooted=False,
+            rooting_type=None,
+            transform=None,
+            order=None,
+            order_branches=False,
+            tip_labels_show=False,
+            tip_labels_hide=False,
+            font_name=None,
+            font_size=None,
+            font_style=None,
+            label_color=None,
+            node_labels_show=False,
+            node_labels_hide=False,
             node_display_attribute=None,
-            branch_labels_show=False, branch_labels_hide=False,
+            branch_labels_show=False,
+            branch_labels_hide=False,
             branch_display_attribute=None,
-            scale_bar_show=False, scale_bar_hide=False,
-            scale_axis_show=False, scale_axis_hide=False,
-            root_age=None, scale_factor=None,
-            angular_range=None, root_angle=None, align_tip_labels=False,
-            radial_spread=None, curvature=None, root_length=None,
-            legend_show=False, legend_position=None,
+            scale_bar_show=False,
+            scale_bar_hide=False,
+            scale_axis_show=False,
+            scale_axis_hide=False,
+            root_age=None,
+            scale_factor=None,
+            angular_range=None,
+            root_angle=None,
+            align_tip_labels=False,
+            radial_spread=None,
+            curvature=None,
+            root_length=None,
+            legend_show=False,
+            legend_position=None,
         )
         apply_cli_args(styler, args)
         settings = styler.get_settings()
@@ -649,7 +688,7 @@ class TestBugFixes:
         styler.clear_clade_hilights()
         assert len(styler._settings._node_annotations) == 0
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -674,6 +713,7 @@ class TestBugFixes:
     def test_discrete_coloring_without_attribute_warns(self, styler):
         """discrete_coloring=True without branch_color_attribute should warn, not crash."""
         import warnings
+
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             styler.set_appearance(discrete_coloring=True)
@@ -687,7 +727,7 @@ class TestBugFixes:
         styler.highlight_clade(["A", "B"], color="#FF0000")
         original_values = styler._settings._node_annotations[0].values.copy()
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -715,7 +755,7 @@ class TestBugFixes:
         styler = FigTreeStyler().load_content(newick)
         styler.highlight_clade(["A", "B"], color="#FF0000")
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -723,7 +763,8 @@ class TestBugFixes:
                 content = f.read()
             # Should contain 1.0, not 1.2999999999999998 or similar
             import re
-            hilight_match = re.search(r'\[&!hilight=\{(\d+),([^,]+),', content)
+
+            hilight_match = re.search(r"\[&!hilight=\{(\d+),([^,]+),", content)
             assert hilight_match is not None
             height_str = hilight_match.group(2)
             height_val = float(height_str)
@@ -761,9 +802,7 @@ class TestBugFixes:
         """validate_nexus should require at least one begin/end block."""
         assert TreeValidator.validate_nexus("#NEXUS") is False
         assert TreeValidator.validate_nexus("#NEXUS garbage") is False
-        assert TreeValidator.validate_nexus(
-            "#NEXUS\nbegin trees;\ntree T = (A:0.1);\nend;"
-        ) is True
+        assert TreeValidator.validate_nexus("#NEXUS\nbegin trees;\ntree T = (A:0.1);\nend;") is True
 
     # --- Issue 13: CLI config error handling ---
 
@@ -772,30 +811,54 @@ class TestBugFixes:
         from figtreekit import apply_cli_args
         import argparse
 
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
             f.write("{invalid json}")
             config_path = f.name
 
         try:
             styler = FigTreeStyler().load_content(simple_newick)
             args = argparse.Namespace(
-                config=config_path, branch_width=None, branch_color_attribute=None,
-                background_color=None, foreground_color=None, selection_color=None,
-                layout=None, expansion=None, zoom=None,
-                rooted=False, unrooted=False, rooting_type=None,
-                transform=None, order=None, order_branches=False,
-                tip_labels_show=False, tip_labels_hide=False,
-                font_name=None, font_size=None, font_style=None, label_color=None,
-                node_labels_show=False, node_labels_hide=False,
+                config=config_path,
+                branch_width=None,
+                branch_color_attribute=None,
+                background_color=None,
+                foreground_color=None,
+                selection_color=None,
+                layout=None,
+                expansion=None,
+                zoom=None,
+                rooted=False,
+                unrooted=False,
+                rooting_type=None,
+                transform=None,
+                order=None,
+                order_branches=False,
+                tip_labels_show=False,
+                tip_labels_hide=False,
+                font_name=None,
+                font_size=None,
+                font_style=None,
+                label_color=None,
+                node_labels_show=False,
+                node_labels_hide=False,
                 node_display_attribute=None,
-                branch_labels_show=False, branch_labels_hide=False,
+                branch_labels_show=False,
+                branch_labels_hide=False,
                 branch_display_attribute=None,
-                scale_bar_show=False, scale_bar_hide=False,
-                scale_axis_show=False, scale_axis_hide=False,
-                root_age=None, scale_factor=None,
-                angular_range=None, root_angle=None, align_tip_labels=False,
-                radial_spread=None, curvature=None, root_length=None,
-                legend_show=False, legend_position=None,
+                scale_bar_show=False,
+                scale_bar_hide=False,
+                scale_axis_show=False,
+                scale_axis_hide=False,
+                root_age=None,
+                scale_factor=None,
+                angular_range=None,
+                root_angle=None,
+                align_tip_labels=False,
+                radial_spread=None,
+                curvature=None,
+                root_length=None,
+                legend_show=False,
+                legend_position=None,
             )
             with pytest.raises(ValidationError, match="Invalid JSON"):
                 apply_cli_args(styler, args)
@@ -809,24 +872,47 @@ class TestBugFixes:
 
         styler = FigTreeStyler().load_content(simple_newick)
         args = argparse.Namespace(
-            config="/nonexistent/config.json", branch_width=None,
+            config="/nonexistent/config.json",
+            branch_width=None,
             branch_color_attribute=None,
-            background_color=None, foreground_color=None, selection_color=None,
-            layout=None, expansion=None, zoom=None,
-            rooted=False, unrooted=False, rooting_type=None,
-            transform=None, order=None, order_branches=False,
-            tip_labels_show=False, tip_labels_hide=False,
-            font_name=None, font_size=None, font_style=None, label_color=None,
-            node_labels_show=False, node_labels_hide=False,
+            background_color=None,
+            foreground_color=None,
+            selection_color=None,
+            layout=None,
+            expansion=None,
+            zoom=None,
+            rooted=False,
+            unrooted=False,
+            rooting_type=None,
+            transform=None,
+            order=None,
+            order_branches=False,
+            tip_labels_show=False,
+            tip_labels_hide=False,
+            font_name=None,
+            font_size=None,
+            font_style=None,
+            label_color=None,
+            node_labels_show=False,
+            node_labels_hide=False,
             node_display_attribute=None,
-            branch_labels_show=False, branch_labels_hide=False,
+            branch_labels_show=False,
+            branch_labels_hide=False,
             branch_display_attribute=None,
-            scale_bar_show=False, scale_bar_hide=False,
-            scale_axis_show=False, scale_axis_hide=False,
-            root_age=None, scale_factor=None,
-            angular_range=None, root_angle=None, align_tip_labels=False,
-            radial_spread=None, curvature=None, root_length=None,
-            legend_show=False, legend_position=None,
+            scale_bar_show=False,
+            scale_bar_hide=False,
+            scale_axis_show=False,
+            scale_axis_hide=False,
+            root_age=None,
+            scale_factor=None,
+            angular_range=None,
+            root_angle=None,
+            align_tip_labels=False,
+            radial_spread=None,
+            curvature=None,
+            root_length=None,
+            legend_show=False,
+            legend_position=None,
         )
         with pytest.raises(FileNotFoundError):
             apply_cli_args(styler, args)
@@ -836,12 +922,14 @@ class TestBugFixes:
     def test_branch_ordering_enum_removed(self):
         """BranchOrdering enum should no longer exist."""
         import figtreekit
-        assert not hasattr(figtreekit, 'BranchOrdering')
+
+        assert not hasattr(figtreekit, "BranchOrdering")
 
     def test_hilight_info_class_removed(self):
         """HilightInfo class should no longer exist."""
         import figtreekit
-        assert not hasattr(figtreekit, 'HilightInfo')
+
+        assert not hasattr(figtreekit, "HilightInfo")
 
 
 class TestNewExceptionHierarchy:
@@ -896,7 +984,7 @@ class TestFontAnnotationFormat:
     def test_font_plain_style(self, styler):
         """Font style 0 should produce PLAIN."""
         styler.set_clade_font(["A", "B"], "Arial", 0, 12)
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -909,7 +997,7 @@ class TestFontAnnotationFormat:
     def test_font_bold_style(self, styler):
         """Font style 1 should produce BOLD."""
         styler.set_clade_font(["A", "B"], "Helvetica", 1, 14)
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -922,7 +1010,7 @@ class TestFontAnnotationFormat:
     def test_font_italic_style(self, styler):
         """Font style 2 should produce ITALIC."""
         styler.set_clade_font(["A", "B"], "Times", 2, 10)
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -935,7 +1023,7 @@ class TestFontAnnotationFormat:
     def test_font_bold_italic_style(self, styler):
         """Font style 3 should produce BOLDITALIC."""
         styler.set_clade_font(["A", "B"], "Courier", 3, 16)
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -956,7 +1044,7 @@ class TestStringQuoting:
     def test_font_name_quoted(self, styler):
         """Font name should be double-quoted in figtree block."""
         styler.set_tip_labels(font_name="Arial")
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -969,7 +1057,7 @@ class TestStringQuoting:
     def test_display_attribute_quoted(self, styler):
         """Display attribute should be double-quoted."""
         styler.set_tip_labels(display_attribute="Names")
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -982,7 +1070,7 @@ class TestStringQuoting:
     def test_color_not_quoted(self, styler):
         """Color values should NOT be quoted."""
         styler.set_appearance(foreground_color="#FF0000")
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -996,7 +1084,7 @@ class TestStringQuoting:
     def test_boolean_not_quoted(self, styler):
         """Boolean values should NOT be quoted."""
         styler.set_tip_labels(is_shown=True)
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -1009,7 +1097,7 @@ class TestStringQuoting:
     def test_number_not_quoted(self, styler):
         """Numeric values should NOT be quoted."""
         styler.set_tip_labels(font_size=14)
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -1030,7 +1118,7 @@ class TestNegativeBranchLength:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             styler.highlight_clade(["A", "B"], color="#FF0000")
-            with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+            with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
                 path = f.name
             try:
                 styler.export(path)
@@ -1104,7 +1192,7 @@ class TestFigTreeCompatibility:
         styler = FigTreeStyler()
         styler.load_content(newick)
         styler.highlight_clade(["A", "B"], color="#FF0000")
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -1166,7 +1254,7 @@ begin trees;
 end;"""
         styler = FigTreeStyler()
         styler.load_content(nexus)
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -1183,7 +1271,7 @@ end;"""
         newick = "(A:0.1,B:0.2);"
         styler = FigTreeStyler().load_content(newick)
         styler.set_tip_labels(font_style=1)
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -1199,7 +1287,7 @@ end;"""
         newick = "(A:0.1,B:0.2);"
         styler = FigTreeStyler().load_content(newick)
         styler.set_tip_labels(is_shown=True)
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -1212,16 +1300,18 @@ end;"""
 
     def test_very_deep_tree(self):
         """Deep tree (>100 internal branches) should not lose precision."""
+
         def build_balanced(n):
             if n == 1:
                 return "T1:0.001"
             left = build_balanced(n // 2)
             right = build_balanced(n - n // 2)
             return f"({left},{right}):0.001"
+
         newick = f"({build_balanced(64)},{build_balanced(64)}):0.001;"
         styler = FigTreeStyler().load_content(newick)
         styler.highlight_clade(["T1"], color="#FF0000")
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -1240,30 +1330,50 @@ class TestSettingsAPI:
         return FigTreeStyler().load_content("((A:0.1,B:0.2):0.3,C:0.4);")
 
     def test_set_trees(self, styler):
-        styler.set_trees(rooting=True, transform=True, transform_type=TransformType.CLADOGRAM,
-                         order=True, order_type=OrderType.INCREASING_NODE_DENSITY)
+        styler.set_trees(
+            rooting=True,
+            transform=True,
+            transform_type=TransformType.CLADOGRAM,
+            order=True,
+            order_type=OrderType.INCREASING_NODE_DENSITY,
+        )
         s = styler.get_settings()
         assert s["trees.rooting"] is True
         assert s["trees.transformType"] == "cladogram"
         assert s["trees.orderType"] == "Increasing Node Density"
 
     def test_set_scale_bar(self, styler):
-        styler.set_scale_bar(is_shown=True, automatic_scale=True, scale_range=0.5,
-                             font_name="Arial", font_size=10, line_width=2.0, color="#FF0000")
+        styler.set_scale_bar(
+            is_shown=True,
+            automatic_scale=True,
+            scale_range=0.5,
+            font_name="Arial",
+            font_size=10,
+            line_width=2.0,
+            color="#FF0000",
+        )
         s = styler.get_settings()
         assert s["scaleBar.isShown"] is True
         assert s["scaleBar.scaleRange"] == 0.5
 
     def test_set_scale_axis(self, styler):
-        styler.set_scale_axis(is_shown=True, reverse_axis=True, show_grid=True,
-                              major_ticks=0.5, origin=1.0, tick_direction="out", color="#0000FF")
+        styler.set_scale_axis(
+            is_shown=True,
+            reverse_axis=True,
+            show_grid=True,
+            major_ticks=0.5,
+            origin=1.0,
+            tick_direction="out",
+            color="#0000FF",
+        )
         s = styler.get_settings()
         assert s["scaleAxis.reverseAxis"] is True
         assert s["scaleAxis.tickDirection"] == "out"
 
     def test_set_scale(self, styler):
-        styler.set_scale(root_age=100.0, scale_root=True, scale_factor=2.0,
-                         offset_age=5.0, auto_scale=False)
+        styler.set_scale(
+            root_age=100.0, scale_root=True, scale_factor=2.0, offset_age=5.0, auto_scale=False
+        )
         s = styler.get_settings()
         assert s["scale.rootAge"] == 100.0
         assert s["scale.scaleRoot"] is True
@@ -1280,20 +1390,28 @@ class TestSettingsAPI:
         assert s["rectilinearLayout.curvature"] == 5
 
     def test_set_node_bars(self, styler):
-        styler.set_node_bars(is_shown=True, bar_width=2.0, attribute="posterior",
-                             color="#FF0000", font_size=10)
+        styler.set_node_bars(
+            is_shown=True, bar_width=2.0, attribute="posterior", color="#FF0000", font_size=10
+        )
         s = styler.get_settings()
         assert s["nodeBars.barWidth"] == 2.0
 
     def test_set_node_shapes(self, styler):
-        styler.set_node_shapes(is_shown=True, shape_type="diamond", size=6.0,
-                               stroke_width=2.0, color="#00FF00")
+        styler.set_node_shapes(
+            is_shown=True, shape_type="diamond", size=6.0, stroke_width=2.0, color="#00FF00"
+        )
         s = styler.get_settings()
         assert s["nodeShapes.shapeType"] == "diamond"
 
     def test_set_legend(self, styler):
-        styler.set_legend(is_shown=True, position="bottom", x_position=1.0,
-                          y_position=2.0, background_opacity=0.5, reverse_order=True)
+        styler.set_legend(
+            is_shown=True,
+            position="bottom",
+            x_position=1.0,
+            y_position=2.0,
+            background_opacity=0.5,
+            reverse_order=True,
+        )
         s = styler.get_settings()
         assert s["legend.position"] == "Bottom"
         assert s["legend.reverseOrder"] is True
@@ -1305,8 +1423,9 @@ class TestSettingsAPI:
         assert s["hilighting.gradient"] is True
 
     def test_set_branch_labels(self, styler):
-        styler.set_branch_labels(is_shown=True, display_attribute="posterior",
-                                 font_name="Arial", font_size=10)
+        styler.set_branch_labels(
+            is_shown=True, display_attribute="posterior", font_name="Arial", font_size=10
+        )
         s = styler.get_settings()
         assert s["branchLabels.isShown"] is True
 
@@ -1335,50 +1454,62 @@ class TestSerializerEdgeCases:
 
     def test_serialize_none(self):
         from figtreekit._serializer import serialize_value
+
         assert serialize_value(None) == "null"
 
     def test_serialize_bool_true(self):
         from figtreekit._serializer import serialize_value
+
         assert serialize_value(True) == "true"
 
     def test_serialize_bool_false(self):
         from figtreekit._serializer import serialize_value
+
         assert serialize_value(False) == "false"
 
     def test_serialize_int(self):
         from figtreekit._serializer import serialize_value
+
         assert serialize_value(42) == "42"
 
     def test_serialize_float_integer(self):
         from figtreekit._serializer import serialize_value
+
         assert serialize_value(1.0) == "1"
 
     def test_serialize_float(self):
         from figtreekit._serializer import serialize_value
+
         assert serialize_value(3.14) == "3.14"
 
     def test_serialize_color(self):
         from figtreekit._serializer import serialize_value
+
         assert serialize_value("#FF0000") == "#ff0000"
 
     def test_serialize_old_style_color(self):
         from figtreekit._serializer import serialize_value
+
         assert serialize_value("#-16711681") == "#-16711681"
 
     def test_serialize_string_quoted(self):
         from figtreekit._serializer import serialize_value
+
         assert serialize_value("Arial") == '"Arial"'
 
     def test_serialize_string_null(self):
         from figtreekit._serializer import serialize_value
+
         assert serialize_value("null") == "null"
 
     def test_generate_figtree_block_empty(self):
         from figtreekit._serializer import generate_figtree_block
+
         assert generate_figtree_block({}) == ""
 
     def test_generate_figtree_block_with_settings(self):
         from figtreekit._serializer import generate_figtree_block
+
         block = generate_figtree_block({"layout.layoutType": "POLAR", "tipLabels.isShown": True})
         assert "begin figtree;" in block
         assert "end;" in block
@@ -1389,33 +1520,40 @@ class TestParserUtilities:
 
     def test_find_unquoted_semicolon_simple(self):
         from figtreekit._parser import find_unquoted_semicolon
+
         assert find_unquoted_semicolon("abc;def") == 3
 
     def test_find_unquoted_semicolon_in_quotes(self):
         from figtreekit._parser import find_unquoted_semicolon
+
         assert find_unquoted_semicolon("abc';';def") == 6
 
     def test_find_unquoted_semicolon_not_found(self):
         from figtreekit._parser import find_unquoted_semicolon
+
         assert find_unquoted_semicolon("abc") == -1
 
     def test_extract_tree_value_simple(self):
         from figtreekit._parser import extract_tree_value
+
         result = extract_tree_value("(A:0.1,B:0.2);rest")
         assert result == "(A:0.1,B:0.2)"
 
     def test_extract_tree_value_with_brackets(self):
         from figtreekit._parser import extract_tree_value
+
         result = extract_tree_value("[&R](A:0.1,B:0.2);rest")
         assert result == "[&R](A:0.1,B:0.2)"
 
     def test_extract_tree_value_no_semicolon(self):
         from figtreekit._parser import extract_tree_value
+
         result = extract_tree_value("(A:0.1,B:0.2)")
         assert result is None
 
     def test_extract_trees_block_content(self):
         from figtreekit._parser import extract_trees_block_content
+
         block = "begin trees;\n\ttree T1 = (A:0.1);\nend;"
         result = extract_trees_block_content(block)
         assert "tree T1" in result
@@ -1423,17 +1561,20 @@ class TestParserUtilities:
 
     def test_extract_taxa_from_newick(self):
         from figtreekit._parser import extract_taxa_from_newick
+
         taxa = extract_taxa_from_newick("((A:0.1,B:0.2):0.3,C:0.4);")
         assert set(taxa) == {"A", "B", "C"}
 
     def test_fallback_extract_taxa(self):
         from figtreekit._parser import _fallback_extract_taxa
+
         taxa = _fallback_extract_taxa("((A:0.1,B:0.2):0.3,C:0.4);")
         assert set(taxa) == {"A", "B", "C"}
 
     def test_apply_parsed_setting_boolean(self):
         from figtreekit._parser import apply_parsed_setting
         from figtreekit.styler import FigTreeSettings
+
         settings = FigTreeSettings()
         apply_parsed_setting(settings, "tipLabels.isShown", "false")
         assert settings.tipLabels["isShown"] is False
@@ -1441,6 +1582,7 @@ class TestParserUtilities:
     def test_apply_parsed_setting_color(self):
         from figtreekit._parser import apply_parsed_setting
         from figtreekit.styler import FigTreeSettings
+
         settings = FigTreeSettings()
         apply_parsed_setting(settings, "appearance.backgroundColour", "#FF0000")
         assert settings.appearance["backgroundColour"] == "#FF0000"
@@ -1448,6 +1590,7 @@ class TestParserUtilities:
     def test_apply_parsed_setting_quoted_string(self):
         from figtreekit._parser import apply_parsed_setting
         from figtreekit.styler import FigTreeSettings
+
         settings = FigTreeSettings()
         apply_parsed_setting(settings, "tipLabels.fontName", '"Arial"')
         assert settings.tipLabels["fontName"] == "Arial"
@@ -1455,6 +1598,7 @@ class TestParserUtilities:
     def test_apply_parsed_setting_null(self):
         from figtreekit._parser import apply_parsed_setting
         from figtreekit.styler import FigTreeSettings
+
         settings = FigTreeSettings()
         apply_parsed_setting(settings, "tipLabels.fontName", "null")
         assert settings.tipLabels["fontName"] is None
@@ -1462,6 +1606,7 @@ class TestParserUtilities:
     def test_apply_parsed_setting_number(self):
         from figtreekit._parser import apply_parsed_setting
         from figtreekit.styler import FigTreeSettings
+
         settings = FigTreeSettings()
         apply_parsed_setting(settings, "tipLabels.fontSize", "14")
         assert settings.tipLabels["fontSize"] == 14
@@ -1469,6 +1614,7 @@ class TestParserUtilities:
     def test_apply_parsed_setting_float(self):
         from figtreekit._parser import apply_parsed_setting
         from figtreekit.styler import FigTreeSettings
+
         settings = FigTreeSettings()
         apply_parsed_setting(settings, "scale.rootAge", "100.5")
         assert settings.scale["rootAge"] == 100.5
@@ -1476,6 +1622,7 @@ class TestParserUtilities:
     def test_apply_parsed_setting_custom(self):
         from figtreekit._parser import apply_parsed_setting
         from figtreekit.styler import FigTreeSettings
+
         settings = FigTreeSettings()
         apply_parsed_setting(settings, "custom.key", "value")
         assert settings._custom["custom.key"] == "value"
@@ -1489,7 +1636,8 @@ class TestCLI:
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         result = subprocess.run(
             [sys.executable, "-m", "figtreekit", str(tree_file), "--validate", "-v"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         assert result.returncode == 0
         combined = (result.stdout + result.stderr).lower()
@@ -1500,7 +1648,8 @@ class TestCLI:
         tree_file.write_text("(A:0.1,B:0.2)")
         result = subprocess.run(
             [sys.executable, "-m", "figtreekit", str(tree_file), "--validate"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         assert result.returncode != 0
 
@@ -1510,7 +1659,8 @@ class TestCLI:
         out_file = tmp_path / "output.nex"
         result = subprocess.run(
             [sys.executable, "-m", "figtreekit", str(tree_file), "-o", str(out_file)],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         assert result.returncode == 0
         assert out_file.exists()
@@ -1522,7 +1672,8 @@ class TestCLI:
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         result = subprocess.run(
             [sys.executable, "-m", "figtreekit", str(tree_file)],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         assert result.returncode != 0
 
@@ -1532,7 +1683,8 @@ class TestCLI:
         out_dir = tmp_path / "styled"
         result = subprocess.run(
             [sys.executable, "-m", "figtreekit", str(tmp_path), "-o", str(out_dir), "-v"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         assert result.returncode == 0
         assert (out_dir / "a.nex").exists()
@@ -1541,9 +1693,11 @@ class TestCLI:
 
     def test_version(self):
         from figtreekit import __version__
+
         result = subprocess.run(
             [sys.executable, "-m", "figtreekit", "--version"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         assert result.returncode == 0
         assert __version__ in result.stdout
@@ -1553,9 +1707,19 @@ class TestCLI:
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_file = tmp_path / "output.nex"
         result = subprocess.run(
-            [sys.executable, "-m", "figtreekit", str(tree_file), "-o", str(out_file),
-             "--layout", "polar", "--tip-labels-show"],
-            capture_output=True, text=True,
+            [
+                sys.executable,
+                "-m",
+                "figtreekit",
+                str(tree_file),
+                "-o",
+                str(out_file),
+                "--layout",
+                "polar",
+                "--tip-labels-show",
+            ],
+            capture_output=True,
+            text=True,
         )
         assert result.returncode == 0
         content = out_file.read_text()
@@ -1571,6 +1735,7 @@ class TestCLIDirect:
 
     def test_create_cli_parser_basic(self):
         from figtreekit._cli import create_cli_parser
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex"])
         assert args.input == "input.tre"
@@ -1580,6 +1745,7 @@ class TestCLIDirect:
 
     def test_create_cli_parser_validate(self):
         from figtreekit._cli import create_cli_parser
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "--validate", "-vv"])
         assert args.validate
@@ -1587,43 +1753,72 @@ class TestCLIDirect:
 
     def test_create_cli_parser_all_options(self):
         from figtreekit._cli import create_cli_parser
+
         parser = create_cli_parser()
-        args = parser.parse_args([
-            "input.tre", "-o", "out.nex",
-            "--layout", "polar",
-            "--branch-width", "2.5",
-            "--background-color", "#FF0000",
-            "--foreground-color", "#00FF00",
-            "--selection-color", "#0000FF",
-            "--expansion", "50",
-            "--zoom", "1.5",
-            "--rooted",
-            "--rooting-type", "midpoint",
-            "--transform", "cladogram",
-            "--order", "increasing",
-            "--order-branches",
-            "--tip-labels-show",
-            "--font-name", "Arial",
-            "--font-size", "12",
-            "--font-style", "1",
-            "--label-color", "#333333",
-            "--node-labels-show",
-            "--node-display-attribute", "support",
-            "--branch-labels-show",
-            "--branch-display-attribute", "length",
-            "--scale-bar-show",
-            "--scale-axis-show",
-            "--root-age", "100.0",
-            "--scale-factor", "1e-6",
-            "--angular-range", "360",
-            "--root-angle", "90",
-            "--align-tip-labels",
-            "--radial-spread", "1.0",
-            "--curvature", "50",
-            "--root-length", "10",
-            "--legend-show",
-            "--legend-position", "top",
-        ])
+        args = parser.parse_args(
+            [
+                "input.tre",
+                "-o",
+                "out.nex",
+                "--layout",
+                "polar",
+                "--branch-width",
+                "2.5",
+                "--background-color",
+                "#FF0000",
+                "--foreground-color",
+                "#00FF00",
+                "--selection-color",
+                "#0000FF",
+                "--expansion",
+                "50",
+                "--zoom",
+                "1.5",
+                "--rooted",
+                "--rooting-type",
+                "midpoint",
+                "--transform",
+                "cladogram",
+                "--order",
+                "increasing",
+                "--order-branches",
+                "--tip-labels-show",
+                "--font-name",
+                "Arial",
+                "--font-size",
+                "12",
+                "--font-style",
+                "1",
+                "--label-color",
+                "#333333",
+                "--node-labels-show",
+                "--node-display-attribute",
+                "support",
+                "--branch-labels-show",
+                "--branch-display-attribute",
+                "length",
+                "--scale-bar-show",
+                "--scale-axis-show",
+                "--root-age",
+                "100.0",
+                "--scale-factor",
+                "1e-6",
+                "--angular-range",
+                "360",
+                "--root-angle",
+                "90",
+                "--align-tip-labels",
+                "--radial-spread",
+                "1.0",
+                "--curvature",
+                "50",
+                "--root-length",
+                "10",
+                "--legend-show",
+                "--legend-position",
+                "top",
+            ]
+        )
         assert args.layout == "polar"
         assert args.branch_width == 2.5
         assert args.background_color == "#FF0000"
@@ -1634,18 +1829,26 @@ class TestCLIDirect:
 
     def test_apply_cli_args_appearance(self, styler):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
-        args = parser.parse_args([
-            "input.tre", "-o", "out.nex",
-            "--branch-width", "3.0",
-            "--background-color", "#FFFFFF",
-        ])
+        args = parser.parse_args(
+            [
+                "input.tre",
+                "-o",
+                "out.nex",
+                "--branch-width",
+                "3.0",
+                "--background-color",
+                "#FFFFFF",
+            ]
+        )
         apply_cli_args(styler, args)
         assert styler._settings.appearance["branchLineWidth"] == 3.0
         assert styler._settings.appearance["backgroundColour"] == "#ffffff"
 
     def test_apply_cli_args_layout(self, styler):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--layout", "radial"])
         apply_cli_args(styler, args)
@@ -1653,13 +1856,20 @@ class TestCLIDirect:
 
     def test_apply_cli_args_trees(self, styler):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
-        args = parser.parse_args([
-            "input.tre", "-o", "out.nex",
-            "--rooted",
-            "--transform", "phylogram",
-            "--order", "decreasing",
-        ])
+        args = parser.parse_args(
+            [
+                "input.tre",
+                "-o",
+                "out.nex",
+                "--rooted",
+                "--transform",
+                "phylogram",
+                "--order",
+                "decreasing",
+            ]
+        )
         apply_cli_args(styler, args)
         assert styler._settings.trees["rooting"] is True
         assert styler._settings.trees["transform"] is True
@@ -1667,16 +1877,24 @@ class TestCLIDirect:
 
     def test_apply_cli_args_labels(self, styler):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
-        args = parser.parse_args([
-            "input.tre", "-o", "out.nex",
-            "--tip-labels-show",
-            "--font-name", "Helvetica",
-            "--font-size", "14",
-            "--node-labels-show",
-            "--node-display-attribute", "posterior",
-            "--branch-labels-hide",
-        ])
+        args = parser.parse_args(
+            [
+                "input.tre",
+                "-o",
+                "out.nex",
+                "--tip-labels-show",
+                "--font-name",
+                "Helvetica",
+                "--font-size",
+                "14",
+                "--node-labels-show",
+                "--node-display-attribute",
+                "posterior",
+                "--branch-labels-hide",
+            ]
+        )
         apply_cli_args(styler, args)
         assert styler._settings.tipLabels["isShown"] is True
         assert styler._settings.tipLabels["fontName"] == "Helvetica"
@@ -1687,16 +1905,24 @@ class TestCLIDirect:
 
     def test_apply_cli_args_scale_and_legend(self, styler):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
-        args = parser.parse_args([
-            "input.tre", "-o", "out.nex",
-            "--scale-bar-show",
-            "--scale-axis-hide",
-            "--root-age", "50.0",
-            "--scale-factor", "1e-9",
-            "--legend-show",
-            "--legend-position", "bottom",
-        ])
+        args = parser.parse_args(
+            [
+                "input.tre",
+                "-o",
+                "out.nex",
+                "--scale-bar-show",
+                "--scale-axis-hide",
+                "--root-age",
+                "50.0",
+                "--scale-factor",
+                "1e-9",
+                "--legend-show",
+                "--legend-position",
+                "bottom",
+            ]
+        )
         apply_cli_args(styler, args)
         assert styler._settings.scaleBar["isShown"] is True
         assert styler._settings.scaleAxis["isShown"] is False
@@ -1706,14 +1932,22 @@ class TestCLIDirect:
 
     def test_apply_cli_args_polar_and_radial(self, styler):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
-        args = parser.parse_args([
-            "input.tre", "-o", "out.nex",
-            "--angular-range", "270",
-            "--root-angle", "45",
-            "--align-tip-labels",
-            "--radial-spread", "0.5",
-        ])
+        args = parser.parse_args(
+            [
+                "input.tre",
+                "-o",
+                "out.nex",
+                "--angular-range",
+                "270",
+                "--root-angle",
+                "45",
+                "--align-tip-labels",
+                "--radial-spread",
+                "0.5",
+            ]
+        )
         apply_cli_args(styler, args)
         # FigTree stores these as slider integers (1/1000 degree offsets)
         assert styler.get_settings()["polarLayout.angularRange"] == 90000
@@ -1723,18 +1957,26 @@ class TestCLIDirect:
 
     def test_apply_cli_args_rectilinear(self, styler):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
-        args = parser.parse_args([
-            "input.tre", "-o", "out.nex",
-            "--curvature", "75",
-            "--root-length", "20",
-        ])
+        args = parser.parse_args(
+            [
+                "input.tre",
+                "-o",
+                "out.nex",
+                "--curvature",
+                "75",
+                "--root-length",
+                "20",
+            ]
+        )
         apply_cli_args(styler, args)
         assert styler.get_settings()["rectilinearLayout.curvature"] == 75
         assert styler.get_settings()["rectilinearLayout.rootLength"] == 20
 
     def test_apply_cli_args_config_file(self, styler, tmp_path):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         config = {"appearance.branchLineWidth": 5.0}
         config_file = tmp_path / "style.json"
         config_file.write_text(json.dumps(config))
@@ -1745,6 +1987,7 @@ class TestCLIDirect:
 
     def test_apply_cli_args_config_not_found(self, styler):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--config", "/nonexistent.json"])
         with pytest.raises(FileNotFoundError):
@@ -1752,6 +1995,7 @@ class TestCLIDirect:
 
     def test_process_single_validate_valid(self, tmp_path):
         from figtreekit._cli import create_cli_parser, _process_single
+
         tree_file = tmp_path / "good.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         parser = create_cli_parser()
@@ -1760,6 +2004,7 @@ class TestCLIDirect:
 
     def test_process_single_validate_invalid(self, tmp_path):
         from figtreekit._cli import create_cli_parser, _process_single
+
         tree_file = tmp_path / "bad.tre"
         tree_file.write_text("(A:0.1,B:0.2)")
         parser = create_cli_parser()
@@ -1768,6 +2013,7 @@ class TestCLIDirect:
 
     def test_process_single_no_output(self, tmp_path):
         from figtreekit._cli import create_cli_parser, _process_single
+
         tree_file = tmp_path / "input.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         parser = create_cli_parser()
@@ -1776,6 +2022,7 @@ class TestCLIDirect:
 
     def test_process_single_export(self, tmp_path):
         from figtreekit._cli import create_cli_parser, _process_single
+
         tree_file = tmp_path / "input.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_file = tmp_path / "out.nex"
@@ -1786,6 +2033,7 @@ class TestCLIDirect:
 
     def test_process_single_parse_error(self, tmp_path):
         from figtreekit._cli import create_cli_parser, _process_single
+
         tree_file = tmp_path / "bad.tre"
         tree_file.write_text("not a tree at all")
         parser = create_cli_parser()
@@ -1794,6 +2042,7 @@ class TestCLIDirect:
 
     def test_process_batch_validate(self, tmp_path):
         from figtreekit._cli import create_cli_parser, _process_batch
+
         for name in ["a.tre", "b.tre"]:
             (tmp_path / name).write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         parser = create_cli_parser()
@@ -1802,6 +2051,7 @@ class TestCLIDirect:
 
     def test_process_batch_export(self, tmp_path):
         from figtreekit._cli import create_cli_parser, _process_batch
+
         for name in ["a.tre", "b.tre"]:
             (tmp_path / name).write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_dir = tmp_path / "styled"
@@ -1813,6 +2063,7 @@ class TestCLIDirect:
 
     def test_process_batch_default_output(self, tmp_path):
         from figtreekit._cli import create_cli_parser, _process_batch
+
         (tmp_path / "x.tre").write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         parser = create_cli_parser()
         args = parser.parse_args([str(tmp_path)])
@@ -1823,6 +2074,7 @@ class TestCLIDirect:
 
     def test_process_batch_empty_dir(self, tmp_path):
         from figtreekit._cli import create_cli_parser, _process_batch
+
         parser = create_cli_parser()
         args = parser.parse_args([str(tmp_path), "--validate"])
         with pytest.raises(FileNotFoundError):
@@ -1830,6 +2082,7 @@ class TestCLIDirect:
 
     def test_main_validate(self, tmp_path, monkeypatch):
         from figtreekit._cli import main
+
         tree_file = tmp_path / "good.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         monkeypatch.setattr(sys, "argv", ["figtreekit", str(tree_file), "--validate"])
@@ -1837,6 +2090,7 @@ class TestCLIDirect:
 
     def test_main_export(self, tmp_path, monkeypatch):
         from figtreekit._cli import main
+
         tree_file = tmp_path / "input.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_file = tmp_path / "out.nex"
@@ -1846,6 +2100,7 @@ class TestCLIDirect:
 
     def test_main_batch(self, tmp_path, monkeypatch):
         from figtreekit._cli import main
+
         (tmp_path / "a.tre").write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_dir = tmp_path / "styled"
         monkeypatch.setattr(sys, "argv", ["figtreekit", str(tmp_path), "-o", str(out_dir)])
@@ -1854,6 +2109,7 @@ class TestCLIDirect:
 
     def test_main_fails_no_output(self, tmp_path, monkeypatch):
         from figtreekit._cli import main
+
         tree_file = tmp_path / "input.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         monkeypatch.setattr(sys, "argv", ["figtreekit", str(tree_file)])
@@ -1862,17 +2118,17 @@ class TestCLIDirect:
 
     def test_process_single_rejects_multi_tree_newick(self, tmp_path):
         from figtreekit._cli import create_cli_parser, _process_single
+
         tree_file = tmp_path / "multi.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);((D:0.1,E:0.2):0.3,F:0.4);")
         out_file = tmp_path / "out.nex"
         parser = create_cli_parser()
-        args = parser.parse_args([
-            str(tree_file), "-o", str(out_file), "--multi-tree", "first"
-        ])
+        args = parser.parse_args([str(tree_file), "-o", str(out_file), "--multi-tree", "first"])
         assert _process_single(tree_file, args) is False
 
     def test_process_single_rejects_output_directory(self, tmp_path):
         from figtreekit._cli import create_cli_parser, _process_single
+
         tree_file = tmp_path / "input.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_dir = tmp_path / "outdir"
@@ -1883,6 +2139,7 @@ class TestCLIDirect:
 
     def test_main_empty_batch_exits_3(self, tmp_path, monkeypatch):
         from figtreekit._cli import main
+
         monkeypatch.setattr(sys, "argv", ["figtreekit", str(tmp_path), "--validate"])
         with pytest.raises(SystemExit) as exc_info:
             main()
@@ -1894,26 +2151,28 @@ class TestApplyMappedKwargs:
 
     def test_basic_mapping(self):
         target = {}
-        mapping = {'is_shown': 'isShown', 'font_name': 'fontName'}
-        FigTreeStyler._apply_mapped_kwargs(target, {'is_shown': True, 'font_name': 'Arial'}, mapping)
-        assert target == {'isShown': True, 'fontName': 'Arial'}
+        mapping = {"is_shown": "isShown", "font_name": "fontName"}
+        FigTreeStyler._apply_mapped_kwargs(
+            target, {"is_shown": True, "font_name": "Arial"}, mapping
+        )
+        assert target == {"isShown": True, "fontName": "Arial"}
 
     def test_none_values_skipped(self):
-        target = {'existing': 'value'}
-        mapping = {'key': 'mappedKey'}
-        FigTreeStyler._apply_mapped_kwargs(target, {'key': None}, mapping)
-        assert target == {'existing': 'value'}
+        target = {"existing": "value"}
+        mapping = {"key": "mappedKey"}
+        FigTreeStyler._apply_mapped_kwargs(target, {"key": None}, mapping)
+        assert target == {"existing": "value"}
 
     def test_unmapped_keys_pass_through(self):
         target = {}
-        mapping = {'known': 'Known'}
-        FigTreeStyler._apply_mapped_kwargs(target, {'known': 1, 'unknown': 2}, mapping)
-        assert target == {'Known': 1, 'unknown': 2}
+        mapping = {"known": "Known"}
+        FigTreeStyler._apply_mapped_kwargs(target, {"known": 1, "unknown": 2}, mapping)
+        assert target == {"Known": 1, "unknown": 2}
 
     def test_empty_kwargs(self):
-        target = {'a': 1}
+        target = {"a": 1}
         FigTreeStyler._apply_mapped_kwargs(target, {}, {})
-        assert target == {'a': 1}
+        assert target == {"a": 1}
 
 
 class TestCountUnresolvedAnnotations:
@@ -1937,7 +2196,7 @@ class TestCountUnresolvedAnnotations:
     def test_no_target_taxa_skipped(self):
         styler = FigTreeStyler().load_content("((A:0.1,B:0.2):0.3,C:0.4);")
         tree = styler._parse_tree_with_biopython(styler._tree_content)
-        ann = NodeAnnotation(annotation_type='color', values='#FF0000', target_taxa=None)
+        ann = NodeAnnotation(annotation_type="color", values="#FF0000", target_taxa=None)
         unresolved = styler._count_unresolved_annotations(tree, [ann])
         assert unresolved == []
 
@@ -1949,14 +2208,18 @@ class TestUnresolvedAnnotationWarning:
         styler = FigTreeStyler().load_content("((A:0.1,B:0.2):0.3,C:0.4);")
         styler.highlight_clade(["NONEXISTENT_TAXON"], color="#FF0000")
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
                 styler.export(path)
-                compat = [x for x in w if issubclass(x.category, CompatibilityWarning)
-                          and "annotation" in str(x.message).lower()]
+                compat = [
+                    x
+                    for x in w
+                    if issubclass(x.category, CompatibilityWarning)
+                    and "annotation" in str(x.message).lower()
+                ]
                 assert len(compat) > 0
                 assert "1 annotation" in str(compat[0].message)
         finally:
@@ -1972,6 +2235,7 @@ class TestCalculateNodeHeightWarning:
 
         # Create a mock node that's not in the tree
         from Bio.Phylo.BaseTree import Clade
+
         fake_node = Clade(branch_length=0.1, name="FAKE")
 
         with warnings.catch_warnings(record=True) as w:
@@ -2028,6 +2292,7 @@ class TestCLICoverageGaps:
 
     def test_apply_cli_args_order_branches(self):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--order-branches"])
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
@@ -2037,6 +2302,7 @@ class TestCLICoverageGaps:
     def test_apply_cli_args_align_tip_labels_sets_both(self):
         """--align-tip-labels should set both polar and rectilinear."""
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--align-tip-labels"])
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
@@ -2047,6 +2313,7 @@ class TestCLICoverageGaps:
     def test_apply_cli_args_root_length_sets_rectilinear(self):
         """--root-length should set rectilinear layout only."""
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--root-length", "15"])
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
@@ -2055,6 +2322,7 @@ class TestCLICoverageGaps:
 
     def test_apply_cli_args_selection_color(self):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--selection-color", "#2d3680"])
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
@@ -2063,14 +2331,18 @@ class TestCLICoverageGaps:
 
     def test_apply_cli_args_branch_color_attribute(self):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
-        args = parser.parse_args(["input.tre", "-o", "out.nex", "--branch-color-attribute", "height"])
+        args = parser.parse_args(
+            ["input.tre", "-o", "out.nex", "--branch-color-attribute", "height"]
+        )
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
         apply_cli_args(styler, args)
         assert styler._settings.appearance["branchColorAttribute"] == "height"
 
     def test_apply_cli_args_expansion(self):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--expansion", "50"])
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
@@ -2079,6 +2351,7 @@ class TestCLICoverageGaps:
 
     def test_apply_cli_args_zoom(self):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--zoom", "2.5"])
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
@@ -2094,19 +2367,20 @@ class TestCLICoverageGaps:
         previous assertion encoded the non-working form.
         """
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--label-color", "#FF0000"])
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
         apply_cli_args(styler, args)
         assert styler._settings.tipLabels["colorAttribute"] == "!color"
-        colors = [a for a in styler._settings._node_annotations
-                  if a.annotation_type == "color"]
+        colors = [a for a in styler._settings._node_annotations if a.annotation_type == "color"]
         assert len(colors) == 2, "one !color annotation per tip expected"
         assert {c.values for c in colors} == {"#FF0000"}
         assert styler._tip_label_colour == "#FF0000"
 
     def test_apply_cli_args_font_style(self):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--font-style", "2"])
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
@@ -2115,6 +2389,7 @@ class TestCLICoverageGaps:
 
     def test_apply_cli_args_unrooted(self):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--unrooted"])
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
@@ -2130,6 +2405,7 @@ class TestCLICoverageGaps:
 
     def test_apply_cli_args_branch_labels_hide(self):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--branch-labels-hide"])
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
@@ -2139,6 +2415,7 @@ class TestCLICoverageGaps:
 
     def test_apply_cli_args_node_labels_hide(self):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--node-labels-hide"])
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
@@ -2148,6 +2425,7 @@ class TestCLICoverageGaps:
 
     def test_apply_cli_args_scale_bar_hide(self):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--scale-bar-hide"])
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
@@ -2157,6 +2435,7 @@ class TestCLICoverageGaps:
 
     def test_apply_cli_args_scale_axis_hide(self):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--scale-axis-hide"])
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
@@ -2166,6 +2445,7 @@ class TestCLICoverageGaps:
 
     def test_apply_cli_args_tip_labels_hide(self):
         from figtreekit._cli import create_cli_parser, apply_cli_args
+
         parser = create_cli_parser()
         args = parser.parse_args(["input.tre", "-o", "out.nex", "--tip-labels-hide"])
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
@@ -2175,23 +2455,21 @@ class TestCLICoverageGaps:
 
     def test_cli_quiet_mode(self, tmp_path, monkeypatch):
         from figtreekit._cli import main
+
         tree_file = tmp_path / "good.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_file = tmp_path / "out.nex"
-        monkeypatch.setattr(sys, "argv", [
-            "figtreekit", str(tree_file), "-o", str(out_file), "-q"
-        ])
+        monkeypatch.setattr(sys, "argv", ["figtreekit", str(tree_file), "-o", str(out_file), "-q"])
         main()
         assert out_file.exists()
 
     def test_cli_debug_mode(self, tmp_path, monkeypatch):
         from figtreekit._cli import main
+
         tree_file = tmp_path / "good.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_file = tmp_path / "out.nex"
-        monkeypatch.setattr(sys, "argv", [
-            "figtreekit", str(tree_file), "-o", str(out_file), "-vv"
-        ])
+        monkeypatch.setattr(sys, "argv", ["figtreekit", str(tree_file), "-o", str(out_file), "-vv"])
         main()
         assert out_file.exists()
 
@@ -2299,11 +2577,13 @@ class TestAuthorInfo:
 
     def test_author_not_todo(self):
         import figtreekit
+
         assert "TODO" not in figtreekit.__author__
         assert "TODO" not in figtreekit.__email__
 
     def test_author_values(self):
         import figtreekit
+
         assert figtreekit.__author__ == "Zeng Zichao"
         assert figtreekit.__email__ == "zengzichao@sjtu.edu.cn"
 
@@ -2352,7 +2632,7 @@ class TestParserCaseInsensitive:
     def test_lowercase_preserves_original_case_in_output(self):
         nexus = "#NEXUS\nBEGIN TAXA;\ndimensions ntax=2;\ntaxlabels A B ;\nEND;\nBEGIN TREES;\ntree T1 = (A:0.1,B:0.2);\nEND;"
         styler = FigTreeStyler().load_content(nexus)
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -2399,6 +2679,7 @@ class TestIterativeNodeHeight:
         so we build the tree programmatically and navigate to the leaf manually.
         """
         from Bio.Phylo.BaseTree import Tree, Clade
+
         # Build a linear chain of 1200 nodes (deeper than default recursion limit)
         n = 1200
         leaf = Clade(branch_length=0.001, name=f"T{n}")
@@ -2540,6 +2821,7 @@ class TestExportSubMethods:
     def test_write_taxa_block_newick(self, styler):
         """_write_taxa_block from Newick input should generate taxa block."""
         import io
+
         buf = io.StringIO()
         styler._write_taxa_block(buf, include_taxa_block=True)
         output = buf.getvalue()
@@ -2549,6 +2831,7 @@ class TestExportSubMethods:
     def test_write_trees_block(self, styler):
         """_write_trees_block should produce valid trees block."""
         import io
+
         buf = io.StringIO()
         styler._write_trees_block(buf, styler._tree_content)
         output = buf.getvalue()
@@ -2559,6 +2842,7 @@ class TestExportSubMethods:
     def test_write_figtree_block(self, styler):
         """_write_figtree_block should produce figtree settings."""
         import io
+
         styler.set_layout(LayoutType.POLAR)
         buf = io.StringIO()
         styler._write_figtree_block(buf)
@@ -2570,6 +2854,7 @@ class TestExportSubMethods:
 # ============================================================
 # Tests for fixes from diagnostic report
 # ============================================================
+
 
 class TestDiagnosticFixes:
     """Tests for all fixes identified in the diagnostic report."""
@@ -2644,6 +2929,7 @@ class TestDiagnosticFixes:
     def test_fallback_numeric_integer_preserved(self):
         """Fallback extraction should preserve integer taxon names."""
         from figtreekit._parser import _fallback_extract_taxa
+
         taxa = _fallback_extract_taxa("(1:0.1,2:0.2);")
         assert "1" in taxa
         assert "2" in taxa
@@ -2651,6 +2937,7 @@ class TestDiagnosticFixes:
     def test_fallback_float_still_filtered(self):
         """Fallback extraction should still filter float names."""
         from figtreekit._parser import _fallback_extract_taxa
+
         taxa = _fallback_extract_taxa("(A:0.1,0.5:0.2);")
         assert "A" in taxa
         assert "0.5" not in taxa
@@ -2663,14 +2950,17 @@ class TestDiagnosticFixes:
         out_dir = tmp_path / "styled"
 
         import figtreekit._cli as cli_mod
-        original_import = __builtins__.__import__ if hasattr(__builtins__, '__import__') else __import__
+
+        original_import = (
+            __builtins__.__import__ if hasattr(__builtins__, "__import__") else __import__
+        )
 
         def mock_import(name, *args, **kwargs):
-            if name == 'tqdm':
+            if name == "tqdm":
                 raise ImportError("mocked tqdm unavailable")
             return original_import(name, *args, **kwargs)
 
-        with patch('builtins.__import__', side_effect=mock_import):
+        with patch("builtins.__import__", side_effect=mock_import):
             # Re-trigger the import path in _process_batch
             parser = create_cli_parser()
             args = parser.parse_args([str(tmp_path), "-o", str(out_dir)])
@@ -2691,7 +2981,7 @@ begin trees;
     tree TREE1 = [&R] (A:0.1,B:0.2);
 end;"""
         styler = FigTreeStyler().load_content(nexus)
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -2708,7 +2998,7 @@ end;"""
         """highlight_clade should still work correctly after all fixes."""
         styler = FigTreeStyler().load_content("(((A:0.1,B:0.2):0.3,(C:0.4,D:0.5):0.6):0.7,E:0.8);")
         styler.highlight_clade(["A", "B"], color="#FF0000")
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -2726,7 +3016,7 @@ end;"""
         styler.set_tip_labels(is_shown=True, font_size=12)
         styler.highlight_clade(["A", "B"], color="#FF0000")
         styler.set_clade_color(["C", "D"], color="#00FF00")
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -2744,6 +3034,7 @@ end;"""
 # Tests for diagnostic report fixes
 # ============================================================
 
+
 class TestSerializerQuoteEscaping:
     """BUG-1 fix: serialize_value escapes embedded double quotes."""
 
@@ -2754,7 +3045,7 @@ class TestSerializerQuoteEscaping:
 
     def test_string_with_backslash(self):
         """Backslashes should be escaped."""
-        result = serialize_value('path\\file')
+        result = serialize_value("path\\file")
         assert result == '"path\\\\file"'
 
     def test_string_with_both_escapes(self):
@@ -2770,6 +3061,7 @@ class TestSerializerQuoteEscaping:
     def test_round_trip_serialize_parse(self):
         """Escaped output should round-trip through apply_parsed_setting."""
         from figtreekit._parser import apply_parsed_setting
+
         original = 'say "hello"'
         serialized = serialize_value(original)
         settings = FigTreeSettings()
@@ -2779,7 +3071,8 @@ class TestSerializerQuoteEscaping:
     def test_round_trip_backslash(self):
         """Backslash values should round-trip correctly."""
         from figtreekit._parser import apply_parsed_setting
-        original = 'path\\file'
+
+        original = "path\\file"
         serialized = serialize_value(original)
         settings = FigTreeSettings()
         apply_parsed_setting(settings, "tipLabels.fontName", serialized)
@@ -2789,14 +3082,14 @@ class TestSerializerQuoteEscaping:
         """Export should produce valid Nexus even with quotes in font name."""
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
         styler.set_tip_labels(font_name='my "font"')
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
             content = Path(path).read_text()
             # Should contain escaped quotes, not raw embedded quotes
             assert '\\"' in content
-            assert '#NEXUS' in content
+            assert "#NEXUS" in content
         finally:
             os.unlink(path)
 
@@ -2807,7 +3100,7 @@ class TestIncludeTaxaBlockFix:
     def test_newick_include_taxa_block_false(self):
         """For Newick input, include_taxa_block=False should suppress taxa block."""
         styler = FigTreeStyler().load_content("((A:0.1,B:0.2):0.3,C:0.4);")
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path, include_taxa_block=False)
@@ -2821,7 +3114,7 @@ class TestIncludeTaxaBlockFix:
     def test_newick_include_taxa_block_true(self):
         """For Newick input, include_taxa_block=True (default) should include taxa block."""
         styler = FigTreeStyler().load_content("((A:0.1,B:0.2):0.3,C:0.4);")
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path, include_taxa_block=True)
@@ -2835,7 +3128,7 @@ class TestIncludeTaxaBlockFix:
         """For Nexus input with taxa block, include_taxa_block=False should suppress it."""
         nexus = "#NEXUS\nbegin taxa;\nend;\nbegin trees;\ntree T=(A:0.1,B:0.2);\nend;"
         styler = FigTreeStyler().load_content(nexus)
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path, include_taxa_block=False)
@@ -2855,7 +3148,7 @@ class TestStrokeTypeSafety:
         tree = styler._parse_tree_with_biopython(styler._tree_content)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            styler._inject_annotation_to_node(tree.root, 'stroke', 'not_a_number')
+            styler._inject_annotation_to_node(tree.root, "stroke", "not_a_number")
             compat = [x for x in w if "Invalid stroke value" in str(x.message)]
             assert len(compat) == 1
 
@@ -2865,14 +3158,14 @@ class TestStrokeTypeSafety:
         tree = styler._parse_tree_with_biopython(styler._tree_content)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            styler._inject_annotation_to_node(tree.root, 'stroke', None)
+            styler._inject_annotation_to_node(tree.root, "stroke", None)
             assert any("Invalid stroke value" in str(x.message) for x in w)
 
     def test_stroke_with_valid_float(self):
         """Valid float stroke value should work."""
         styler = FigTreeStyler().load_content("((A:0.1,B:0.2):0.3,C:0.4);")
         tree = styler._parse_tree_with_biopython(styler._tree_content)
-        styler._inject_annotation_to_node(tree.root, 'stroke', 3.5)
+        styler._inject_annotation_to_node(tree.root, "stroke", 3.5)
         assert tree.root.comment is not None
         assert "!stroke=3.5" in tree.root.comment
 
@@ -2880,14 +3173,14 @@ class TestStrokeTypeSafety:
         """Integer-valued float should produce integer in output."""
         styler = FigTreeStyler().load_content("((A:0.1,B:0.2):0.3,C:0.4);")
         tree = styler._parse_tree_with_biopython(styler._tree_content)
-        styler._inject_annotation_to_node(tree.root, 'stroke', 4.0)
+        styler._inject_annotation_to_node(tree.root, "stroke", 4.0)
         assert "!stroke=4" in tree.root.comment
 
     def test_stroke_with_string_number(self):
         """String number like '3.5' should be accepted."""
         styler = FigTreeStyler().load_content("((A:0.1,B:0.2):0.3,C:0.4);")
         tree = styler._parse_tree_with_biopython(styler._tree_content)
-        styler._inject_annotation_to_node(tree.root, 'stroke', '3.5')
+        styler._inject_annotation_to_node(tree.root, "stroke", "3.5")
         assert "!stroke=3.5" in tree.root.comment
 
 
@@ -2916,9 +3209,9 @@ class TestParserExceptionPaths:
     def test_parse_nexus_no_trees_block(self):
         """Nexus with taxa but no trees block."""
         result = parse_nexus_content("#NEXUS\nbegin taxa;\nend;")
-        assert result['tree_block'] is None
-        assert result['all_trees'] == []
-        assert result['tree_content'] is None
+        assert result["tree_block"] is None
+        assert result["all_trees"] == []
+        assert result["tree_content"] is None
 
     def test_extract_taxa_fallback_on_parse_failure(self):
         """When Bio.Phylo fails, fallback extraction should be used."""
@@ -2962,14 +3255,14 @@ class TestStylerAnnotationPaths:
         """Font annotation without comma falls through to default path."""
         styler = FigTreeStyler().load_content("((A:0.1,B:0.2):0.3,C:0.4);")
         tree = styler._parse_tree_with_biopython(styler._tree_content)
-        styler._inject_annotation_to_node(tree.root, 'font', 'simple')
+        styler._inject_annotation_to_node(tree.root, "font", "simple")
         assert "!font=simple" in tree.root.comment
 
     def test_inject_color_annotation_non_string(self):
         """Color annotation with non-string value."""
         styler = FigTreeStyler().load_content("((A:0.1,B:0.2):0.3,C:0.4);")
         tree = styler._parse_tree_with_biopython(styler._tree_content)
-        styler._inject_annotation_to_node(tree.root, 'color', 12345)
+        styler._inject_annotation_to_node(tree.root, "color", 12345)
         assert "!color=12345" in tree.root.comment
 
     def test_inject_hilight_invalid_values_warns(self):
@@ -2978,7 +3271,7 @@ class TestStylerAnnotationPaths:
         tree = styler._parse_tree_with_biopython(styler._tree_content)
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            styler._inject_annotation_to_node(tree.root, 'hilight', [1, 2])
+            styler._inject_annotation_to_node(tree.root, "hilight", [1, 2])
             assert any("Invalid hilight" in str(x.message) for x in w)
 
     def test_inject_annotation_on_existing_comment(self):
@@ -2986,7 +3279,7 @@ class TestStylerAnnotationPaths:
         styler = FigTreeStyler().load_content("((A:0.1,B:0.2):0.3,C:0.4);")
         tree = styler._parse_tree_with_biopython(styler._tree_content)
         tree.root.comment = "[&R]"
-        styler._inject_annotation_to_node(tree.root, 'color', '#ff0000')
+        styler._inject_annotation_to_node(tree.root, "color", "#ff0000")
         assert "[&R]" in tree.root.comment
         assert "!color=#ff0000" in tree.root.comment
 
@@ -2994,8 +3287,8 @@ class TestStylerAnnotationPaths:
         """Duplicate annotation type on same node should be skipped."""
         styler = FigTreeStyler().load_content("((A:0.1,B:0.2):0.3,C:0.4);")
         tree = styler._parse_tree_with_biopython(styler._tree_content)
-        styler._inject_annotation_to_node(tree.root, 'color', '#ff0000')
-        styler._inject_annotation_to_node(tree.root, 'color', '#00ff00')
+        styler._inject_annotation_to_node(tree.root, "color", "#ff0000")
+        styler._inject_annotation_to_node(tree.root, "color", "#00ff00")
         # Should only have the first color
         assert tree.root.comment.count("!color=") == 1
 
@@ -3049,7 +3342,7 @@ class TestSetCladeFontEnum:
     def test_font_style_enum_export(self):
         styler = FigTreeStyler().load_content("((A:0.1,B:0.2):0.3,C:0.4);")
         styler.set_clade_font(["A", "B"], "Arial", FontStyle.ITALIC, 12)
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -3068,15 +3361,11 @@ class TestBiologicalPlausibility:
         assert "single taxon" in issues[0].lower()
 
     def test_all_zero_branch_lengths_warns(self):
-        issues = TreeValidator.validate_biological_plausibility(
-            "((A:0.0,B:0.0):0.0,C:0.0);"
-        )
+        issues = TreeValidator.validate_biological_plausibility("((A:0.0,B:0.0):0.0,C:0.0);")
         assert any("zero" in i.lower() for i in issues)
 
     def test_normal_tree_no_issues(self):
-        issues = TreeValidator.validate_biological_plausibility(
-            "((A:0.1,B:0.2):0.3,C:0.4);"
-        )
+        issues = TreeValidator.validate_biological_plausibility("((A:0.1,B:0.2):0.3,C:0.4);")
         assert issues == []
 
     def test_empty_string_no_issues(self):
@@ -3097,8 +3386,12 @@ class TestParserFallbackWarning:
             warnings.simplefilter("always")
             # Malformed Newick that triggers exception in Bio.Phylo
             extract_taxa_from_newick("(((")
-            compat = [x for x in w if issubclass(x.category, CompatibilityWarning)
-                      and "falling back" in str(x.message).lower()]
+            compat = [
+                x
+                for x in w
+                if issubclass(x.category, CompatibilityWarning)
+                and "falling back" in str(x.message).lower()
+            ]
             assert len(compat) >= 1
 
 
@@ -3107,28 +3400,36 @@ class TestIncludeTaxaBlockWarning:
 
     def test_newick_false_warns(self):
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
                 styler.export(path, include_taxa_block=False)
-                compat = [x for x in w if issubclass(x.category, CompatibilityWarning)
-                          and "taxa block" in str(x.message).lower()]
+                compat = [
+                    x
+                    for x in w
+                    if issubclass(x.category, CompatibilityWarning)
+                    and "taxa block" in str(x.message).lower()
+                ]
                 assert len(compat) == 1
         finally:
             os.unlink(path)
 
     def test_newick_true_no_warning(self):
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             with warnings.catch_warnings(record=True) as w:
                 warnings.simplefilter("always")
                 styler.export(path, include_taxa_block=True)
-                compat = [x for x in w if issubclass(x.category, CompatibilityWarning)
-                          and "taxa block" in str(x.message).lower()]
+                compat = [
+                    x
+                    for x in w
+                    if issubclass(x.category, CompatibilityWarning)
+                    and "taxa block" in str(x.message).lower()
+                ]
                 assert len(compat) == 0
         finally:
             os.unlink(path)
@@ -3176,8 +3477,12 @@ class TestAnnotationLossWarning:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             result = styler._resolve_annotations_copy()
-            compat = [x for x in w if issubclass(x.category, CompatibilityWarning)
-                      and "annotation" in str(x.message).lower()]
+            compat = [
+                x
+                for x in w
+                if issubclass(x.category, CompatibilityWarning)
+                and "annotation" in str(x.message).lower()
+            ]
             assert len(compat) == 1
             assert "1 annotation(s)" in str(compat[0].message)
             # Should return original content on failure
@@ -3189,8 +3494,12 @@ class TestAnnotationLossWarning:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             styler._resolve_annotations_copy()
-            compat = [x for x in w if issubclass(x.category, CompatibilityWarning)
-                      and "annotation" in str(x.message).lower()]
+            compat = [
+                x
+                for x in w
+                if issubclass(x.category, CompatibilityWarning)
+                and "annotation" in str(x.message).lower()
+            ]
             assert len(compat) == 0
 
 
@@ -3199,27 +3508,31 @@ class TestFontParseError:
 
     def test_invalid_font_style_int(self):
         from figtreekit.styler import FigTreeStyler
+
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
         from Bio import Phylo
         import io
-        tree = list(Phylo.parse(io.StringIO("(A:0.1,B:0.2);"), 'newick'))[0]
+
+        tree = list(Phylo.parse(io.StringIO("(A:0.1,B:0.2);"), "newick"))[0]
         node = tree.get_terminals()[0]
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            styler._inject_annotation_to_node(node, 'font', 'Arial,notanumber,12')
+            styler._inject_annotation_to_node(node, "font", "Arial,notanumber,12")
             font_warns = [x for x in w if "font annotation format" in str(x.message).lower()]
             assert len(font_warns) == 1
 
     def test_valid_font_format(self):
         from figtreekit.styler import FigTreeStyler
+
         styler = FigTreeStyler().load_content("(A:0.1,B:0.2);")
         from Bio import Phylo
         import io
-        tree = list(Phylo.parse(io.StringIO("(A:0.1,B:0.2);"), 'newick'))[0]
+
+        tree = list(Phylo.parse(io.StringIO("(A:0.1,B:0.2);"), "newick"))[0]
         node = tree.get_terminals()[0]
-        styler._inject_annotation_to_node(node, 'font', 'Arial,1,12')
+        styler._inject_annotation_to_node(node, "font", "Arial,1,12")
         assert node.comment is not None
-        assert '!font=Arial-BOLD-12' in node.comment
+        assert "!font=Arial-BOLD-12" in node.comment
 
 
 class TestGetTreeContent:
@@ -3239,6 +3552,7 @@ class TestGetTreeContent:
 # ============================================================
 # Supplementary tests
 # ============================================================
+
 
 class TestTranslateBlockConsistency:
     """Tests for translate block consistency with tree content."""
@@ -3260,7 +3574,7 @@ end;"""
         styler = FigTreeStyler()
         styler.load_content(nexus)
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -3271,7 +3585,7 @@ end;"""
             # Tree should use translate IDs, not taxon names
             assert "1:0.1" in content or "1:0.1" in content
             # Should NOT contain taxon names in tree value
-            tree_match = re.search(r'tree\s+TREE1\s*=\s*(.+?);', content, re.DOTALL)
+            tree_match = re.search(r"tree\s+TREE1\s*=\s*(.+?);", content, re.DOTALL)
             if tree_match:
                 tree_value = tree_match.group(1)
                 # Taxon names should be replaced with translate IDs
@@ -3303,7 +3617,7 @@ end;"""
         # Tree content uses translate IDs, so use translate IDs for annotations
         styler.highlight_clade(["1", "2"], color="#FF0000")
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -3358,14 +3672,14 @@ end;"""
         styler.load_content(nexus)
         styler.set_clade_color(["A", "B"], color="#FF0000")
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
             with open(path) as f:
                 content = f.read()
             # First tree should have annotation
-            tree1_match = re.search(r'tree\s+TREE1\s*=\s*(.+?);', content, re.DOTALL)
+            tree1_match = re.search(r"tree\s+TREE1\s*=\s*(.+?);", content, re.DOTALL)
             assert tree1_match is not None
             assert "[&!color=" in tree1_match.group(1)
         finally:
@@ -3386,18 +3700,18 @@ end;"""
         styler.load_content(nexus)
         styler.set_clade_color(["A", "B"], color="#FF0000")
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
             with open(path) as f:
                 content = f.read()
             # Second tree should have annotation
-            tree2_match = re.search(r'tree\s+TREE2\s*=\s*(.+?);', content, re.DOTALL)
+            tree2_match = re.search(r"tree\s+TREE2\s*=\s*(.+?);", content, re.DOTALL)
             assert tree2_match is not None
             assert "[&!color=" in tree2_match.group(1)
             # First tree should NOT have annotation
-            tree1_match = re.search(r'tree\s+TREE1\s*=\s*(.+?);', content, re.DOTALL)
+            tree1_match = re.search(r"tree\s+TREE1\s*=\s*(.+?);", content, re.DOTALL)
             assert tree1_match is not None
             assert "[&!color=" not in tree1_match.group(1)
         finally:
@@ -3445,14 +3759,18 @@ class TestStrictMode:
             styler = FigTreeStyler(strict=False)
             styler.load_content(newick)
             # Warning is emitted at export time, not load time
-            with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+            with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
                 path = f.name
             try:
                 styler.export(path)
             finally:
                 os.unlink(path)
-            compat = [x for x in w if issubclass(x.category, CompatibilityWarning)
-                      and "negative" in str(x.message).lower()]
+            compat = [
+                x
+                for x in w
+                if issubclass(x.category, CompatibilityWarning)
+                and "negative" in str(x.message).lower()
+            ]
             assert len(compat) > 0
 
     def test_strict_mode_multiple_negative_branches(self):
@@ -3536,7 +3854,7 @@ end;"""
         styler = FigTreeStyler()
         styler.load_content(nexus)
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -3552,6 +3870,7 @@ end;"""
 # Tests for coverage gaps identified in diagnostic report
 # ============================================================
 
+
 class TestMainModuleCoverage:
     """Tests for __main__.py module coverage."""
 
@@ -3562,7 +3881,8 @@ class TestMainModuleCoverage:
         out_file = tmp_path / "output.nex"
         result = subprocess.run(
             [sys.executable, "-m", "figtreekit", str(tree_file), "-o", str(out_file)],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         assert result.returncode == 0
         assert out_file.exists()
@@ -3575,7 +3895,8 @@ class TestMainModuleCoverage:
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         result = subprocess.run(
             [sys.executable, "-m", "figtreekit", str(tree_file), "--validate"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         assert result.returncode == 0
 
@@ -3583,7 +3904,8 @@ class TestMainModuleCoverage:
         """python -m figtreekit --help should show help."""
         result = subprocess.run(
             [sys.executable, "-m", "figtreekit", "--help"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         assert result.returncode == 0
         assert "figtreekit" in result.stdout.lower() or "usage" in result.stdout.lower()
@@ -3608,7 +3930,7 @@ end;"""
         styler.load_content(nexus)
         styler.set_clade_color(["A", "B"], color="#00FF00")
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -3619,7 +3941,7 @@ end;"""
             assert "tree TREE2" in content
             assert "tree TREE3" in content
             # Only TREE2 should have annotation
-            tree2_match = re.search(r'tree\s+TREE2\s*=\s*(.+?);', content, re.DOTALL)
+            tree2_match = re.search(r"tree\s+TREE2\s*=\s*(.+?);", content, re.DOTALL)
             assert tree2_match is not None
             assert "[&!color=" in tree2_match.group(1)
         finally:
@@ -3641,7 +3963,7 @@ end;"""
         styler.load_content(nexus)
         styler.set_clade_color(["A", "B"], color="#FF0000")
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -3652,7 +3974,7 @@ end;"""
             assert "tree TREE2" in content
             assert "tree TREE3" in content
             # Only TREE3 should have annotation
-            tree3_match = re.search(r'tree\s+TREE3\s*=\s*(.+?);', content, re.DOTALL)
+            tree3_match = re.search(r"tree\s+TREE3\s*=\s*(.+?);", content, re.DOTALL)
             assert tree3_match is not None
             assert "[&!color=" in tree3_match.group(1)
         finally:
@@ -3671,7 +3993,7 @@ end;"""
         styler = FigTreeStyler(tree_index=0)
         styler.load_content(nexus)
 
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -3750,7 +4072,7 @@ begin trees;
 end;"""
         styler = FigTreeStyler().load_content(nexus)
         assert styler._tree_content is not None
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)
@@ -3768,7 +4090,7 @@ end;"""
         styler.highlight_clade(["A", "B"], color="#FF0000")
         styler.set_clade_color(["C", "D"], color="#00FF00")
 
-        paths = [tempfile.mktemp(suffix='.nex') for _ in range(3)]
+        paths = [tempfile.mktemp(suffix=".nex") for _ in range(3)]
         try:
             for p in paths:
                 styler.export(p)
@@ -3806,7 +4128,7 @@ begin trees;
 end;"""
         styler = FigTreeStyler().load_content(nexus)
         assert styler._tree_content is not None
-        with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+        with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
             path = f.name
         try:
             styler.export(path)

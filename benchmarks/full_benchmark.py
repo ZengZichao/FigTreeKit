@@ -50,6 +50,7 @@ OUT = Path(__file__).parent
 # Tree generators
 # ---------------------------------------------------------------------------
 
+
 def gen_balanced(n: int, seed: int) -> str:
     rng = random.Random(seed)
     nodes = [f"T{i:05d}" for i in range(1, n + 1)]
@@ -82,7 +83,7 @@ def gen_polytomy(n: int, seed: int) -> str:
     taxa = [f"T{i:05d}" for i in range(1, n + 1)]
     k = max(2, int(math.sqrt(n)))
     clades = []
-    for chunk in (taxa[i:i + k] for i in range(0, n, k)):
+    for chunk in (taxa[i : i + k] for i in range(0, n, k)):
         clades.append("(" + ",".join(f"{t}:{rng.expovariate(100.0):.6f}" for t in chunk) + ")")
     return "(" + ",".join(f"{c}:{rng.expovariate(100.0):.6f}" for c in clades) + ");"
 
@@ -98,6 +99,7 @@ GENERATORS = {
 # ---------------------------------------------------------------------------
 # Timing helpers
 # ---------------------------------------------------------------------------
+
 
 def _gc():
     gc.collect()
@@ -155,15 +157,16 @@ def _t_crit(df: int, alpha: float = 0.05) -> float:
     df = max(1, int(df))
     try:
         from scipy import stats as _st
+
         return float(_st.t.ppf(1.0 - alpha / 2.0, df))
     except Exception:
         z = 1.959964
-        g1 = (z ** 3 + z) / 4.0
-        g2 = (5 * z ** 5 + 16 * z ** 3 + 3 * z) / 96.0
-        g3 = (3 * z ** 7 + 19 * z ** 5 + 17 * z ** 3 - 15 * z) / 384.0
-        g4 = (79 * z ** 9 + 776 * z ** 7 + 1482 * z ** 5 - 1920 * z ** 3 - 945 * z) / 92160.0
+        g1 = (z**3 + z) / 4.0
+        g2 = (5 * z**5 + 16 * z**3 + 3 * z) / 96.0
+        g3 = (3 * z**7 + 19 * z**5 + 17 * z**3 - 15 * z) / 384.0
+        g4 = (79 * z**9 + 776 * z**7 + 1482 * z**5 - 1920 * z**3 - 945 * z) / 92160.0
         i = 1.0 / df
-        return z + g1 * i + g2 * i ** 2 + g3 * i ** 3 + g4 * i ** 4
+        return z + g1 * i + g2 * i**2 + g3 * i**3 + g4 * i**4
 
 
 def slope_ci(xs, ys):
@@ -173,19 +176,25 @@ def slope_ci(xs, ys):
     slope, intercept = np.polyfit(lx, ly, 1)
     resid = ly - (slope * lx + intercept)
     dof = max(n - 2, 1)
-    ss_res = float((resid ** 2).sum())
+    ss_res = float((resid**2).sum())
     ss_tot = float(((ly - ly.mean()) ** 2).sum())
     se = math.sqrt(ss_res / dof / float(((lx - lx.mean()) ** 2).sum()))
     tcrit = _t_crit(dof)
-    return {"slope": float(slope), "se": float(se),
-            "ci95": [float(slope - tcrit * se), float(slope + tcrit * se)],
-            "critical_value": tcrit, "r_squared": (1.0 - ss_res / ss_tot) if ss_tot else 0.0,
-            "n_points": n, "df": dof}
+    return {
+        "slope": float(slope),
+        "se": float(se),
+        "ci95": [float(slope - tcrit * se), float(slope + tcrit * se)],
+        "critical_value": tcrit,
+        "r_squared": (1.0 - ss_res / ss_tot) if ss_tot else 0.0,
+        "n_points": n,
+        "df": dof,
+    }
 
 
 # ---------------------------------------------------------------------------
 # Benchmark sections
 # ---------------------------------------------------------------------------
+
 
 def run_scaling(sizes, repeats, seeds, out_csv):
     rows = []
@@ -195,22 +204,31 @@ def run_scaling(sizes, repeats, seeds, out_csv):
             parses, exports, totals = [], [], []
             for r in range(repeats):
                 p, e, tot = _run_pipeline(tree, 0, seed + r)
-                parses.append(p); exports.append(e); totals.append(tot)
+                parses.append(p)
+                exports.append(e)
+                totals.append(tot)
             mem_kb = _peak_memory(tree, 0, seed)
-            rows.append({
-                "n_taxa": n, "shape": "balanced", "seed": seed, "repeats": repeats,
-                "parse_mean_s": summarize(parses)["mean"],
-                "parse_sem_s": summarize(parses)["sem"],
-                "export_mean_s": summarize(exports)["mean"],
-                "export_sem_s": summarize(exports)["sem"],
-                "total_mean_s": summarize(totals)["mean"],
-                "total_sem_s": summarize(totals)["sem"],
-                "export_median_s": summarize(exports)["median"],
-                "export_iqr_s": summarize(exports)["iqr"],
-                "peak_memory_bytes": int(mem_kb * 1024),
-            })
-            print(f"  scaling: n={n} seed={seed} export_median="
-                  f"{summarize(exports)['median']:.4f}s")
+            rows.append(
+                {
+                    "n_taxa": n,
+                    "shape": "balanced",
+                    "seed": seed,
+                    "repeats": repeats,
+                    "parse_mean_s": summarize(parses)["mean"],
+                    "parse_sem_s": summarize(parses)["sem"],
+                    "export_mean_s": summarize(exports)["mean"],
+                    "export_sem_s": summarize(exports)["sem"],
+                    "total_mean_s": summarize(totals)["mean"],
+                    "total_sem_s": summarize(totals)["sem"],
+                    "export_median_s": summarize(exports)["median"],
+                    "export_iqr_s": summarize(exports)["iqr"],
+                    "peak_memory_bytes": int(mem_kb * 1024),
+                }
+            )
+            print(
+                f"  scaling: n={n} seed={seed} export_median="
+                f"{summarize(exports)['median']:.4f}s"
+            )
     _write_csv(out_csv, rows)
     return rows
 
@@ -233,15 +251,28 @@ def run_shapes(sizes, repeats, seeds, out_csv):
                 for r in range(repeats):
                     _, e, _ = _run_pipeline(tree, 0, seed + r)
                     exports.append(e)
-                    per_tree.append({
-                        "shape": shape, "n_taxa": n, "seed": seed,
-                        "repeat": r, "export_s": e,
-                    })
+                    per_tree.append(
+                        {
+                            "shape": shape,
+                            "n_taxa": n,
+                            "seed": seed,
+                            "repeat": r,
+                            "export_s": e,
+                        }
+                    )
             s = summarize(exports)
-            rows.append({"n_taxa": n, "shape": shape, "n_trees": len(seeds),
-                         "repeats_per_tree": repeats,
-                         "export_mean_s": s["mean"], "export_sem_s": s["sem"],
-                         "export_median_s": s["median"], "export_iqr_s": s["iqr"]})
+            rows.append(
+                {
+                    "n_taxa": n,
+                    "shape": shape,
+                    "n_trees": len(seeds),
+                    "repeats_per_tree": repeats,
+                    "export_mean_s": s["mean"],
+                    "export_sem_s": s["sem"],
+                    "export_median_s": s["median"],
+                    "export_iqr_s": s["iqr"],
+                }
+            )
             print(f"  shapes: {shape} n={n} median={s['median']:.4f}s")
     _write_csv(out_csv, rows)
     per_tree_csv = out_csv.with_name(out_csv.stem + "_per_tree.csv")
@@ -260,9 +291,17 @@ def run_annotation_scaling(out_csv):
                 _, e, _ = _run_pipeline(tree, a, 100 + r)
                 exports.append(e)
             s = summarize(exports)
-            rows.append({"n_taxa": n, "annotations": label, "a": a,
-                         "export_mean_s": s["mean"], "export_sem_s": s["sem"],
-                         "export_median_s": s["median"], "export_iqr_s": s["iqr"]})
+            rows.append(
+                {
+                    "n_taxa": n,
+                    "annotations": label,
+                    "a": a,
+                    "export_mean_s": s["mean"],
+                    "export_sem_s": s["sem"],
+                    "export_median_s": s["median"],
+                    "export_iqr_s": s["iqr"],
+                }
+            )
             print(f"  annotations: n={n} a={label}({a}) median={s['median']:.4f}s")
     _write_csv(out_csv, rows)
     return rows
@@ -277,6 +316,7 @@ def run_competitive(sizes, repeats, seeds, out_csv):
     timing repeats of a single tree.
     """
     from Bio import Phylo
+
     rows = []
     for n in sizes:
         ratios, ftk_tree, bio_tree = [], [], []
@@ -295,20 +335,29 @@ def run_competitive(sizes, repeats, seeds, out_csv):
                     Phylo.write(t, str(Path(tmp) / "o.nex"), "nexus")
                     bio.append(time.perf_counter() - t0)
             fmed, bmed = float(np.median(ftk)), float(np.median(bio))
-            ftk_tree.append(fmed); bio_tree.append(bmed)
+            ftk_tree.append(fmed)
+            bio_tree.append(bmed)
             ratios.append(fmed / bmed)
         rs = summarize(ratios)
-        rows.append({"n_taxa": n, "n_trees": len(seeds),
-                     "figtreekit_export_mean_s": float(np.mean(ftk_tree)),
-                     "figtreekit_export_sem_s": summarize(ftk_tree)["sem"],
-                     "biophylo_export_mean_s": float(np.mean(bio_tree)),
-                     "biophylo_export_sem_s": summarize(bio_tree)["sem"],
-                     "ratio": float(np.mean(ratios)),
-                     "ratio_sem_s": rs["sem"],
-                     "ratio_min": min(ratios), "ratio_max": max(ratios)})
-        print(f"  competitive: n={n} ratio={rows[-1]['ratio']:.2f} "
-              f"[{rows[-1]['ratio_min']:.2f}, {rows[-1]['ratio_max']:.2f}] "
-              f"over {len(seeds)} trees")
+        rows.append(
+            {
+                "n_taxa": n,
+                "n_trees": len(seeds),
+                "figtreekit_export_mean_s": float(np.mean(ftk_tree)),
+                "figtreekit_export_sem_s": summarize(ftk_tree)["sem"],
+                "biophylo_export_mean_s": float(np.mean(bio_tree)),
+                "biophylo_export_sem_s": summarize(bio_tree)["sem"],
+                "ratio": float(np.mean(ratios)),
+                "ratio_sem_s": rs["sem"],
+                "ratio_min": min(ratios),
+                "ratio_max": max(ratios),
+            }
+        )
+        print(
+            f"  competitive: n={n} ratio={rows[-1]['ratio']:.2f} "
+            f"[{rows[-1]['ratio_min']:.2f}, {rows[-1]['ratio_max']:.2f}] "
+            f"over {len(seeds)} trees"
+        )
     _write_csv(out_csv, rows)
     return rows
 
@@ -325,8 +374,9 @@ def run_stage_breakdown(sizes, jar_path, out_csv):
             parses.append(time.perf_counter() - t0)
             t0 = time.perf_counter()
             for i in range(10):
-                styler.set_clade_color([f"T{(i * 10 + j) % n + 1:05d}" for j in range(5)],
-                                       "#E91E63")
+                styler.set_clade_color(
+                    [f"T{(i * 10 + j) % n + 1:05d}" for j in range(5)], "#E91E63"
+                )
             annotates.append(time.perf_counter() - t0)
             with tempfile.TemporaryDirectory() as tmp:
                 nex = Path(tmp) / "s.nex"
@@ -338,16 +388,20 @@ def run_stage_breakdown(sizes, jar_path, out_csv):
                     t0 = time.perf_counter()
                     try:
                         subprocess.run(
-                            ["java", "-jar", str(jar_path), "-graphic", "PNG",
-                             str(nex), str(png)],
-                            capture_output=True, timeout=180, check=True)
+                            ["java", "-jar", str(jar_path), "-graphic", "PNG", str(nex), str(png)],
+                            capture_output=True,
+                            timeout=180,
+                            check=True,
+                        )
                         renders.append(time.perf_counter() - t0)
                     except Exception:
                         renders.append(float("nan"))
-        row = {"n_taxa": n,
-               "parse_s": summarize(parses)["median"],
-               "annotate_s": summarize(annotates)["median"],
-               "export_s": summarize(exports)["median"]}
+        row = {
+            "n_taxa": n,
+            "parse_s": summarize(parses)["median"],
+            "annotate_s": summarize(annotates)["median"],
+            "export_s": summarize(exports)["median"],
+        }
         row["render_s"] = summarize(renders)["median"] if renders else float("nan")
         rows.append(row)
         print(f"  stages: n={n} {row}")
@@ -379,18 +433,26 @@ def run_gtdb(gtdb_dir, out_json):
             s2.export(str(Path(tmp) / "out.nex"))
         _, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
-        n_taxa = sum(1 for _ in styler._parse_tree_with_biopython(
-            styler._tree_content).get_terminals())
-        datasets.append({
-            "file": name, "dataset": name.split("_r232")[0], "n_taxa": n_taxa,
-            "parse_time_s": round(t_parse, 3), "export_time_s": round(t_export, 3),
-            "total_time_s": round(t_parse + t_export, 3),
-            "peak_memory_MB": round(peak / 1_000_000, 1),
-            "peak_memory_bytes": int(peak),
-            "heap_per_taxon_kB": round(peak / 1_000 / n_taxa, 2),
-        })
-        print(f"  gtdb: {name} parse={t_parse:.2f}s export={t_export:.2f}s "
-              f"mem={peak / 1_000_000:.1f}MB")
+        n_taxa = sum(
+            1 for _ in styler._parse_tree_with_biopython(styler._tree_content).get_terminals()
+        )
+        datasets.append(
+            {
+                "file": name,
+                "dataset": name.split("_r232")[0],
+                "n_taxa": n_taxa,
+                "parse_time_s": round(t_parse, 3),
+                "export_time_s": round(t_export, 3),
+                "total_time_s": round(t_parse + t_export, 3),
+                "peak_memory_MB": round(peak / 1_000_000, 1),
+                "peak_memory_bytes": int(peak),
+                "heap_per_taxon_kB": round(peak / 1_000 / n_taxa, 2),
+            }
+        )
+        print(
+            f"  gtdb: {name} parse={t_parse:.2f}s export={t_export:.2f}s "
+            f"mem={peak / 1_000_000:.1f}MB"
+        )
     payload = {
         "benchmark": "GTDB R232 real-dataset validation",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
@@ -401,7 +463,7 @@ def run_gtdb(gtdb_dir, out_json):
         # large-data pass carries its own provenance instead of borrowing the
         # synthetic benchmark's record.
         "cpu": _cpu_name(),
-        "ram_gb": round(_ram_bytes() / 2 ** 30, 1),
+        "ram_gb": round(_ram_bytes() / 2**30, 1),
         "figtreekit_version": __version__,
         "biopython": _biopython_version(),
         "java": _java_version(),
@@ -430,13 +492,19 @@ def _write_csv(path, rows):
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true", help="reduced sizes for smoke runs")
-    ap.add_argument("--gtdb-dir", default=gtdb_data_dir(),
-                    help=("directory holding ar53_r232.tree / bac120_r232.tree; "
-                          "defaults to $FTK_GTDB_DIR, then benchmarks/gtdb_data "
-                          "(see benchmarks/gtdb_data/README.md)"))
+    ap.add_argument(
+        "--gtdb-dir",
+        default=gtdb_data_dir(),
+        help=(
+            "directory holding ar53_r232.tree / bac120_r232.tree; "
+            "defaults to $FTK_GTDB_DIR, then benchmarks/gtdb_data "
+            "(see benchmarks/gtdb_data/README.md)"
+        ),
+    )
     args = ap.parse_args()
 
     if args.quick:
@@ -446,19 +514,23 @@ def main():
         # independently generated tree; the `repeats` timings per tree are
         # technical replicates summarized within-tree before inference.
         sizes, repeats, seeds = (
-            [50, 100, 500, 1000, 5000, 10000], 10,
+            [50, 100, 500, 1000, 5000, 10000],
+            10,
             [42, 7, 123, 2024, 314, 601, 808, 917, 1337, 5555],
         )
 
     jar = OUT.parent / "figtreekit" / "figtree_patched.jar"
-    have_java = jar.exists() and subprocess.run(
-        ["java", "-version"], capture_output=True).returncode == 0
+    have_java = (
+        jar.exists() and subprocess.run(["java", "-version"], capture_output=True).returncode == 0
+    )
 
     commit = _git_commit()
     dirty = _git_dirty()
     if dirty:
-        print(f"[warn] uncommitted tracked changes present; results correspond "
-              f"to commit {commit[:12]} plus local modifications")
+        print(
+            f"[warn] uncommitted tracked changes present; results correspond "
+            f"to commit {commit[:12]} plus local modifications"
+        )
 
     meta = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
@@ -466,13 +538,15 @@ def main():
         "platform": platform.platform(),
         "machine": platform.machine(),
         "cpu": _cpu_name(),
-        "ram_gb": round(_ram_bytes() / 2 ** 30, 1),
+        "ram_gb": round(_ram_bytes() / 2**30, 1),
         "python": platform.python_version(),
         "biopython": _biopython_version(),
         "java": _java_version() if have_java else None,
         "commit": commit,
         "git_dirty": dirty,
-        "sizes": sizes, "repeats": repeats, "seeds": seeds,
+        "sizes": sizes,
+        "repeats": repeats,
+        "seeds": seeds,
         "statistical_unit": (
             "one independently generated tree per (size, seed); repeats "
             "are technical timing replicates summarized within tree "
@@ -485,8 +559,10 @@ def main():
         ),
     }
     (OUT / "benchmark_meta.json").write_text(json.dumps(meta, indent=2))
-    print(f"[meta] {meta['platform']} | {meta['cpu']} | {meta['ram_gb']} GB | "
-          f"py{meta['python']} | biopython {meta['biopython']}")
+    print(
+        f"[meta] {meta['platform']} | {meta['cpu']} | {meta['ram_gb']} GB | "
+        f"py{meta['python']} | biopython {meta['biopython']}"
+    )
 
     print("[1/6] main scaling (balanced)...")
     main_rows = run_scaling(sizes, repeats, seeds, OUT / "results.csv")
@@ -502,8 +578,9 @@ def main():
     run_competitive(sizes, repeats, seeds, OUT / "competitive_results.csv")
 
     print("[5/6] stage breakdown...")
-    run_stage_breakdown([100, 500, 1000, 2000], jar if have_java else None,
-                        OUT / "stage_breakdown.csv")
+    run_stage_breakdown(
+        [100, 500, 1000, 2000], jar if have_java else None, OUT / "stage_breakdown.csv"
+    )
 
     print("[6/6] GTDB R232...")
     run_gtdb(args.gtdb_dir, OUT / "gtdb_results.json")
@@ -548,8 +625,9 @@ def main():
 
 def _git_commit() -> str:
     try:
-        out = subprocess.run(["git", "rev-parse", "HEAD"], cwd=OUT.parent,
-                             capture_output=True, text=True, timeout=10)
+        out = subprocess.run(
+            ["git", "rev-parse", "HEAD"], cwd=OUT.parent, capture_output=True, text=True, timeout=10
+        )
         return out.stdout.strip() if out.returncode == 0 else "unknown"
     except Exception:
         return "unknown"
@@ -558,10 +636,13 @@ def _git_commit() -> str:
 def _git_dirty():
     """True if tracked files have uncommitted changes (untracked ignored)."""
     try:
-        out = subprocess.run(["git", "status", "--porcelain",
-                              "--untracked-files=no"],
-                             cwd=OUT.parent, capture_output=True, text=True,
-                             timeout=10)
+        out = subprocess.run(
+            ["git", "status", "--porcelain", "--untracked-files=no"],
+            cwd=OUT.parent,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
         return bool(out.stdout.strip()) if out.returncode == 0 else None
     except Exception:
         return None
@@ -569,8 +650,9 @@ def _git_dirty():
 
 def _cpu_name():
     try:
-        out = subprocess.run(["sysctl", "-n", "machdep.cpu.brand_string"],
-                             capture_output=True, text=True, timeout=5)
+        out = subprocess.run(
+            ["sysctl", "-n", "machdep.cpu.brand_string"], capture_output=True, text=True, timeout=5
+        )
         if out.returncode == 0 and out.stdout.strip():
             return out.stdout.strip()
     except Exception:
@@ -580,8 +662,9 @@ def _cpu_name():
 
 def _ram_bytes():
     try:
-        out = subprocess.run(["sysctl", "-n", "hw.memsize"],
-                             capture_output=True, text=True, timeout=5)
+        out = subprocess.run(
+            ["sysctl", "-n", "hw.memsize"], capture_output=True, text=True, timeout=5
+        )
         if out.returncode == 0:
             return int(out.stdout.strip())
     except Exception:
@@ -591,13 +674,13 @@ def _ram_bytes():
 
 def _biopython_version():
     import Bio
+
     return Bio.__version__
 
 
 def _java_version():
     try:
-        out = subprocess.run(["java", "-version"], capture_output=True,
-                             text=True, timeout=10)
+        out = subprocess.run(["java", "-version"], capture_output=True, text=True, timeout=10)
         return (out.stderr or out.stdout).splitlines()[0]
     except Exception:
         return None

@@ -15,6 +15,7 @@ Two artefacts are written next to the workflow outputs:
     one row per assessed taxonomic group: name, tip count, verdict, the
     intruder/unmapped taxa that caused a refusal, and the assigned colour.
 """
+
 from __future__ import annotations
 
 import ast
@@ -28,6 +29,7 @@ from pathlib import Path
 
 def environment_stamp() -> dict:
     import figtreekit
+
     return {
         "timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "figtreekit_version": getattr(figtreekit, "__version__", "unknown"),
@@ -50,9 +52,16 @@ def count_written_annotations(nexus_path: Path) -> dict:
     }
 
 
-def write_audit(prefix: Path, *, rank: str, groups: dict, completeness: dict,
-                nexus_path: Path, collapsed=None,
-                extra: dict | None = None) -> dict:
+def write_audit(
+    prefix: Path,
+    *,
+    rank: str,
+    groups: dict,
+    completeness: dict,
+    nexus_path: Path,
+    collapsed=None,
+    extra: dict | None = None,
+) -> dict:
     """Write ``<prefix>_audit.json`` and ``<prefix>_groups.csv``.
 
     *collapsed* is the collection of group names the workflow actually
@@ -73,18 +82,33 @@ def write_audit(prefix: Path, *, rank: str, groups: dict, completeness: dict,
 
     rows = []
     for name, info in items(mono):
-        rows.append(_group_row(name, "exclusive", info, accepted=True,
-                               collapsed=collapsed_set))
+        rows.append(_group_row(name, "exclusive", info, accepted=True, collapsed=collapsed_set))
     for name, info in items(nonmono):
-        rows.append(_group_row(name, "non-exclusive", info, accepted=False, collapsed=collapsed_set,
-                               intruders=intruders_by_group.get(name, [])))
+        rows.append(
+            _group_row(
+                name,
+                "non-exclusive",
+                info,
+                accepted=False,
+                collapsed=collapsed_set,
+                intruders=intruders_by_group.get(name, []),
+            )
+        )
     for name, info in items(unmapped):
         rows.append(_group_row(name, "unmapped", info, accepted=False, collapsed=collapsed_set))
 
     csv_path = Path(f"{prefix}_groups.csv")
     with csv_path.open("w", newline="", encoding="utf-8") as fh:
-        fieldnames = ["rank", "group", "tip_count", "verdict", "collapse_applied",
-                      "intruder_taxa", "unmapped_tips_in_mrca", "colour"]
+        fieldnames = [
+            "rank",
+            "group",
+            "tip_count",
+            "verdict",
+            "collapse_applied",
+            "intruder_taxa",
+            "unmapped_tips_in_mrca",
+            "colour",
+        ]
         w = csv.DictWriter(fh, fieldnames=fieldnames)
         w.writeheader()
         w.writerows(rows)
@@ -96,7 +120,8 @@ def write_audit(prefix: Path, *, rank: str, groups: dict, completeness: dict,
         "rank": rank,
         "environment": environment_stamp(),
         "completeness_audit": {
-            k: v for k, v in (completeness or {}).items()
+            k: v
+            for k, v in (completeness or {}).items()
             if isinstance(v, (int, float, str, bool)) or k == "rank_coverage"
         },
         "groups_assessed": summary.get("total_groups", len(mono) + len(nonmono)),
@@ -107,10 +132,8 @@ def write_audit(prefix: Path, *, rank: str, groups: dict, completeness: dict,
         "groups_exclusive": len(mono),
         "groups_non_exclusive": len(nonmono),
         "groups_unmapped": len(unmapped),
-        "multi_tip_exclusive_groups": sum(1 for r in exclusive_rows
-                                          if r["tip_count"] > 1),
-        "singleton_exclusive_groups": sum(1 for r in exclusive_rows
-                                          if r["tip_count"] == 1),
+        "multi_tip_exclusive_groups": sum(1 for r in exclusive_rows if r["tip_count"] > 1),
+        "singleton_exclusive_groups": sum(1 for r in exclusive_rows if r["tip_count"] == 1),
         "collapse_requested": (None if collapsed_set is None else len(collapsed_set)),
         "annotations_written_to_nexus": written,
         "nexus_path": _rel(nexus_path),
@@ -131,14 +154,15 @@ def write_audit(prefix: Path, *, rank: str, groups: dict, completeness: dict,
         mismatch = written["!collapse"] - len(collapsed_set)
         payload["collapse_annotation_difference"] = mismatch
         if mismatch:
-            print(f"[audit] WARNING {abs(mismatch)} group(s) submitted for collapse "
-                  f"produced no !collapse annotation (requested {len(collapsed_set)}, "
-                  f"written {written['!collapse']}); a group whose single tip is "
-                  f"already inside an earlier collapse can resolve to an unintended "
-                  f"node, so this difference must be explained, not ignored")
+            print(
+                f"[audit] WARNING {abs(mismatch)} group(s) submitted for collapse "
+                f"produced no !collapse annotation (requested {len(collapsed_set)}, "
+                f"written {written['!collapse']}); a group whose single tip is "
+                f"already inside an earlier collapse can resolve to an unintended "
+                f"node, so this difference must be explained, not ignored"
+            )
     json_path = Path(f"{prefix}_audit.json")
-    json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False),
-                         encoding="utf-8")
+    json_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"[audit] wrote {json_path} and {csv_path}")
     return payload
 
@@ -174,8 +198,14 @@ def _rel(path) -> str:
 def group_tip_count(info) -> int:
     """Number of mapped tips a group covers, as the analyzer reported it."""
     d = info if isinstance(info, dict) else {}
-    tips = (d.get("tips") or d.get("tip_count") or d.get("n_tips")
-            or d.get("clade_size") or d.get("taxa") or d.get("members"))
+    tips = (
+        d.get("tips")
+        or d.get("tip_count")
+        or d.get("n_tips")
+        or d.get("clade_size")
+        or d.get("taxa")
+        or d.get("members")
+    )
     if isinstance(tips, (list, set, tuple)):
         return len(tips)
     if isinstance(tips, (int, float, str)) and str(tips).strip() != "":
@@ -183,13 +213,13 @@ def group_tip_count(info) -> int:
     return 0
 
 
-def _group_row(name: str, verdict: str, info, accepted: bool, intruders=None,
-               collapsed=None) -> dict:
+def _group_row(
+    name: str, verdict: str, info, accepted: bool, intruders=None, collapsed=None
+) -> dict:
     d = info if isinstance(info, dict) else {}
     tip_count = group_tip_count(info)
     if intruders is None:
-        intruders = (d.get("intruders") or d.get("intruder_taxa")
-                     or d.get("extra_taxa") or [])
+        intruders = d.get("intruders") or d.get("intruder_taxa") or d.get("extra_taxa") or []
     unmapped_in = d.get("unmapped_in_mrca") or d.get("unmapped") or []
     return {
         "group": name,
@@ -199,9 +229,16 @@ def _group_row(name: str, verdict: str, info, accepted: bool, intruders=None,
         # monophyly test pass".  A group can be exclusive and still be left
         # expanded (single-taxon groups, or a colour-only workflow), and the
         # exported NEXUS is the arbiter.
-        "collapse_applied": "yes" if (collapsed is not None
-                                      and name in collapsed) else "no",
-        "intruder_taxa": ";".join(map(str, intruders)) if isinstance(intruders, (list, tuple, set)) else str(intruders or ""),
-        "unmapped_tips_in_mrca": ";".join(map(str, unmapped_in)) if isinstance(unmapped_in, (list, tuple, set)) else str(unmapped_in or ""),
+        "collapse_applied": "yes" if (collapsed is not None and name in collapsed) else "no",
+        "intruder_taxa": (
+            ";".join(map(str, intruders))
+            if isinstance(intruders, (list, tuple, set))
+            else str(intruders or "")
+        ),
+        "unmapped_tips_in_mrca": (
+            ";".join(map(str, unmapped_in))
+            if isinstance(unmapped_in, (list, tuple, set))
+            else str(unmapped_in or "")
+        ),
         "colour": d.get("colour") or d.get("color") or "",
     }

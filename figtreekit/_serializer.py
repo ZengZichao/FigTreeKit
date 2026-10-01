@@ -23,41 +23,41 @@ import re
 from typing import Any, Dict, Optional
 
 # Color patterns
-COLOR_PATTERN = re.compile(r'^#[0-9A-Fa-f]{6}$')
-OLD_STYLE_COLOR_PATTERN = re.compile(r'^#-\d+$')
+COLOR_PATTERN = re.compile(r"^#[0-9A-Fa-f]{6}$")
+OLD_STYLE_COLOR_PATTERN = re.compile(r"^#-\d+$")
 # 3-digit hex shorthand (#RGB) — expanded to 6 digits on serialize.
-_SHORT_HEX_PATTERN = re.compile(r'^#[0-9A-Fa-f]{3}$')
+_SHORT_HEX_PATTERN = re.compile(r"^#[0-9A-Fa-f]{3}$")
 
 # Parameters read by FigTree using getFloat()/getDouble(); these must be
 # serialized with a decimal point (e.g. "1.0" not "1").  Hoisted to module
 # scope so generate_figtree_block does not rebuild the set on every call.
 _FLOAT_PARAMS = {
-    'appearance.branchLineWidth',
-    'appearance.branchMinLineWidth',
-    'scaleBar.lineWidth',
-    'scaleBar.scaleRange',
-    'scaleBar.fontSize',
-    'scaleAxis.lineWidth',
-    'scaleAxis.fontSize',
-    'scaleAxis.majorTicks',
-    'scaleAxis.origin',
-    'nodeBars.barWidth',
-    'nodeBars.fontSize',
-    'nodeShapes.size',
-    'nodeShapes.strokeWidth',
-    'nodeShapes.fontSize',
-    'nodeLabels.fontSize',
-    'branchLabels.fontSize',
-    'tipLabels.fontSize',
-    'legend.fontSize',
-    'legend.backgroundOpacity',
-    'legend.borderWidth',
-    'legend.x',
-    'legend.y',
-    'scale.rootAge',
-    'scale.scaleFactor',
-    'scale.offsetAge',
-    'radialLayout.spread',
+    "appearance.branchLineWidth",
+    "appearance.branchMinLineWidth",
+    "scaleBar.lineWidth",
+    "scaleBar.scaleRange",
+    "scaleBar.fontSize",
+    "scaleAxis.lineWidth",
+    "scaleAxis.fontSize",
+    "scaleAxis.majorTicks",
+    "scaleAxis.origin",
+    "nodeBars.barWidth",
+    "nodeBars.fontSize",
+    "nodeShapes.size",
+    "nodeShapes.strokeWidth",
+    "nodeShapes.fontSize",
+    "nodeLabels.fontSize",
+    "branchLabels.fontSize",
+    "tipLabels.fontSize",
+    "legend.fontSize",
+    "legend.backgroundOpacity",
+    "legend.borderWidth",
+    "legend.x",
+    "legend.y",
+    "scale.rootAge",
+    "scale.scaleFactor",
+    "scale.offsetAge",
+    "radialLayout.spread",
 }
 
 
@@ -77,7 +77,7 @@ def _expand_hex_color(value: Any) -> Optional[str]:
     if COLOR_PATTERN.match(value):
         return value.lower()
     if _SHORT_HEX_PATTERN.match(value):
-        return '#' + ''.join(ch * 2 for ch in value[1:]).lower()
+        return "#" + "".join(ch * 2 for ch in value[1:]).lower()
     return None
 
 
@@ -137,7 +137,7 @@ def serialize_value(value: Any, force_float: bool = False) -> str:
     # Strings: all non-color strings are double-quoted with backslash escaping
     # (extends FigTreeNexusExporter.java createString to handle embedded quotes)
     if isinstance(value, str):
-        escaped = value.replace('\\', '\\\\').replace('"', '\\"')
+        escaped = value.replace("\\", "\\\\").replace('"', '\\"')
         return f'"{escaped}"'
 
     return str(value)
@@ -167,7 +167,7 @@ def generate_figtree_block(settings_dict: Dict[str, Any]) -> str:
         if serialized:
             lines.append(f"\tset {key}={serialized};")
     lines.append("end;")
-    return '\n'.join(lines)
+    return "\n".join(lines)
 
 
 # ── Nexus trees/taxa block writers (moved from styler.py) ───────────────
@@ -179,8 +179,7 @@ def generate_figtree_block(settings_dict: Dict[str, Any]) -> str:
 # declaration at all (degenerate trees blocks without a ``tree ... =`` line).
 _NESTED_COMMENT = r"\[(?:[^\[\]]|\[(?:[^\[\]]|\[[^\]]*\])*\])*\]"
 _TREE_VALUE_PATTERN = re.compile(
-    r'tree\s+\S+\s*=\s*(?:(?:[^\[\];]|' + _NESTED_COMMENT + r')*;)',
-    re.DOTALL | re.IGNORECASE
+    r"tree\s+\S+\s*=\s*(?:(?:[^\[\];]|" + _NESTED_COMMENT + r")*;)", re.DOTALL | re.IGNORECASE
 )
 
 
@@ -203,13 +202,13 @@ def _tree_declaration_head(trees_content: str, start: int, end: int) -> str:
         if trees_content[j].isspace():
             j += 1
             continue
-        if trees_content[j] != '[':
+        if trees_content[j] != "[":
             break
         depth = 0
         while j < end:
-            if trees_content[j] == '[':
+            if trees_content[j] == "[":
                 depth += 1
-            elif trees_content[j] == ']':
+            elif trees_content[j] == "]":
                 depth -= 1
                 if depth == 0:
                     j += 1
@@ -241,9 +240,7 @@ def write_taxa_block(
         return
     if not is_nexus_format:
         # Use resolved content when collapses may have changed terminal names
-        source = (resolved_content
-                  if (resolved_content and has_collapses)
-                  else tree_content)
+        source = resolved_content if (resolved_content and has_collapses) else tree_content
         taxa = extract_taxa_from_newick(source)
         out.write("begin taxa;\n")
         out.write(f"\tdimensions ntax={len(taxa)};\n")
@@ -297,46 +294,36 @@ def write_trees_block(
         try:
             spans = find_tree_declaration_spans(trees_content)
         except ValueError as e:
-            raise ExportError(
-                f"Cannot serialize trees block: {e}"
-            ) from e
-        clean = resolved_tree_content.rstrip(';')
+            raise ExportError(f"Cannot serialize trees block: {e}") from e
+        clean = resolved_tree_content.rstrip(";")
         if spans and tree_index < len(spans):
             start, end = spans[tree_index]
             decl = _tree_declaration_head(trees_content, start, end)
-            replacement = f'\t{decl}{clean};'
+            replacement = f"\t{decl}{clean};"
             if single_tree:
                 trees_content = replacement
             else:
-                trees_content = (
-                    trees_content[:start] +
-                    replacement +
-                    trees_content[end:]
-                )
+                trees_content = trees_content[:start] + replacement + trees_content[end:]
         elif spans:
             # Requested tree_index out of range: fall back to replacing the
             # first declaration (matches historical behaviour).
             start, end = spans[0]
             decl = _tree_declaration_head(trees_content, start, end)
-            replacement = f'\t{decl}{clean};'
+            replacement = f"\t{decl}{clean};"
             if single_tree:
                 trees_content = replacement
             else:
-                trees_content = (
-                    trees_content[:start] +
-                    replacement +
-                    trees_content[end:]
-                )
+                trees_content = trees_content[:start] + replacement + trees_content[end:]
         else:
             # Degenerate block without any ``tree ... =`` declaration: the
             # scanner found nothing, so fall back to a tolerant regex
             # substitution (left unchanged when even that fails to match).
-            replacement = f'\ttree TREE1 = {clean};'
+            replacement = f"\ttree TREE1 = {clean};"
             trees_content = _TREE_VALUE_PATTERN.sub(replacement, trees_content, count=1)
         out.write(trees_content)
         out.write("\n")
     else:
-        clean = resolved_tree_content.rstrip(';')
+        clean = resolved_tree_content.rstrip(";")
         out.write(f"\ttree TREE1 = {clean};\n")
 
     out.write("end;\n\n")

@@ -57,7 +57,8 @@ def count_taxa(tree_path: Path) -> int:
     text = tree_path.read_text(encoding="utf-8", errors="replace")
     # Count leaf labels: tokens after '(' or ',' that are not internal nodes.
     import re
-    labels = re.findall(r'[(,]\s*([^(),;:\[\]]+?)\s*(?=[:),;])', text)
+
+    labels = re.findall(r"[(,]\s*([^(),;:\[\]]+?)\s*(?=[:),;])", text)
     return len(labels)
 
 

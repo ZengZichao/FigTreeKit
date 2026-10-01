@@ -11,6 +11,7 @@ Resolution order:
     2. the ``FTK_GTDB_DIR`` environment variable,
     3. ``<repo>/benchmarks/gtdb_data``.
 """
+
 from __future__ import annotations
 
 import os
@@ -18,8 +19,12 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 GTDB_RELEASE_URL = "https://data.gtdb.ecogenomic.org/releases/release232/232.0/"
-GTDB_FILES = ("ar53_r232.tree", "bac120_r232.tree",
-              "ar53_taxonomy_r232.tsv", "bac120_taxonomy_r232.tsv")
+GTDB_FILES = (
+    "ar53_r232.tree",
+    "bac120_r232.tree",
+    "ar53_taxonomy_r232.tsv",
+    "bac120_taxonomy_r232.tsv",
+)
 
 
 def gtdb_data_dir() -> Path:

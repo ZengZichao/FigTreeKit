@@ -91,6 +91,7 @@ def _get_figtree_defaults() -> Dict[str, Any]:
         _DEFAULTS_CACHE = get_figtree_defaults()
     return _DEFAULTS_CACHE
 
+
 @dataclass
 class FigTreeSettings:
     """Container for all FigTree settings organized by category.
@@ -98,22 +99,47 @@ class FigTreeSettings:
     Settings are stored as raw Python types and serialized via
     :func:`~figtreekit._serializer.serialize_value`.
     """
-    appearance: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["appearance"].copy())
+
+    appearance: Dict[str, Any] = field(
+        default_factory=lambda: _get_figtree_defaults()["appearance"].copy()
+    )
     layout: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["layout"].copy())
     trees: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["trees"].copy())
-    tipLabels: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["tipLabels"].copy())
-    nodeLabels: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["nodeLabels"].copy())
-    branchLabels: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["branchLabels"].copy())
-    scaleBar: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["scaleBar"].copy())
-    scaleAxis: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["scaleAxis"].copy())
+    tipLabels: Dict[str, Any] = field(
+        default_factory=lambda: _get_figtree_defaults()["tipLabels"].copy()
+    )
+    nodeLabels: Dict[str, Any] = field(
+        default_factory=lambda: _get_figtree_defaults()["nodeLabels"].copy()
+    )
+    branchLabels: Dict[str, Any] = field(
+        default_factory=lambda: _get_figtree_defaults()["branchLabels"].copy()
+    )
+    scaleBar: Dict[str, Any] = field(
+        default_factory=lambda: _get_figtree_defaults()["scaleBar"].copy()
+    )
+    scaleAxis: Dict[str, Any] = field(
+        default_factory=lambda: _get_figtree_defaults()["scaleAxis"].copy()
+    )
     scale: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["scale"].copy())
-    polarLayout: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["polarLayout"].copy())
-    radialLayout: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["radialLayout"].copy())
-    rectilinearLayout: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["rectilinearLayout"].copy())
-    nodeBars: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["nodeBars"].copy())
-    nodeShapes: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["nodeShapes"].copy())
+    polarLayout: Dict[str, Any] = field(
+        default_factory=lambda: _get_figtree_defaults()["polarLayout"].copy()
+    )
+    radialLayout: Dict[str, Any] = field(
+        default_factory=lambda: _get_figtree_defaults()["radialLayout"].copy()
+    )
+    rectilinearLayout: Dict[str, Any] = field(
+        default_factory=lambda: _get_figtree_defaults()["rectilinearLayout"].copy()
+    )
+    nodeBars: Dict[str, Any] = field(
+        default_factory=lambda: _get_figtree_defaults()["nodeBars"].copy()
+    )
+    nodeShapes: Dict[str, Any] = field(
+        default_factory=lambda: _get_figtree_defaults()["nodeShapes"].copy()
+    )
     legend: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["legend"].copy())
-    hilighting: Dict[str, Any] = field(default_factory=lambda: _get_figtree_defaults()["hilighting"].copy())
+    hilighting: Dict[str, Any] = field(
+        default_factory=lambda: _get_figtree_defaults()["hilighting"].copy()
+    )
     _custom: Dict[str, Any] = field(default_factory=dict)
     _node_annotations: List[NodeAnnotation] = field(default_factory=list)
     _collapses: List[CladeCollapse] = field(default_factory=list)
@@ -121,7 +147,7 @@ class FigTreeSettings:
     def to_dict(self) -> Dict[str, Any]:
         result: Dict[str, Any] = {}
         for category, values in vars(self).items():
-            if category.startswith('_'):
+            if category.startswith("_"):
                 continue
             for key, value in values.items():
                 result[f"{category}.{key}"] = value
@@ -143,8 +169,8 @@ class FigTreeSettings:
             value: Value to assign.  Stored in the matching category dict,
                 or in :attr:`_custom` when the category is unknown.
         """
-        if '.' in key:
-            category, param = key.split('.', 1)
+        if "." in key:
+            category, param = key.split(".", 1)
         else:
             category = key
             param = key
@@ -154,7 +180,7 @@ class FigTreeSettings:
         # every category on every call — the previous O(n) rebuild per call
         # made bulk loads (many settings) O(n²) for no reason.
         attr = getattr(self, category, None)
-        if isinstance(attr, dict) and not category.startswith('_'):
+        if isinstance(attr, dict) and not category.startswith("_"):
             attr[param] = value
         else:
             self._custom[key] = value
@@ -189,8 +215,7 @@ class FigTreeStyler:
     COLOR_ATTRIBUTE_NAME = "!color"
     FONT_ATTRIBUTE_NAME = "!font"
 
-    def __init__(self, input_file: Optional[str] = None, tree_index: int = 0,
-                 strict: bool = False):
+    def __init__(self, input_file: Optional[str] = None, tree_index: int = 0, strict: bool = False):
         self._settings = FigTreeSettings()
         self._tree_content: Optional[str] = None
         self._is_nexus_format: bool = False
@@ -271,9 +296,7 @@ class FigTreeStyler:
         # Scan for malicious content (control characters, bidi overrides)
         mal_errors = scan_for_anomalous_content(content, label="tree content", source="input")
         if mal_errors:
-            raise ValidationError(
-                "Malicious content detected:\n" + "\n".join(mal_errors)
-            )
+            raise ValidationError("Malicious content detected:\n" + "\n".join(mal_errors))
 
         self._tree_content = None
         self._is_nexus_format = False
@@ -288,19 +311,19 @@ class FigTreeStyler:
         self._node_height_cache = {}
         self._height_cache = {}
 
-        if content.upper().startswith('#NEXUS'):
+        if content.upper().startswith("#NEXUS"):
             self._is_nexus_format = True
             self._parse_nexus_content(content)
         else:
-            if content.rstrip() == ';':
+            if content.rstrip() == ";":
                 warnings.warn(
                     "Loaded Newick string contains only a semicolon (empty tree). "
                     "This is technically valid but may indicate missing tree data.",
                     CompatibilityWarning,
                 )
             self._is_nexus_format = False
-            if not content.rstrip().endswith(';'):
-                last_taxon = re.findall(r'([A-Za-z0-9_][A-Za-z0-9_.]*)\s*:', content)
+            if not content.rstrip().endswith(";"):
+                last_taxon = re.findall(r"([A-Za-z0-9_][A-Za-z0-9_.]*)\s*:", content)
                 ctx = f" after clade '{last_taxon[-1]}'" if last_taxon else ""
                 raise ParseError(f"Invalid Newick: missing semicolon{ctx}")
             self._tree_content = content
@@ -362,13 +385,13 @@ class FigTreeStyler:
 
     def _parse_nexus_content(self, content: str) -> None:
         parsed = parse_nexus_content(content, self._tree_index)
-        self._taxa_block = parsed['taxa_block']
-        self._tree_block = parsed['tree_block']
-        self._translate_block = parsed['translate_block']
-        self._tree_content = parsed['tree_content']
-        self._all_trees = parsed['all_trees']
-        if parsed['figtree_block']:
-            load_existing_figtree_block(self._settings, parsed['figtree_block'])
+        self._taxa_block = parsed["taxa_block"]
+        self._tree_block = parsed["tree_block"]
+        self._translate_block = parsed["translate_block"]
+        self._tree_content = parsed["tree_content"]
+        self._all_trees = parsed["all_trees"]
+        if parsed["figtree_block"]:
+            load_existing_figtree_block(self._settings, parsed["figtree_block"])
 
     # ------------------------------------------------------------------
     # Tree parsing engine (Bio.Phylo)
@@ -385,7 +408,7 @@ class FigTreeStyler:
             # ranges, posterior probabilities, NHX tags) now survives the
             # round-trip through the tree object itself, at every attachment
             # position Bio.Phylo supports.
-            trees = list(Phylo.parse(_io.StringIO(tree_string), 'newick'))
+            trees = list(Phylo.parse(_io.StringIO(tree_string), "newick"))
             if not trees:
                 return None
 
@@ -393,7 +416,7 @@ class FigTreeStyler:
             negative_branches: List[str] = []
             for clade in tree.find_clades():
                 if clade.branch_length is not None and clade.branch_length < 0:
-                    node_name = clade.name or '<internal>'
+                    node_name = clade.name or "<internal>"
                     negative_branches.append(f"{node_name} ({clade.branch_length})")
                     if self._strict:
                         raise ValidationError(
@@ -403,7 +426,11 @@ class FigTreeStyler:
             if negative_branches and not self._strict:
                 warnings.warn(
                     f"Negative branch length(s) found: {', '.join(negative_branches[:5])}"
-                    + (f" and {len(negative_branches) - 5} more" if len(negative_branches) > 5 else "")
+                    + (
+                        f" and {len(negative_branches) - 5} more"
+                        if len(negative_branches) > 5
+                        else ""
+                    )
                     + ". FigTree may render this incorrectly.",
                     CompatibilityWarning,
                 )
@@ -411,9 +438,7 @@ class FigTreeStyler:
         except (ValidationError, ExportError):
             raise
         except Exception as e:
-            warnings.warn(
-                f"Bio.Phylo tree parsing failed ({type(e).__name__}): {e}"
-            )
+            warnings.warn(f"Bio.Phylo tree parsing failed ({type(e).__name__}): {e}")
             return None
 
     def _find_mrca_clade(
@@ -472,8 +497,7 @@ class FigTreeStyler:
                 # subsequently-unresolved annotation is reported instead of
                 # silently dropped (fix #29).
                 warnings.warn(
-                    f"MRCA search failed for taxa {taxon_names}: no matching taxa "
-                    f"found in tree"
+                    f"MRCA search failed for taxa {taxon_names}: no matching taxa " f"found in tree"
                 )
                 return None
             if len(names) == 1:
@@ -554,7 +578,7 @@ class FigTreeStyler:
             while stack:
                 current = stack.pop()
                 total_length += current.branch_length or 0.0
-                children = getattr(current, 'clades', None)
+                children = getattr(current, "clades", None)
                 if children:
                     stack.extend(children)
                 else:
@@ -568,7 +592,7 @@ class FigTreeStyler:
         # hilight/collapse annotations don't re-run the full DFS (fix #26).
         # Entries carry a structural guard and are dropped when the tree
         # changes; failure results are never cached (fix C6).
-        cache = self.__dict__.setdefault('_node_height_cache', {})
+        cache = self.__dict__.setdefault("_node_height_cache", {})
         key = (id(tree), id(node))
         cached = cache.get(key)
         if cached is not None:
@@ -587,7 +611,7 @@ class FigTreeStyler:
                     result = round(height, 10)
                     cache[key] = (result, self._tree_cache_guard(tree))
                     return result
-                if hasattr(current, 'clades'):
+                if hasattr(current, "clades"):
                     for child in current.clades:
                         child_height = height + (child.branch_length or 0.0)
                         stack.append((child, child_height))
@@ -640,10 +664,7 @@ class FigTreeStyler:
         stack = [(node, 0.0)]
         while stack:
             current, dist = stack.pop()
-            is_terminal = (
-                not hasattr(current, 'clades') or
-                not current.clades
-            )
+            is_terminal = not hasattr(current, "clades") or not current.clades
             if is_terminal:
                 if dist > max_dist_in_subtree:
                     max_dist_in_subtree = dist
@@ -654,17 +675,14 @@ class FigTreeStyler:
 
         # 3. maxHeight = max tip depth in the entire tree (cache once per tree,
         # since it is identical for every hilight/collapse annotation, fix #26).
-        hcache = self.__dict__.setdefault('_height_cache', {})
+        hcache = self.__dict__.setdefault("_height_cache", {})
         tree_id = id(tree)
         if tree_id not in hcache:
             max_height = 0.0
             stack = [(tree.root, 0.0)]
             while stack:
                 current, depth = stack.pop()
-                is_terminal = (
-                    not hasattr(current, 'clades') or
-                    not current.clades
-                )
+                is_terminal = not hasattr(current, "clades") or not current.clades
                 if is_terminal:
                     if depth > max_height:
                         max_height = depth
@@ -678,17 +696,18 @@ class FigTreeStyler:
         result = max_height - max_tip_depth_in_subtree
         return round(max(0.0, result), 10)
 
-    def _inject_annotation_to_node(self, node, annotation_type: str, values: Any,
-                                     extra_params: Optional[Dict[str, Any]] = None):
+    def _inject_annotation_to_node(
+        self, node, annotation_type: str, values: Any, extra_params: Optional[Dict[str, Any]] = None
+    ):
         if node is None:
             return
 
         tag = f"!{annotation_type.replace('!', '')}"
 
-        if annotation_type == 'color':
+        if annotation_type == "color":
             color_value = values.lower() if isinstance(values, str) else values
             annotation_str = f"&{tag}={color_value}"
-        elif annotation_type == 'hilight':
+        elif annotation_type == "hilight":
             if isinstance(values, (list, tuple)) and len(values) >= 3:
                 color = values[2].lower() if isinstance(values[2], str) else values[2]
                 # FigTree only supports 3-element format: {tipCount,tipHeight,color}
@@ -697,9 +716,9 @@ class FigTreeStyler:
             else:
                 warnings.warn(f"Invalid hilight values: {values}")
                 return
-        elif annotation_type == 'font':
-            if isinstance(values, str) and ',' in values:
-                parts = values.split(',')
+        elif annotation_type == "font":
+            if isinstance(values, str) and "," in values:
+                parts = values.split(",")
                 try:
                     name, style_int, size = parts[0], int(parts[1]), parts[2]
                 except (ValueError, IndexError):
@@ -709,7 +728,7 @@ class FigTreeStyler:
                 annotation_str = f"&{tag}={name}-{style_str}-{size}"
             else:
                 annotation_str = f"&{tag}={values}"
-        elif annotation_type == 'stroke':
+        elif annotation_type == "stroke":
             try:
                 numeric = float(values)
                 stroke_value = int(numeric) if numeric.is_integer() else numeric
@@ -724,7 +743,7 @@ class FigTreeStyler:
             node.comment = annotation_str
         else:
             tag_present = f"{tag}=" in node.comment
-            if annotation_type == 'hilight' or not tag_present:
+            if annotation_type == "hilight" or not tag_present:
                 # Standard jebl meta-comment format: [&k1=v1,k2=v2]
                 # The & prefix only appears once at the start; subsequent
                 # annotations are separated by commas without & prefix.
@@ -733,8 +752,8 @@ class FigTreeStyler:
                 # Same annotation type already present: override its value
                 # rather than silently dropping the new value (fix #28).
                 node.comment = re.sub(
-                    rf'{re.escape(tag)}=[^,&]*',
-                    annotation_str.lstrip('&'),
+                    rf"{re.escape(tag)}=[^,&]*",
+                    annotation_str.lstrip("&"),
                     node.comment,
                     count=1,
                 )
@@ -761,8 +780,10 @@ class FigTreeStyler:
         if target_node is None:
             return False
         self._inject_annotation_to_node(
-            target_node, annotation.annotation_type, annotation.values,
-            extra_params=annotation.extra_params
+            target_node,
+            annotation.annotation_type,
+            annotation.values,
+            extra_params=annotation.extra_params,
         )
         return True
 
@@ -784,15 +805,14 @@ class FigTreeStyler:
                 continue
             node = self._find_mrca_clade(tree, annotation.target_taxa)
             if node is None:
-                unresolved.append(
-                    f"{annotation.annotation_type} for taxa {annotation.target_taxa}"
-                )
+                unresolved.append(f"{annotation.annotation_type} for taxa {annotation.target_taxa}")
         return unresolved
 
     def _serialize_tree_to_newick(self, tree) -> Optional[str]:
         try:
             from Bio import Phylo
             import io as _io
+
             has_translate = bool(self._translate_block)
             for clade in tree.find_clades():
                 if clade.name:
@@ -802,8 +822,8 @@ class FigTreeStyler:
                         clade.name = m.group(1)
                     # Replace semicolons inside node names to prevent Nexus
                     # parser confusion (e.g. GTDB "c__X; o__Y" → "c__X, o__Y")
-                    if clade.name and ';' in clade.name:
-                        clade.name = clade.name.replace(';', ',')
+                    if clade.name and ";" in clade.name:
+                        clade.name = clade.name.replace(";", ",")
                 # NOTE: Numeric node names are intentionally PRESERVED here.
                 # In BEAST trees and trees without a `translate` block, purely
                 # numeric leaf names (e.g. "1", "123") are real taxon labels and
@@ -817,7 +837,7 @@ class FigTreeStyler:
                 if clade.confidence is not None:
                     clade.confidence = None
             output = _io.StringIO()
-            Phylo.write(tree, output, 'newick')
+            Phylo.write(tree, output, "newick")
             return output.getvalue().strip()
         except (ValueError, AttributeError, TypeError, OSError) as e:
             warnings.warn(f"Tree serialization failed: {e}")
@@ -827,8 +847,9 @@ class FigTreeStyler:
     # Annotation API
     # ------------------------------------------------------------------
 
-    def highlight_clade(self, taxon_names: List[str], color: str = "#804548",
-                        width: int = 4, offset: float = 0.0) -> "FigTreeStyler":
+    def highlight_clade(
+        self, taxon_names: List[str], color: str = "#804548", width: int = 4, offset: float = 0.0
+    ) -> "FigTreeStyler":
         """Highlight a clade defined by its constituent taxa.
 
         Finds the MRCA of the specified taxa and applies a colored background
@@ -852,13 +873,13 @@ class FigTreeStyler:
             raise ValidationError(f"Invalid taxon names: {taxon_names}")
 
         annotation = NodeAnnotation(
-            annotation_type='hilight',
+            annotation_type="hilight",
             values=[0, 0.0, color],
             target_taxa=taxon_names,
-            extra_params={'width': width, 'offset': offset},
+            extra_params={"width": width, "offset": offset},
         )
         self._settings._node_annotations.append(annotation)
-        self._settings.hilighting['isShown'] = True
+        self._settings.hilighting["isShown"] = True
         return self
 
     def set_clade_color(self, taxon_names: List[str], color: str) -> "FigTreeStyler":
@@ -877,7 +898,7 @@ class FigTreeStyler:
             raise ValidationError(f"Invalid taxon names: {taxon_names}")
 
         self._settings._node_annotations.append(
-            NodeAnnotation(annotation_type='color', values=color, target_taxa=taxon_names)
+            NodeAnnotation(annotation_type="color", values=color, target_taxa=taxon_names)
         )
         return self
 
@@ -901,13 +922,17 @@ class FigTreeStyler:
             raise ValidationError(f"Invalid taxon names: {taxon_names}")
 
         self._settings._node_annotations.append(
-            NodeAnnotation(annotation_type='color_all', values=color, target_taxa=taxon_names)
+            NodeAnnotation(annotation_type="color_all", values=color, target_taxa=taxon_names)
         )
         return self
 
-    def set_clade_font(self, taxon_names: List[str], font_name: str = "Arial",
-                       font_style: Union[int, FontStyle] = FontStyle.PLAIN,
-                       font_size: int = 12) -> "FigTreeStyler":
+    def set_clade_font(
+        self,
+        taxon_names: List[str],
+        font_name: str = "Arial",
+        font_style: Union[int, FontStyle] = FontStyle.PLAIN,
+        font_size: int = 12,
+    ) -> "FigTreeStyler":
         """Set font for a clade's labels.
 
         The annotation is serialized as ``[&!font=Name-STYLE-size]`` compatible
@@ -933,14 +958,12 @@ class FigTreeStyler:
             raise ValidationError(f"Invalid font size: {font_size} (must be positive integer)")
         # A comma in the font name would corrupt the comma-separated
         # "!font=Name-STYLE-size" annotation (fix #33).
-        if ',' in font_name:
-            raise ValidationError(
-                f"Invalid font name: '{font_name}' must not contain a comma"
-            )
+        if "," in font_name:
+            raise ValidationError(f"Invalid font name: '{font_name}' must not contain a comma")
 
         self._settings._node_annotations.append(
             NodeAnnotation(
-                annotation_type='font',
+                annotation_type="font",
                 values=f"{font_name},{font_style},{font_size}",
                 target_taxa=taxon_names,
             )
@@ -970,12 +993,13 @@ class FigTreeStyler:
             CompatibilityWarning,
         )
         self._settings._node_annotations.append(
-            NodeAnnotation(annotation_type='stroke', values=stroke_width, target_taxa=taxon_names)
+            NodeAnnotation(annotation_type="stroke", values=stroke_width, target_taxa=taxon_names)
         )
         return self
 
-    def set_clade_hilight(self, clade_identifier: str, tip_count: int,
-                          height: float, color: str) -> "FigTreeStyler":
+    def set_clade_hilight(
+        self, clade_identifier: str, tip_count: int, height: float, color: str
+    ) -> "FigTreeStyler":
         """Set hilight annotation with explicit parameters.
 
         Args:
@@ -991,9 +1015,9 @@ class FigTreeStyler:
             raise ValidationError(f"Invalid hex color: {color}")
 
         target_taxa = None
-        mrca_match = re.match(r'MRCA\(([^)]+)\)', clade_identifier, re.IGNORECASE)
+        mrca_match = re.match(r"MRCA\(([^)]+)\)", clade_identifier, re.IGNORECASE)
         if mrca_match:
-            target_taxa = [t.strip() for t in mrca_match.group(1).split(',')]
+            target_taxa = [t.strip() for t in mrca_match.group(1).split(",")]
         else:
             warnings.warn(
                 f"clade_identifier '{clade_identifier}' does not match MRCA(taxa,...) pattern; "
@@ -1003,13 +1027,13 @@ class FigTreeStyler:
 
         self._settings._node_annotations.append(
             NodeAnnotation(
-                annotation_type='hilight',
+                annotation_type="hilight",
                 values=[tip_count, height, color],
                 target_taxa=target_taxa,
                 extra_params={},
             )
         )
-        self._settings.hilighting['isShown'] = True
+        self._settings.hilighting["isShown"] = True
         return self
 
     def clear_annotations(self) -> "FigTreeStyler":
@@ -1020,7 +1044,7 @@ class FigTreeStyler:
     def clear_clade_hilights(self) -> "FigTreeStyler":
         """Clear only hilight annotations, preserving color/font annotations."""
         self._settings._node_annotations = [
-            a for a in self._settings._node_annotations if a.annotation_type != 'hilight'
+            a for a in self._settings._node_annotations if a.annotation_type != "hilight"
         ]
         return self
 
@@ -1083,7 +1107,7 @@ class FigTreeStyler:
         mrca_set = set(mrca_terminal_names)
 
         # Check if monophyletic: MRCA terminals must exactly match target taxa
-        is_monophyletic = (mrca_set == target_set)
+        is_monophyletic = mrca_set == target_set
         missing = list(mrca_set - target_set)
         extra = list(target_set - mrca_set)
 
@@ -1160,7 +1184,8 @@ class FigTreeStyler:
 
         map_file = mapping_file or self._taxonomy_mapping_file
         mapper = TaxonomyMapper(
-            pattern=pattern, delimiter=self._table_sep,
+            pattern=pattern,
+            delimiter=self._table_sep,
             priority=self._taxonomy_source_priority,
         )
         if map_file:
@@ -1175,6 +1200,7 @@ class FigTreeStyler:
 
         # Parse labels with configured mode
         from .taxonomy import parse_taxonomy_auto
+
         if pattern:
             mapper.parse_labels(
                 labels,
@@ -1283,8 +1309,7 @@ class FigTreeStyler:
 
         if collapse_type not in ("collapse", "cartoon"):
             raise ValidationError(
-                f"Invalid collapse_type: {collapse_type!r} "
-                f"(expected 'collapse' or 'cartoon')"
+                f"Invalid collapse_type: {collapse_type!r} " f"(expected 'collapse' or 'cartoon')"
             )
 
         if label is None:
@@ -1322,9 +1347,9 @@ class FigTreeStyler:
                         if set(mrca_terminals) != set(present):
                             extra = sorted(set(mrca_terminals) - set(present))
                             extra_str = (
-                                f" (extra tips: {extra[:5]}"
-                                f"{'...' if len(extra) > 5 else ''})"
-                                if extra else ""
+                                f" (extra tips: {extra[:5]}" f"{'...' if len(extra) > 5 else ''})"
+                                if extra
+                                else ""
                             )
                             warnings.warn(
                                 f"collapse_clade: taxa {list(taxon_names)} are not "
@@ -1365,7 +1390,9 @@ class FigTreeStyler:
             self for method chaining.
         """
         return self.collapse_clade(
-            taxon_names, label=label, collapse_type="cartoon",
+            taxon_names,
+            label=label,
+            collapse_type="cartoon",
             allow_partial=allow_partial,
         )
 
@@ -1409,8 +1436,7 @@ class FigTreeStyler:
 
         if not result["is_monophyletic"]:
             warning = result.get("warning") or (
-                f"'{group_name}' is not a monophyletic group — "
-                f"collapse is not allowed."
+                f"'{group_name}' is not a monophyletic group — " f"collapse is not allowed."
             )
             warnings.warn(warning, CompatibilityWarning)
             return self
@@ -1525,14 +1551,14 @@ class FigTreeStyler:
             if ctype == "cartoon":
                 tip_count = len(mrca.get_terminals())
                 annot_name = "!cartoon"
-                annot_str = f'&!cartoon={{{tip_count},{min_height}}}'
+                annot_str = f"&!cartoon={{{tip_count},{min_height}}}"
             else:
                 annot_name = "!collapse"
-                annot_str = f'&!collapse={{{collapse.label},{min_height}}}'
+                annot_str = f"&!collapse={{{collapse.label},{min_height}}}"
 
             if mrca.comment is None:
                 mrca.comment = annot_str
-            elif f'{annot_name}=' not in mrca.comment:
+            elif f"{annot_name}=" not in mrca.comment:
                 # Standard jebl format: & only at start, subsequent
                 # annotations separated by commas without & prefix.
                 mrca.comment += f',{annot_str.lstrip("&")}'
@@ -1541,9 +1567,7 @@ class FigTreeStyler:
                 # Pattern matches the tag without & prefix so it works
                 # for both first and subsequent annotations.
                 mrca.comment = re.sub(
-                    rf'{annot_name}=\{{[^}}]+\}}',
-                    annot_str.lstrip('&'),
-                    mrca.comment
+                    rf"{annot_name}=\{{[^}}]+\}}", annot_str.lstrip("&"), mrca.comment
                 )
 
             # Set MRCA name to collapse label for FigTree node label display
@@ -1623,8 +1647,7 @@ class FigTreeStyler:
                 )
             else:
                 warnings.warn(
-                    f"Could not find MRCA for taxa {taxon_names}. "
-                    f"No styles will be applied.",
+                    f"Could not find MRCA for taxa {taxon_names}. " f"No styles will be applied.",
                     CompatibilityWarning,
                 )
 
@@ -1947,8 +1970,9 @@ class FigTreeStyler:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _apply_mapped_kwargs(target: Dict[str, Any], kwargs: Dict[str, Any],
-                             mapping: Dict[str, str]) -> None:
+    def _apply_mapped_kwargs(
+        target: Dict[str, Any], kwargs: Dict[str, Any], mapping: Dict[str, str]
+    ) -> None:
         """Apply keyword arguments to *target* dict using *mapping*.
 
         Keys not in *mapping* are passed through unchanged.
@@ -1963,16 +1987,16 @@ class FigTreeStyler:
             target[mapping.get(key, key)] = val
 
     _APPEARANCE_MAPPING: Dict[str, str] = {
-        'branch_line_width': 'branchLineWidth',
-        'background_color': 'backgroundColour',
-        'foreground_color': 'foregroundColour',
-        'selection_color': 'selectionColour',
-        'background_color_attribute': 'backgroundColorAttribute',
-        'branch_color_attribute': 'branchColorAttribute',
-        'branch_width_attribute': 'branchWidthAttribute',
-        'branch_min_line_width': 'branchMinLineWidth',
-        'branch_color_gradient': 'branchColorGradient',
-        'hilighting_gradient': 'hilightingGradient',
+        "branch_line_width": "branchLineWidth",
+        "background_color": "backgroundColour",
+        "foreground_color": "foregroundColour",
+        "selection_color": "selectionColour",
+        "background_color_attribute": "backgroundColorAttribute",
+        "branch_color_attribute": "branchColorAttribute",
+        "branch_width_attribute": "branchWidthAttribute",
+        "branch_min_line_width": "branchMinLineWidth",
+        "branch_color_gradient": "branchColorGradient",
+        "hilighting_gradient": "hilightingGradient",
     }
 
     def set_appearance(self, **kwargs: Any) -> "FigTreeStyler":
@@ -2000,53 +2024,59 @@ class FigTreeStyler:
         kwargs = kwargs.copy()
 
         # Validate color arguments before applying
-        for color_key in ('background_color', 'foreground_color', 'selection_color'):
+        for color_key in ("background_color", "foreground_color", "selection_color"):
             if color_key in kwargs and kwargs[color_key] is not None:
                 if not TreeValidator.validate_color(kwargs[color_key]):
                     raise ValidationError(f"Invalid {color_key}: {kwargs[color_key]}")
                 kwargs[color_key] = kwargs[color_key].lower()
 
         # Handle discrete_coloring special case
-        discrete = kwargs.pop('discrete_coloring', None)
+        discrete = kwargs.pop("discrete_coloring", None)
 
         # Apply mapped kwargs
         self._apply_mapped_kwargs(s, kwargs, self._APPEARANCE_MAPPING)
 
         # Post-process discrete_coloring
         if discrete is not None:
-            branch_color_attr = kwargs.get('branch_color_attribute')
+            branch_color_attr = kwargs.get("branch_color_attribute")
             if branch_color_attr:
-                if discrete and not branch_color_attr.endswith('*'):
-                    s['branchColorAttribute'] = f"{branch_color_attr} *"
+                if discrete and not branch_color_attr.endswith("*"):
+                    s["branchColorAttribute"] = f"{branch_color_attr} *"
             else:
                 # Check if branch_color_attribute was set in a previous call
-                existing_attr = s.get('branchColorAttribute')
+                existing_attr = s.get("branchColorAttribute")
                 if existing_attr and existing_attr != "None" and discrete:
                     # Append '*' to existing attribute if not already present
-                    if not existing_attr.endswith('*'):
-                        s['branchColorAttribute'] = f"{existing_attr} *"
+                    if not existing_attr.endswith("*"):
+                        s["branchColorAttribute"] = f"{existing_attr} *"
                 elif discrete:
-                    warnings.warn("discrete_coloring=True requires branch_color_attribute; ignoring")
+                    warnings.warn(
+                        "discrete_coloring=True requires branch_color_attribute; ignoring"
+                    )
 
         return self
 
-    def set_hilighting(self, is_shown: Optional[bool] = None,
-                       gradient: Optional[bool] = None) -> "FigTreeStyler":
+    def set_hilighting(
+        self, is_shown: Optional[bool] = None, gradient: Optional[bool] = None
+    ) -> "FigTreeStyler":
         if is_shown is not None:
-            self._settings.hilighting['isShown'] = is_shown
+            self._settings.hilighting["isShown"] = is_shown
         if gradient is not None:
-            self._settings.hilighting['gradient'] = gradient
+            self._settings.hilighting["gradient"] = gradient
         return self
 
-    def set_layout(self, layout_type: Optional[LayoutType] = None,
-                   expansion: Optional[int] = None,
-                   zoom: Optional[float] = None) -> "FigTreeStyler":
+    def set_layout(
+        self,
+        layout_type: Optional[LayoutType] = None,
+        expansion: Optional[int] = None,
+        zoom: Optional[float] = None,
+    ) -> "FigTreeStyler":
         if layout_type is not None:
-            self._settings.layout['layoutType'] = layout_type.value
+            self._settings.layout["layoutType"] = layout_type.value
         if expansion is not None:
-            self._settings.layout['expansion'] = expansion
+            self._settings.layout["expansion"] = expansion
         if zoom is not None:
-            self._settings.layout['zoom'] = zoom
+            self._settings.layout["zoom"] = zoom
         return self
 
     def set_align_tip_labels(self, align: bool = True) -> "FigTreeStyler":
@@ -2062,39 +2092,46 @@ class FigTreeStyler:
         Returns:
             Self for method chaining.
         """
-        layout_type = self._settings.layout.get('layoutType', 'RECTILINEAR')
-        if layout_type == 'RECTILINEAR':
-            self._settings.rectilinearLayout['alignTipLabels'] = align
-        elif layout_type == 'RADIAL':
-            self._settings.radialLayout['alignTipLabels'] = align
-        elif layout_type == 'POLAR':
-            self._settings.polarLayout['alignTipLabels'] = align
+        layout_type = self._settings.layout.get("layoutType", "RECTILINEAR")
+        if layout_type == "RECTILINEAR":
+            self._settings.rectilinearLayout["alignTipLabels"] = align
+        elif layout_type == "RADIAL":
+            self._settings.radialLayout["alignTipLabels"] = align
+        elif layout_type == "POLAR":
+            self._settings.polarLayout["alignTipLabels"] = align
         return self
 
-    def set_trees(self, rooting: Optional[bool] = None,
-                  rooting_type: Optional[RootingType] = None,
-                  transform: Optional[bool] = None,
-                  transform_type: Optional[TransformType] = None,
-                  order: Optional[bool] = None,
-                  order_type: Optional[OrderType] = None) -> "FigTreeStyler":
+    def set_trees(
+        self,
+        rooting: Optional[bool] = None,
+        rooting_type: Optional[RootingType] = None,
+        transform: Optional[bool] = None,
+        transform_type: Optional[TransformType] = None,
+        order: Optional[bool] = None,
+        order_type: Optional[OrderType] = None,
+    ) -> "FigTreeStyler":
         if rooting is not None:
-            self._settings.trees['rooting'] = rooting
+            self._settings.trees["rooting"] = rooting
         if rooting_type is not None:
-            self._settings.trees['rootingType'] = rooting_type.value
+            self._settings.trees["rootingType"] = rooting_type.value
         if transform is not None:
-            self._settings.trees['transform'] = transform
+            self._settings.trees["transform"] = transform
         if transform_type is not None:
-            self._settings.trees['transformType'] = transform_type.value
+            self._settings.trees["transformType"] = transform_type.value
         if order is not None:
-            self._settings.trees['order'] = order
+            self._settings.trees["order"] = order
         if order_type is not None:
-            self._settings.trees['orderType'] = order_type.value
+            self._settings.trees["orderType"] = order_type.value
         return self
 
     _LABEL_MAPPING: Dict[str, str] = {
-        'is_shown': 'isShown', 'font_name': 'fontName', 'font_size': 'fontSize',
-        'font_style': 'fontStyle', 'display_attribute': 'displayAttribute',
-        'color_attribute': 'colorAttribute', 'significant_digits': 'significantDigits',
+        "is_shown": "isShown",
+        "font_name": "fontName",
+        "font_size": "fontSize",
+        "font_style": "fontStyle",
+        "display_attribute": "displayAttribute",
+        "color_attribute": "colorAttribute",
+        "significant_digits": "significantDigits",
     }
 
     def set_tip_labels(self, **kwargs: Any) -> "FigTreeStyler":
@@ -2143,11 +2180,15 @@ class FigTreeStyler:
         return self
 
     _SCALE_BAR_MAPPING: Dict[str, str] = {
-        'is_shown': 'isShown', 'automatic_scale': 'automaticScale',
-        'scale_range': 'scaleRange', 'font_name': 'fontName',
-        'font_size': 'fontSize', 'font_style': 'fontStyle',
-        'line_width': 'lineWidth', 'significant_digits': 'significantDigits',
-        'color': 'colour',
+        "is_shown": "isShown",
+        "automatic_scale": "automaticScale",
+        "scale_range": "scaleRange",
+        "font_name": "fontName",
+        "font_size": "fontSize",
+        "font_style": "fontStyle",
+        "line_width": "lineWidth",
+        "significant_digits": "significantDigits",
+        "color": "colour",
     }
 
     def set_scale_bar(self, **kwargs: Any) -> "FigTreeStyler":
@@ -2155,13 +2196,19 @@ class FigTreeStyler:
         return self
 
     _SCALE_AXIS_MAPPING: Dict[str, str] = {
-        'is_shown': 'isShown', 'automatic_scale': 'automaticScale',
-        'reverse_axis': 'reverseAxis', 'show_grid': 'showGrid',
-        'font_name': 'fontName', 'font_size': 'fontSize',
-        'font_style': 'fontStyle', 'line_width': 'lineWidth',
-        'major_ticks': 'majorTicks', 'origin': 'origin',
-        'significant_digits': 'significantDigits',
-        'tick_direction': 'tickDirection', 'color': 'colour',
+        "is_shown": "isShown",
+        "automatic_scale": "automaticScale",
+        "reverse_axis": "reverseAxis",
+        "show_grid": "showGrid",
+        "font_name": "fontName",
+        "font_size": "fontSize",
+        "font_style": "fontStyle",
+        "line_width": "lineWidth",
+        "major_ticks": "majorTicks",
+        "origin": "origin",
+        "significant_digits": "significantDigits",
+        "tick_direction": "tickDirection",
+        "color": "colour",
     }
 
     def set_scale_axis(self, **kwargs: Any) -> "FigTreeStyler":
@@ -2169,9 +2216,11 @@ class FigTreeStyler:
         return self
 
     _SCALE_MAPPING: Dict[str, str] = {
-        'root_age': 'rootAge', 'scale_root': 'scaleRoot',
-        'scale_factor': 'scaleFactor', 'offset_age': 'offsetAge',
-        'auto_scale': 'autoScale',
+        "root_age": "rootAge",
+        "scale_root": "scaleRoot",
+        "scale_factor": "scaleFactor",
+        "offset_age": "offsetAge",
+        "auto_scale": "autoScale",
     }
 
     def set_scale(self, **kwargs: Any) -> "FigTreeStyler":
@@ -2179,9 +2228,11 @@ class FigTreeStyler:
         return self
 
     _POLAR_MAPPING: Dict[str, str] = {
-        'align_tip_labels': 'alignTipLabels', 'angular_range': 'angularRange',
-        'root_angle': 'rootAngle', 'root_length': 'rootLength',
-        'show_root': 'showRoot',
+        "align_tip_labels": "alignTipLabels",
+        "angular_range": "angularRange",
+        "root_angle": "rootAngle",
+        "root_length": "rootLength",
+        "show_root": "showRoot",
     }
 
     def set_polar_layout(self, **kwargs: Any) -> "FigTreeStyler":
@@ -2196,15 +2247,16 @@ class FigTreeStyler:
         # FigTree's NEXUS format stores slider integers, not actual angles.
         #   rootAngle slider  = (actual - 180) * 1000
         #   angularRange slider = (360 - actual) * 1000
-        if 'angular_range' in kwargs and kwargs['angular_range'] is not None:
-            kwargs['angular_range'] = int((360 - kwargs['angular_range']) * 1000)
-        if 'root_angle' in kwargs and kwargs['root_angle'] is not None:
-            kwargs['root_angle'] = int((kwargs['root_angle'] - 180) * 1000)
+        if "angular_range" in kwargs and kwargs["angular_range"] is not None:
+            kwargs["angular_range"] = int((360 - kwargs["angular_range"]) * 1000)
+        if "root_angle" in kwargs and kwargs["root_angle"] is not None:
+            kwargs["root_angle"] = int((kwargs["root_angle"] - 180) * 1000)
         self._apply_mapped_kwargs(self._settings.polarLayout, kwargs, self._POLAR_MAPPING)
         return self
 
     _RADIAL_MAPPING: Dict[str, str] = {
-        'align_tip_labels': 'alignTipLabels', 'spread': 'spread',
+        "align_tip_labels": "alignTipLabels",
+        "spread": "spread",
     }
 
     def set_radial_layout(self, **kwargs: Any) -> "FigTreeStyler":
@@ -2212,19 +2264,26 @@ class FigTreeStyler:
         return self
 
     _RECTILINEAR_MAPPING: Dict[str, str] = {
-        'align_tip_labels': 'alignTipLabels', 'curvature': 'curvature',
-        'root_length': 'rootLength',
+        "align_tip_labels": "alignTipLabels",
+        "curvature": "curvature",
+        "root_length": "rootLength",
     }
 
     def set_rectilinear_layout(self, **kwargs: Any) -> "FigTreeStyler":
-        self._apply_mapped_kwargs(self._settings.rectilinearLayout, kwargs, self._RECTILINEAR_MAPPING)
+        self._apply_mapped_kwargs(
+            self._settings.rectilinearLayout, kwargs, self._RECTILINEAR_MAPPING
+        )
         return self
 
     _NODE_BARS_MAPPING: Dict[str, str] = {
-        'is_shown': 'isShown', 'bar_width': 'barWidth',
-        'attribute': 'attribute', 'color_attribute': 'colorAttribute',
-        'color': 'colour', 'font_size': 'fontSize',
-        'font_style': 'fontStyle', 'significant_digits': 'significantDigits',
+        "is_shown": "isShown",
+        "bar_width": "barWidth",
+        "attribute": "attribute",
+        "color_attribute": "colorAttribute",
+        "color": "colour",
+        "font_size": "fontSize",
+        "font_style": "fontStyle",
+        "significant_digits": "significantDigits",
     }
 
     def set_node_bars(self, **kwargs: Any) -> "FigTreeStyler":
@@ -2232,11 +2291,16 @@ class FigTreeStyler:
         return self
 
     _NODE_SHAPES_MAPPING: Dict[str, str] = {
-        'is_shown': 'isShown', 'attribute': 'attribute',
-        'color_attribute': 'colorAttribute', 'shape_type': 'shapeType',
-        'color': 'colour', 'size': 'size', 'font_size': 'fontSize',
-        'font_style': 'fontStyle', 'significant_digits': 'significantDigits',
-        'stroke_width': 'strokeWidth',
+        "is_shown": "isShown",
+        "attribute": "attribute",
+        "color_attribute": "colorAttribute",
+        "shape_type": "shapeType",
+        "color": "colour",
+        "size": "size",
+        "font_size": "fontSize",
+        "font_style": "fontStyle",
+        "significant_digits": "significantDigits",
+        "stroke_width": "strokeWidth",
     }
 
     def set_node_shapes(self, **kwargs: Any) -> "FigTreeStyler":
@@ -2244,25 +2308,30 @@ class FigTreeStyler:
         return self
 
     _LEGEND_MAPPING: Dict[str, str] = {
-        'is_shown': 'isShown', 'position': 'position',
-        'x_position': 'x', 'y_position': 'y',
-        'font_size': 'fontSize', 'font_style': 'fontStyle',
-        'color': 'colour', 'background_color': 'backgroundColour',
-        'background_opacity': 'backgroundOpacity',
-        'border_width': 'borderWidth', 'reverse_order': 'reverseOrder',
-        'is_visible': 'isVisible',
+        "is_shown": "isShown",
+        "position": "position",
+        "x_position": "x",
+        "y_position": "y",
+        "font_size": "fontSize",
+        "font_style": "fontStyle",
+        "color": "colour",
+        "background_color": "backgroundColour",
+        "background_opacity": "backgroundOpacity",
+        "border_width": "borderWidth",
+        "reverse_order": "reverseOrder",
+        "is_visible": "isVisible",
     }
 
     def set_legend(self, **kwargs: Any) -> "FigTreeStyler":
-        if 'position' in kwargs and isinstance(kwargs['position'], str):
-            kwargs = {**kwargs, 'position': kwargs['position'].capitalize()}
+        if "position" in kwargs and isinstance(kwargs["position"], str):
+            kwargs = {**kwargs, "position": kwargs["position"].capitalize()}
         self._apply_mapped_kwargs(self._settings.legend, kwargs, self._LEGEND_MAPPING)
         return self
 
     def set_custom_param(self, key: str, value: Any) -> "FigTreeStyler":
         """Set a custom parameter not covered by the typed API."""
-        if '.' in key:
-            category, param = key.split('.', 1)
+        if "." in key:
+            category, param = key.split(".", 1)
             attr = getattr(self._settings, category, None)
             if isinstance(attr, dict):
                 attr[param] = value
@@ -2407,15 +2476,15 @@ class FigTreeStyler:
 
         mapping: Dict[str, str] = {}
         # Extract content after 'translate' keyword
-        content = re.sub(r'^\s*translate\s+', '', self._translate_block, flags=re.IGNORECASE)
-        content = content.rstrip(';').strip()
+        content = re.sub(r"^\s*translate\s+", "", self._translate_block, flags=re.IGNORECASE)
+        content = content.rstrip(";").strip()
 
         # Four-state machine: split the block into comma-delimited entries,
         # keeping commas and quotes inside quoted regions verbatim.
         entries: List[str] = []
-        current = ''
+        current = ""
         state = TRANSLATE_NORMAL
-        open_quote = ''
+        open_quote = ""
         for char in content:
             if state == TRANSLATE_ESCAPING:
                 # The previous character was a quote matching the open one.
@@ -2440,9 +2509,9 @@ class FigTreeStyler:
                     state = TRANSLATE_IN_DOUBLE_QUOTE
                     open_quote = char
                     current += char
-                elif char == ',':
+                elif char == ",":
                     entries.append(current.strip())
-                    current = ''
+                    current = ""
                 else:
                     current += char
             else:  # IN_SINGLE_QUOTE or IN_DOUBLE_QUOTE
@@ -2469,8 +2538,9 @@ class FigTreeStyler:
             translate_id = translate_id.strip()
             taxon_name = taxon_name.strip()
             # Remove quotes if present
-            if (taxon_name.startswith("'") and taxon_name.endswith("'")) or \
-               (taxon_name.startswith('"') and taxon_name.endswith('"')):
+            if (taxon_name.startswith("'") and taxon_name.endswith("'")) or (
+                taxon_name.startswith('"') and taxon_name.endswith('"')
+            ):
                 taxon_name = taxon_name[1:-1]
             # Unescape doubled quotes per Nexus specification ('' → ')
             taxon_name = taxon_name.replace("''", "'").replace('""', '"')
@@ -2524,7 +2594,7 @@ class FigTreeStyler:
         self._hilight_marks = []
         _hl_idx = 0
         for ann in resolved:
-            if ann.annotation_type != 'hilight' or not ann.target_taxa:
+            if ann.annotation_type != "hilight" or not ann.target_taxa:
                 continue
             try:
                 # allow_missing=True: at export time some targets may have
@@ -2541,7 +2611,11 @@ class FigTreeStyler:
                     # collapse bands are positioned in the same coordinate
                     # system.
                     height = self._get_min_tip_height(tree, mrca)
-                    _raw_color = ann.values[2] if isinstance(ann.values, (list, tuple)) and len(ann.values) >= 3 else "#ff0000"
+                    _raw_color = (
+                        ann.values[2]
+                        if isinstance(ann.values, (list, tuple)) and len(ann.values) >= 3
+                        else "#ff0000"
+                    )
                     # Normalize the color to lowercase so the band serialized
                     # here (and re-written by the Phase 2b regex) matches the
                     # lowercased value emitted by _inject_annotation_to_node
@@ -2552,9 +2626,7 @@ class FigTreeStyler:
                     # marker name, is recorded so Phase 2b and the color
                     # exclusion logic can locate it without relying on a
                     # name that a subsequent collapse might overwrite).
-                    self._inject_annotation_to_node(
-                        mrca, 'hilight', [tip_count, height, color]
-                    )
+                    self._inject_annotation_to_node(mrca, "hilight", [tip_count, height, color])
                     self._hilight_marks.append((mrca, tip_count, height, color))
                     _hl_idx += 1
                 else:
@@ -2582,9 +2654,8 @@ class FigTreeStyler:
                 # node comment (tip_count may have changed after collapse).
                 if node.comment and "!hilight=" in node.comment:
                     node.comment = re.sub(
-                        r'(!hilight=\{)[^}]*(\})',
-                        lambda m, tc=new_tip_count, h=height, c=color:
-                            f"{m.group(1)}{tc},{h},{c}{m.group(2)}",
+                        r"(!hilight=\{)[^}]*(\})",
+                        lambda m, tc=new_tip_count, h=height, c=color: f"{m.group(1)}{tc},{h},{c}{m.group(2)}",
                         node.comment,
                         count=1,
                     )
@@ -2595,17 +2666,17 @@ class FigTreeStyler:
         _hl_node_ids = {id(m[0]) for m in self._hilight_marks}
 
         for i, ann in enumerate(resolved):
-            if ann.annotation_type == 'hilight':
+            if ann.annotation_type == "hilight":
                 continue
-            if ann.annotation_type == 'color_all' and ann.target_taxa:
+            if ann.annotation_type == "color_all" and ann.target_taxa:
                 mrca = self._find_mrca_clade(tree, ann.target_taxa, allow_missing=True)
                 if mrca:
                     color_value = ann.values.lower() if isinstance(ann.values, str) else ann.values
                     for clade in mrca.find_clades():
                         if id(clade) in _hl_node_ids:
                             continue
-                        self._inject_annotation_to_node(clade, 'color', color_value)
-            elif ann.annotation_type == 'color' and ann.target_taxa:
+                        self._inject_annotation_to_node(clade, "color", color_value)
+            elif ann.annotation_type == "color" and ann.target_taxa:
                 target_node = self._find_mrca_clade(tree, ann.target_taxa, allow_missing=True)
                 if target_node:
                     if id(target_node) in _hl_node_ids:
@@ -2618,10 +2689,12 @@ class FigTreeStyler:
                         )
                     else:
                         self._inject_annotation_to_node(
-                            target_node, ann.annotation_type, ann.values,
-                            extra_params=ann.extra_params
+                            target_node,
+                            ann.annotation_type,
+                            ann.values,
+                            extra_params=ann.extra_params,
                         )
-            elif ann.annotation_type not in ('hilight', 'color_all', 'color'):
+            elif ann.annotation_type not in ("hilight", "color_all", "color"):
                 # Generic annotations (font, stroke, etc.) reuse the shared
                 # single-annotation engine so this loop does not duplicate the
                 # MRCA resolution / injection logic in _apply_annotations_to_tree.
@@ -2633,18 +2706,20 @@ class FigTreeStyler:
             for entry in self._hilight_marks:
                 node = entry[0]
                 if node.comment and "!color=" in node.comment:
-                    node.comment = re.sub(r'&?!color=[^,&]+,?', '', node.comment).strip(',').strip()
+                    node.comment = re.sub(r"&?!color=[^,&]+,?", "", node.comment).strip(",").strip()
                     # Ensure & prefix if comment is non-empty (jebl meta-comment format)
-                    if node.comment and not node.comment.startswith('&'):
-                        node.comment = '&' + node.comment
+                    if node.comment and not node.comment.startswith("&"):
+                        node.comment = "&" + node.comment
                     if not node.comment:
                         node.comment = None
 
         unresolved = unresolved_hilights + [
-            a for a in resolved
-            if a.annotation_type not in ('hilight', 'color_all')
+            a
+            for a in resolved
+            if a.annotation_type not in ("hilight", "color_all")
             and a.target_taxa
-            and not self._find_mrca_clade(tree, a.target_taxa, allow_missing=True)]
+            and not self._find_mrca_clade(tree, a.target_taxa, allow_missing=True)
+        ]
         if unresolved:
             warnings.warn(
                 f"{len(unresolved)} annotation(s) could not be resolved "
@@ -2676,10 +2751,7 @@ class FigTreeStyler:
                             # followed by ':', ',', ')', ';' or end-of-string).
                             # This prevents matching numeric taxon names inside
                             # branch lengths such as '0.123'.
-                            pattern = (
-                                r'(^|[(,])\s*' + re.escape(taxon_name)
-                                + r'\s*(?=[,:);]|$)'
-                            )
+                            pattern = r"(^|[(,])\s*" + re.escape(taxon_name) + r"\s*(?=[,:);]|$)"
                             serialized = re.sub(
                                 pattern,
                                 lambda m: m.group(1) + translate_id,
@@ -2705,8 +2777,9 @@ class FigTreeStyler:
         """
         return reinsert_bracket_comments(newick, comments)
 
-    def _write_taxa_block(self, out, include_taxa_block: bool,
-                          resolved_content: Optional[str] = None) -> None:
+    def _write_taxa_block(
+        self, out, include_taxa_block: bool, resolved_content: Optional[str] = None
+    ) -> None:
         """Write the taxa block to the output file.
 
         Delegates to :func:`_serializer.write_taxa_block`; the serialization
@@ -2773,8 +2846,7 @@ class FigTreeStyler:
         # Also strip from multi-tree content if present
         if self._all_trees:
             self._all_trees = [
-                strip_square_bracket_comments(t) if t else t
-                for t in self._all_trees
+                strip_square_bracket_comments(t) if t else t for t in self._all_trees
             ]
 
         return self
@@ -2844,9 +2916,9 @@ class FigTreeStyler:
 
         # Atomic write: write to temp file first, then rename
         output_path = Path(output_file)
-        tmp_path = output_path.with_suffix(output_path.suffix + '.tmp')
+        tmp_path = output_path.with_suffix(output_path.suffix + ".tmp")
         try:
-            with open(tmp_path, 'w', encoding='utf-8', newline='\n') as out:
+            with open(tmp_path, "w", encoding="utf-8", newline="\n") as out:
                 out.write("#NEXUS\n")
                 self._write_taxa_block(out, include_taxa_block, resolved_content)
                 self._write_trees_block(out, resolved_content, single_tree=single_tree)
@@ -2941,13 +3013,17 @@ class FigTreeStyler:
 
         # Export to temporary or permanent Nexus file
         if keep_nex:
-            nex_file = str(Path(output_file).with_suffix('.nex'))
+            nex_file = str(Path(output_file).with_suffix(".nex"))
             self.export(nex_file, include_taxa_block=include_taxa_block)
         else:
             import tempfile
+
             tmp_f = tempfile.NamedTemporaryFile(
-                mode='w', suffix='.nex', delete=False,
-                encoding='utf-8', newline='\n',
+                mode="w",
+                suffix=".nex",
+                delete=False,
+                encoding="utf-8",
+                newline="\n",
             )
             nex_file = tmp_f.name
             tmp_f.close()
@@ -2962,7 +3038,12 @@ class FigTreeStyler:
         try:
             appearance = self._settings.appearance or {}
             render_with_figtree(
-                nex_file, output_file, format, width, height, jar_path,
+                nex_file,
+                output_file,
+                format,
+                width,
+                height,
+                jar_path,
                 timeout=timeout,
                 background_color=appearance.get("backgroundColour") or None,
                 foreground_color=appearance.get("foregroundColour") or None,

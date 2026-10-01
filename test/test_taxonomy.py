@@ -3,6 +3,7 @@ and FigTreeStyler taxonomy integration.
 
 Covers robustness scenarios 15-20 and 27-28.
 """
+
 import warnings
 import os
 import csv
@@ -28,7 +29,6 @@ from figtreekit.taxonomy import (
     extend_rank_prefixes,
 )
 from figtreekit.exceptions import ValidationError
-
 
 # ---------------------------------------------------------------------------
 # Test trees
@@ -59,6 +59,7 @@ TREE_NESTED = "(((A:1,B:1):1,C:2):1,D:3);"
 # 1. parse_taxonomy_auto — format detection and parsing
 # ---------------------------------------------------------------------------
 
+
 class TestParseTaxonomyAuto:
     """Tests for parse_taxonomy_auto and detect_taxonomy_format."""
 
@@ -76,60 +77,46 @@ class TestParseTaxonomyAuto:
 
     def test_parse_embedded_format_a(self):
         """#15: Embedded format A parses correctly."""
-        result = parse_taxonomy_auto(
-            "SP1_d_Bacteria_p_Firmicutes_c_Bacilli"
-        )
+        result = parse_taxonomy_auto("SP1_d_Bacteria_p_Firmicutes_c_Bacilli")
         assert result["domain"] == "Bacteria"
         assert result["phylum"] == "Firmicutes"
         assert result["class"] == "Bacilli"
 
     def test_parse_embedded_format_a_reverse_mode(self):
         """Format A reverse mode (default) parses correctly."""
-        result = parse_taxonomy_auto(
-            "SP1_d_Bacteria_p_Firmicutes", mode="reverse"
-        )
+        result = parse_taxonomy_auto("SP1_d_Bacteria_p_Firmicutes", mode="reverse")
         assert result["domain"] == "Bacteria"
         assert result["phylum"] == "Firmicutes"
 
     def test_parse_embedded_format_a_greedy_mode(self):
         """Format A greedy mode parses correctly."""
-        result = parse_taxonomy_auto(
-            "SP1_d_Bacteria_p_Firmicutes", mode="greedy"
-        )
+        result = parse_taxonomy_auto("SP1_d_Bacteria_p_Firmicutes", mode="greedy")
         assert result["domain"] == "Bacteria"
         assert result["phylum"] == "Firmicutes"
 
     def test_parse_embedded_format_a_segment_mode(self):
         """Format A segment mode parses correctly."""
-        result = parse_taxonomy_auto(
-            "SP1_d_Bacteria_p_Firmicutes", mode="segment"
-        )
+        result = parse_taxonomy_auto("SP1_d_Bacteria_p_Firmicutes", mode="segment")
         assert result["domain"] == "Bacteria"
         assert result["phylum"] == "Firmicutes"
 
     def test_parse_table_format_b(self):
         """#16: Table format B (GTDB-style) parses correctly."""
-        result = parse_taxonomy_auto(
-            "d__Bacteria;p__Firmicutes;c__Bacilli"
-        )
+        result = parse_taxonomy_auto("d__Bacteria;p__Firmicutes;c__Bacilli")
         assert result["domain"] == "Bacteria"
         assert result["phylum"] == "Firmicutes"
         assert result["class"] == "Bacilli"
 
     def test_parse_table_format_b_empty_rank(self):
         """Format B with empty rank value produces empty string."""
-        result = parse_taxonomy_auto(
-            "d__Bacteria;p__Firmicutes;c__"
-        )
+        result = parse_taxonomy_auto("d__Bacteria;p__Firmicutes;c__")
         assert result["domain"] == "Bacteria"
         assert result["phylum"] == "Firmicutes"
         assert result["class"] == ""
 
     def test_parse_table_format_b_custom_sep(self):
         """Format B with custom separator."""
-        result = parse_taxonomy_auto(
-            "d__Bacteria,p__Firmicutes", sep=","
-        )
+        result = parse_taxonomy_auto("d__Bacteria,p__Firmicutes", sep=",")
         assert result["domain"] == "Bacteria"
         assert result["phylum"] == "Firmicutes"
 
@@ -143,6 +130,7 @@ class TestParseTaxonomyAuto:
 # ---------------------------------------------------------------------------
 # 2. Rank prefix configuration
 # ---------------------------------------------------------------------------
+
 
 class TestRankPrefixConfig:
     """Tests for get/set/extend rank prefix functions."""
@@ -180,14 +168,13 @@ class TestRankPrefixConfig:
 # 3. SPECIAL_IDENTIFIERS
 # ---------------------------------------------------------------------------
 
+
 class TestSpecialIdentifiers:
     """Tests for SPECIAL_IDENTIFIERS constants."""
 
     def test_special_identifiers_keys(self):
         """All four special identifiers exist."""
-        assert set(SPECIAL_IDENTIFIERS.keys()) == {
-            "LUCA", "LACA", "LBCA", "root"
-        }
+        assert set(SPECIAL_IDENTIFIERS.keys()) == {"LUCA", "LACA", "LBCA", "root"}
 
     def test_luca_domains(self):
         """LUCA covers both Bacteria and Archaea."""
@@ -209,6 +196,7 @@ class TestSpecialIdentifiers:
 # ---------------------------------------------------------------------------
 # 4. TaxonomyMapper
 # ---------------------------------------------------------------------------
+
 
 class TestTaxonomyMapper:
     """Tests for TaxonomyMapper class."""
@@ -270,9 +258,7 @@ class TestTaxonomyMapper:
             "SP2_d_Bacteria",
         ]
         mapper.parse_labels(labels)
-        result = mapper.check_completeness(
-            labels, required_ranks=["domain", "phylum", "class"]
-        )
+        result = mapper.check_completeness(labels, required_ranks=["domain", "phylum", "class"])
         assert len(result["incomplete"]) == 1
         assert result["coverage"] < 100.0
 
@@ -327,8 +313,7 @@ class TestTaxonomyMapper:
         """load_mapping correctly loads a two-column TSV mapping file."""
         mapping_file = tmp_path / "mapping.tsv"
         mapping_file.write_text(
-            "SP1\td__Bacteria;p__Firmicutes\n"
-            "SP2\td__Archaea;p__Thermoproteota\n"
+            "SP1\td__Bacteria;p__Firmicutes\n" "SP2\td__Archaea;p__Thermoproteota\n"
         )
         mapper = TaxonomyMapper()
         mapper.load_mapping(str(mapping_file))
@@ -340,9 +325,7 @@ class TestTaxonomyMapper:
         """load_mapping correctly loads a multi-column CSV mapping file."""
         mapping_file = tmp_path / "mapping.csv"
         mapping_file.write_text(
-            "taxon,domain,phylum\n"
-            "SP1,Bacteria,Firmicutes\n"
-            "SP2,Archaea,Thermoproteota\n"
+            "taxon,domain,phylum\n" "SP1,Bacteria,Firmicutes\n" "SP2,Archaea,Thermoproteota\n"
         )
         mapper = TaxonomyMapper()
         mapper.load_mapping(str(mapping_file), delimiter=",")
@@ -377,6 +360,7 @@ class TestTaxonomyMapper:
 # ---------------------------------------------------------------------------
 # 5. MonophylyAnalyzer
 # ---------------------------------------------------------------------------
+
 
 class TestMonophylyAnalyzer:
     """Tests for MonophylyAnalyzer class."""
@@ -481,6 +465,7 @@ class TestMonophylyAnalyzer:
 # 6. FigTreeStyler taxonomy integration — robustness scenarios 15-20
 # ---------------------------------------------------------------------------
 
+
 class TestStylerTaxonomyIntegration:
     """Tests for FigTreeStyler taxonomy methods (scenarios 15-20)."""
 
@@ -496,9 +481,7 @@ class TestStylerTaxonomyIntegration:
         # Use a tree with simple labels + external mapping
         tree = "((SP1:1,SP2:1):1,(SP3:1,SP4:1):2);"
         styler = FigTreeStyler().load_content(tree)
-        result = styler.analyze_taxonomy(
-            mapping_file=None, rank="genus"
-        )
+        result = styler.analyze_taxonomy(mapping_file=None, rank="genus")
         # Without taxonomy info, all taxa are unmapped
         assert "unmapped" in result
 
@@ -584,6 +567,7 @@ class TestStylerTaxonomyIntegration:
 # 7. Conflict detection — robustness scenario 27
 # ---------------------------------------------------------------------------
 
+
 class TestColorHilightConflict:
     """#27: set_clade_color + highlight_clade conflict detection."""
 
@@ -598,9 +582,7 @@ class TestColorHilightConflict:
 
     def test_color_hilight_no_conflict_different_taxa(self, tmp_path):
         """No conflict when color and hilight target different taxa."""
-        styler = FigTreeStyler().load_content(
-            "((A:1,B:1):1,(C:1,D:1):2);"
-        )
+        styler = FigTreeStyler().load_content("((A:1,B:1):1,(C:1,D:1):2);")
         styler.highlight_clade(["A", "B"], color="#804548")
         styler.set_clade_color(["C", "D"], "#ff0000")
         # Should not raise a conflict warning
@@ -625,6 +607,7 @@ class TestColorHilightConflict:
 # ---------------------------------------------------------------------------
 # 8. Instance isolation — robustness scenario 28
 # ---------------------------------------------------------------------------
+
 
 class TestHilightMarksIsolation:
     """#28: _hilight_marks instance isolation between FigTreeStyler instances."""
@@ -677,6 +660,7 @@ class TestHilightMarksIsolation:
 # 9. Library-mode API
 # ---------------------------------------------------------------------------
 
+
 class TestLibraryModeAPI:
     """Tests for parse_taxonomy and is_monophyletic convenience functions."""
 
@@ -715,18 +699,21 @@ class TestInstanceScopedPrefixes:
 
     def test_custom_prefixes_embedded(self):
         from figtreekit.taxonomy import TaxonomyMapper
+
         mapper = TaxonomyMapper(prefixes={"x": "phylum"})
         result = mapper.parse_labels(["taxon1_x_MyPhylum"])
         assert result["taxon1_x_MyPhylum"].get("phylum") == "MyPhylum"
 
     def test_custom_prefixes_do_not_leak_to_module_config(self):
         from figtreekit.taxonomy import TaxonomyMapper, get_rank_prefixes
+
         before = get_rank_prefixes()
         TaxonomyMapper(prefixes={"x": "phylum"}).parse_labels(["t_x_Foo"])
         assert get_rank_prefixes() == before
 
     def test_default_mapper_unaffected_by_instance_mapper(self):
         from figtreekit.taxonomy import TaxonomyMapper
+
         TaxonomyMapper(prefixes={"x": "phylum"}).parse_labels(["t_x_Foo"])
         default = TaxonomyMapper()
         result = default.parse_labels(["taxon_d_Bacteria_p_Cyano"])
@@ -735,12 +722,14 @@ class TestInstanceScopedPrefixes:
 
     def test_custom_prefixes_table_format(self):
         from figtreekit.taxonomy import TaxonomyMapper
+
         mapper = TaxonomyMapper(prefixes={"x": "phylum"})
         result = mapper.parse_labels(["x__MyPhylum"], sep=";")
         assert result["x__MyPhylum"].get("phylum") == "MyPhylum"
 
     def test_prefix_helper_builds_independent_maps(self):
         from figtreekit.taxonomy import _build_prefix_maps
+
         rp, emb, gtdb, ranks = _build_prefix_maps({"x": "phylum"})
         assert rp == {"x": "phylum"}
         assert emb == {"_x_": "phylum"}
@@ -749,5 +738,6 @@ class TestInstanceScopedPrefixes:
 
     def test_prefix_helper_none_returns_module_config(self):
         from figtreekit.taxonomy import _build_prefix_maps, get_rank_prefixes
+
         rp, _, _, _ = _build_prefix_maps(None)
         assert rp == get_rank_prefixes()

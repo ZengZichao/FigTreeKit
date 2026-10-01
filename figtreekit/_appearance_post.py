@@ -60,7 +60,7 @@ def _hex_to_rgb(value: str) -> Optional[tuple]:
     if len(text) != 6:
         return None
     try:
-        return tuple(int(text[i:i + 2], 16) for i in (0, 2, 4))
+        return tuple(int(text[i : i + 2], 16) for i in (0, 2, 4))
     except ValueError:
         return None
 
@@ -128,9 +128,9 @@ def apply_appearance_pass(
                 if a == 0 or max(r, g, b) >= NEAR_BLACK_THRESHOLD:
                     continue
                 if protect is not None:
-                    dist = ((r - protect[0]) ** 2
-                            + (g - protect[1]) ** 2
-                            + (b - protect[2]) ** 2) ** 0.5
+                    dist = (
+                        (r - protect[0]) ** 2 + (g - protect[1]) ** 2 + (b - protect[2]) ** 2
+                    ) ** 0.5
                     if dist < PROTECTED_DISTANCE:
                         continue
                 pixels[x, y] = (fg[0], fg[1], fg[2], a)
@@ -144,6 +144,7 @@ def apply_appearance_pass(
     img = Image.alpha_composite(backdrop, img)
 
     out_format = "JPEG" if fmt in ("JPEG", "JPG") else "PNG"
-    img.convert("RGB").save(image_path, format=out_format,
-                            **({"quality": 95} if out_format == "JPEG" else {}))
+    img.convert("RGB").save(
+        image_path, format=out_format, **({"quality": 95} if out_format == "JPEG" else {})
+    )
     return changed or True

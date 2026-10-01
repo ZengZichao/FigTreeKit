@@ -20,8 +20,8 @@ from figtreekit._renderer import (
 )
 from figtreekit import _figtree_setup as fs
 
-
 # ── _renderer.find_figtree_jar ───────────────────────────────────────────
+
 
 class TestFindFigtreeJar:
     def test_env_var_wins(self, monkeypatch, tmp_path):
@@ -39,9 +39,7 @@ class TestFindFigtreeJar:
     def test_bundled_jar_found(self, monkeypatch):
         monkeypatch.delenv("FIGTREE_JAR", raising=False)
         monkeypatch.delenv("FIGTREE_HOME", raising=False)
-        monkeypatch.setattr(
-            "figtreekit._figtree_setup.get_saved_figtree_path", lambda: None
-        )
+        monkeypatch.setattr("figtreekit._figtree_setup.get_saved_figtree_path", lambda: None)
         result = find_figtree_jar()
         assert result is not None and result.endswith("figtree_patched.jar")
 
@@ -63,6 +61,7 @@ class TestCheckJavaAvailable:
 
 # ── _renderer.render_with_figtree ────────────────────────────────────────
 
+
 class TestRenderWithFigtree:
     def test_missing_input_raises_filenotfound(self, tmp_path):
         with pytest.raises(FileNotFoundError):
@@ -71,18 +70,14 @@ class TestRenderWithFigtree:
     def test_java_missing_raises_rendererror(self, monkeypatch, tmp_path):
         src = tmp_path / "in.nex"
         src.write_text("#NEXUS")
-        monkeypatch.setattr(
-            "figtreekit._renderer.check_java_available", lambda: False
-        )
+        monkeypatch.setattr("figtreekit._renderer.check_java_available", lambda: False)
         with pytest.raises(RenderError, match="Java"):
             render_with_figtree(str(src), str(tmp_path / "o.png"))
 
     def test_jar_missing_raises_rendererror(self, monkeypatch, tmp_path):
         src = tmp_path / "in.nex"
         src.write_text("#NEXUS")
-        monkeypatch.setattr(
-            "figtreekit._renderer.check_java_available", lambda: True
-        )
+        monkeypatch.setattr("figtreekit._renderer.check_java_available", lambda: True)
         monkeypatch.setattr("figtreekit._renderer.find_figtree_jar", lambda: None)
         with pytest.raises(RenderError, match="JAR"):
             render_with_figtree(str(src), str(tmp_path / "o.png"))
@@ -92,9 +87,7 @@ class TestRenderWithFigtree:
         src.write_text("#NEXUS")
         jar = tmp_path / "figtree.jar"
         jar.write_bytes(b"jar")
-        monkeypatch.setattr(
-            "figtreekit._renderer.check_java_available", lambda: True
-        )
+        monkeypatch.setattr("figtreekit._renderer.check_java_available", lambda: True)
         return src, jar
 
     def test_success_path(self, monkeypatch, tmp_path):
@@ -112,9 +105,7 @@ class TestRenderWithFigtree:
         src, jar = self._patch_prereqs(monkeypatch, tmp_path)
         monkeypatch.setattr(
             "subprocess.run",
-            lambda cmd, **kw: subprocess.CompletedProcess(
-                cmd, 1, stdout="", stderr="Error: boom"
-            ),
+            lambda cmd, **kw: subprocess.CompletedProcess(cmd, 1, stdout="", stderr="Error: boom"),
         )
         with pytest.raises(RenderError, match="exited with code 1"):
             render_with_figtree(str(src), str(tmp_path / "o.png"), jar_path=str(jar))
@@ -124,8 +115,7 @@ class TestRenderWithFigtree:
         out = tmp_path / "o.png"
         monkeypatch.setattr(
             "subprocess.run",
-            lambda cmd, **kw: (out.touch(),
-                               subprocess.CompletedProcess(cmd, 0, "", ""))[1],
+            lambda cmd, **kw: (out.touch(), subprocess.CompletedProcess(cmd, 0, "", ""))[1],
         )
         with pytest.raises(RenderError, match="empty output"):
             render_with_figtree(str(src), str(out), jar_path=str(jar))
@@ -138,8 +128,7 @@ class TestRenderWithFigtree:
 
         monkeypatch.setattr("subprocess.run", fake_run)
         with pytest.raises(RenderError, match="300 seconds"):
-            render_with_figtree(str(src), str(tmp_path / "o.png"),
-                                jar_path=str(jar), timeout=300)
+            render_with_figtree(str(src), str(tmp_path / "o.png"), jar_path=str(jar), timeout=300)
 
     def test_java_opts_split(self, monkeypatch, tmp_path):
         src, jar = self._patch_prereqs(monkeypatch, tmp_path)
@@ -152,8 +141,7 @@ class TestRenderWithFigtree:
             return subprocess.CompletedProcess(cmd, 0, "", "")
 
         monkeypatch.setattr("subprocess.run", fake_run)
-        render_with_figtree(str(src), str(out), jar_path=str(jar),
-                            java_opts="-Xmx1g -XX:+UseG1GC")
+        render_with_figtree(str(src), str(out), jar_path=str(jar), java_opts="-Xmx1g -XX:+UseG1GC")
         assert "-Xmx1g" in seen["cmd"] and "-XX:+UseG1GC" in seen["cmd"]
 
 
@@ -171,14 +159,14 @@ class TestRenderMultiple:
             return True
 
         monkeypatch.setattr("figtreekit._renderer.render_with_figtree", fake_render)
-        result = render_multiple([str(a), str(b)], str(tmp_path / "out"),
-                                 formats=["PNG"])
+        result = render_multiple([str(a), str(b)], str(tmp_path / "out"), formats=["PNG"])
         assert len(result["success"]) == 1
         assert len(result["failed"]) == 1
         assert result["failed"][0]["format"] == "PNG"
 
 
 # ── _figtree_setup checks ────────────────────────────────────────────────
+
 
 class TestSetupChecks:
     def test_check_java_not_on_path(self, monkeypatch):
@@ -224,9 +212,7 @@ class TestSetupChecks:
 
     def test_check_figtree_jar_missing(self, monkeypatch, tmp_path):
         monkeypatch.setattr(fs, "get_saved_figtree_path", lambda: None)
-        monkeypatch.setattr(
-            fs, "get_figtree_jar_path", lambda: tmp_path / "none" / "figtree.jar"
-        )
+        monkeypatch.setattr(fs, "get_figtree_jar_path", lambda: tmp_path / "none" / "figtree.jar")
         ok, msg = fs.check_figtree()
         assert ok is False and "not found" in msg
 
@@ -287,8 +273,7 @@ class TestPrintSetupStatus:
         monkeypatch.setattr(fs, "check_java", lambda: (True, "17"))
         monkeypatch.setattr(fs, "check_ant", lambda: (False, "no ant"))
         monkeypatch.setattr(fs, "get_saved_figtree_path", lambda: None)
-        monkeypatch.setattr(fs, "get_figtree_jar_path",
-                            lambda: tmp_path / "none.jar")
+        monkeypatch.setattr(fs, "get_figtree_jar_path", lambda: tmp_path / "none.jar")
         monkeypatch.setattr(fs, "check_figtree", lambda: (False, "missing"))
         fs.print_setup_status()
         out = capsys.readouterr().out
@@ -297,48 +282,55 @@ class TestPrintSetupStatus:
 
 # ── Nested bracket-comment regression (suggestion #17) ───────────────────
 
+
 class TestNestedBracketTreeDecl:
     def test_tree_decl_with_nested_comment(self):
         from figtreekit._parser import find_tree_declaration_spans
-        block = 'tree t1 = [&R] (A[&note=[x;y],meta=1]:0.1,B:0.2);'
+
+        block = "tree t1 = [&R] (A[&note=[x;y],meta=1]:0.1,B:0.2);"
         spans = find_tree_declaration_spans(block)
         assert len(spans) == 1
-        matched = block[spans[0][0]:spans[0][1]]
+        matched = block[spans[0][0] : spans[0][1]]
         assert matched.rstrip().endswith(";")
         assert "(A[&note=[x;y],meta=1]:0.1,B:0.2);" in matched
 
     def test_tree_decl_with_semicolon_in_comment(self):
         from figtreekit._parser import find_tree_declaration_spans
-        block = 'tree t1 = (A[&c=has;semi]:0.1,B:0.2);'
+
+        block = "tree t1 = (A[&c=has;semi]:0.1,B:0.2);"
         spans = find_tree_declaration_spans(block)
         assert len(spans) == 1
-        assert block[spans[0][0]:spans[0][1]].rstrip().endswith(");")
+        assert block[spans[0][0] : spans[0][1]].rstrip().endswith(");")
 
     def test_tree_decl_deep_nesting_beyond_regex_limit(self):
         # The legacy regex tolerated only 3 nesting levels; the character
         # scanner handles arbitrary depth (balanced comments, fix G2).
         from figtreekit._parser import find_tree_declaration_spans
-        block = 'tree t1 = (A[&n=[a=[b=[c=[d;e]]]]]:0.1,B:0.2);\ntree t2 = (C:0.3,D:0.4);'
+
+        block = "tree t1 = (A[&n=[a=[b=[c=[d;e]]]]]:0.1,B:0.2);\ntree t2 = (C:0.3,D:0.4);"
         spans = find_tree_declaration_spans(block)
         assert len(spans) == 2
-        assert block[spans[0][0]:spans[0][1]].endswith("(A[&n=[a=[b=[c=[d;e]]]]]:0.1,B:0.2);")
-        assert block[spans[1][0]:spans[1][1]] == 'tree t2 = (C:0.3,D:0.4);'
+        assert block[spans[0][0] : spans[0][1]].endswith("(A[&n=[a=[b=[c=[d;e]]]]]:0.1,B:0.2);")
+        assert block[spans[1][0] : spans[1][1]] == "tree t2 = (C:0.3,D:0.4);"
 
     def test_tree_decl_deep_unmatched_bracket_rejected(self):
         # A stray ']' outside any comment is rejected even at depth (G2).
         from figtreekit._parser import find_tree_declaration_spans
-        block = 'tree t1 = (A[&n=[a=[b=[c=[d;e]]]]]]:0.1,B:0.2);'
+
+        block = "tree t1 = (A[&n=[a=[b=[c=[d;e]]]]]]:0.1,B:0.2);"
         with pytest.raises(ValueError, match="unmatched closing bracket"):
             find_tree_declaration_spans(block)
 
     def test_tree_decl_quoted_name_with_semicolon(self):
         from figtreekit._parser import find_tree_declaration_spans
+
         block = "tree 'STATE_1;[&lnP=-123]' = (A:0.1,B:0.2);"
         spans = find_tree_declaration_spans(block)
         assert len(spans) == 1
-        assert block[spans[0][0]:spans[0][1]].endswith("(A:0.1,B:0.2);")
+        assert block[spans[0][0] : spans[0][1]].endswith("(A:0.1,B:0.2);")
 
     def test_strip_unlimited_nesting(self):
         from figtreekit._parser import strip_square_bracket_comments
+
         assert strip_square_bracket_comments("(A[[[[x]]]]:0.1,B);") == "(A:0.1,B);"
         assert strip_square_bracket_comments("(A:0.1,B);") == "(A:0.1,B);"

@@ -28,39 +28,77 @@ from typing import Dict, Iterable, Iterator, List, Optional, Sequence, Set, Tupl
 from ._parser import strip_square_bracket_comments
 from .exceptions import ValidationError
 
-
 TREE_EXTENSIONS = {
-    '.newick', '.nwk', '.tree', '.tre', '.treefile',
-    '.nexus', '.nex', '.nx',
-    '.phyloxml', '.xml',
-    '.nh', '.nhy',
+    ".newick",
+    ".nwk",
+    ".tree",
+    ".tre",
+    ".treefile",
+    ".nexus",
+    ".nex",
+    ".nx",
+    ".phyloxml",
+    ".xml",
+    ".nh",
+    ".nhy",
 }
 
 SEQUENCE_EXTENSIONS = {
-    '.fasta', '.fa', '.fas', '.fna', '.faa', '.ffn', '.frn',
-    '.fastq', '.fq',
-    '.gb', '.gbk', '.genbank',
-    '.embl',
-    '.stockholm', '.sto',
-    '.phylip', '.phy',
-    '.clustal', '.aln',
+    ".fasta",
+    ".fa",
+    ".fas",
+    ".fna",
+    ".faa",
+    ".ffn",
+    ".frn",
+    ".fastq",
+    ".fq",
+    ".gb",
+    ".gbk",
+    ".genbank",
+    ".embl",
+    ".stockholm",
+    ".sto",
+    ".phylip",
+    ".phy",
+    ".clustal",
+    ".aln",
 }
 
 ALL_KNOWN_EXTENSIONS = TREE_EXTENSIONS | SEQUENCE_EXTENSIONS
 
 _EXT_FORMAT_MAP = {
-    '.newick': 'newick', '.nwk': 'newick', '.tree': 'newick',
-    '.tre': 'newick', '.treefile': 'newick', '.nh': 'newick', '.nhy': 'newick',
-    '.nexus': 'nexus', '.nex': 'nexus', '.nx': 'nexus',
-    '.phyloxml': 'phyloxml', '.xml': 'phyloxml',
-    '.fasta': 'fasta', '.fa': 'fasta', '.fas': 'fasta', '.fna': 'fasta',
-    '.faa': 'fasta', '.ffn': 'fasta', '.frn': 'fasta',
-    '.fastq': 'fastq', '.fq': 'fastq',
-    '.gb': 'genbank', '.gbk': 'genbank', '.genbank': 'genbank',
-    '.embl': 'embl',
-    '.stockholm': 'stockholm', '.sto': 'stockholm',
-    '.phylip': 'phylip', '.phy': 'phylip',
-    '.clustal': 'clustal', '.aln': 'clustal',
+    ".newick": "newick",
+    ".nwk": "newick",
+    ".tree": "newick",
+    ".tre": "newick",
+    ".treefile": "newick",
+    ".nh": "newick",
+    ".nhy": "newick",
+    ".nexus": "nexus",
+    ".nex": "nexus",
+    ".nx": "nexus",
+    ".phyloxml": "phyloxml",
+    ".xml": "phyloxml",
+    ".fasta": "fasta",
+    ".fa": "fasta",
+    ".fas": "fasta",
+    ".fna": "fasta",
+    ".faa": "fasta",
+    ".ffn": "fasta",
+    ".frn": "fasta",
+    ".fastq": "fastq",
+    ".fq": "fastq",
+    ".gb": "genbank",
+    ".gbk": "genbank",
+    ".genbank": "genbank",
+    ".embl": "embl",
+    ".stockholm": "stockholm",
+    ".sto": "stockholm",
+    ".phylip": "phylip",
+    ".phy": "phylip",
+    ".clustal": "clustal",
+    ".aln": "clustal",
 }
 
 
@@ -94,9 +132,9 @@ class TreeValidator:
         """
         if not isinstance(color, str):
             return False
-        if re.match(r'^#[0-9A-Fa-f]{6}$', color):
+        if re.match(r"^#[0-9A-Fa-f]{6}$", color):
             return True
-        if re.match(r'^#-\d+$', color):
+        if re.match(r"^#-\d+$", color):
             val = int(color[1:])
             # Java RGB range: -2^24 to 2^24-1
             return -16777216 <= val <= 16777215
@@ -151,11 +189,11 @@ class TreeValidator:
         newick = newick.strip()
         if not newick:
             return False
-        if newick.count('(') != newick.count(')'):
+        if newick.count("(") != newick.count(")"):
             return False
-        if newick.count('[') != newick.count(']'):
+        if newick.count("[") != newick.count("]"):
             return False
-        if not newick.endswith(';'):
+        if not newick.endswith(";"):
             return False
         return True
 
@@ -174,10 +212,10 @@ class TreeValidator:
         if not isinstance(content, str):
             return False
         content_upper = content.upper().strip()
-        if not content_upper.startswith('#NEXUS'):
+        if not content_upper.startswith("#NEXUS"):
             return False
-        collapsed = re.sub(r'\s+', ' ', content_upper)
-        if not re.search(r'\bBEGIN\b.*?\bEND\s*;', collapsed):
+        collapsed = re.sub(r"\s+", " ", content_upper)
+        if not re.search(r"\bBEGIN\b.*?\bEND\s*;", collapsed):
             return False
         return True
 
@@ -205,15 +243,15 @@ class TreeValidator:
             return issues
 
         # Check for single taxon (degenerate tree)
-        stripped = newick.strip().rstrip(';').strip()
-        if stripped and '(' not in stripped:
+        stripped = newick.strip().rstrip(";").strip()
+        if stripped and "(" not in stripped:
             issues.append(
                 "Tree contains a single taxon — this is degenerate and "
                 "will produce an uninformative visualization."
             )
 
         # Check for all-zero branch lengths
-        branch_lengths = re.findall(r':([\d.eE+-]+)', newick)
+        branch_lengths = re.findall(r":([\d.eE+-]+)", newick)
         if branch_lengths:
             parsed_lengths: List[float] = []
             malformed = False
@@ -232,9 +270,7 @@ class TreeValidator:
                     )
                     malformed = True
                     break
-            if not malformed and parsed_lengths and all(
-                abs(v) < 1e-15 for v in parsed_lengths
-            ):
+            if not malformed and parsed_lengths and all(abs(v) < 1e-15 for v in parsed_lengths):
                 issues.append(
                     "All branch lengths are zero or near-zero — the tree will "
                     "render as a single point in FigTree."
@@ -252,6 +288,7 @@ class TreeValidator:
         # parsed tree for subsequent export.
         if max_taxa_warning_threshold > 0:
             from ._parser import extract_taxa_from_newick
+
             taxa = extract_taxa_from_newick(newick)
             taxa_count = len(taxa)
 
@@ -278,50 +315,50 @@ def _detect_format_by_content(content: str) -> Optional[str]:
     upper = stripped.upper()
 
     # Nexus
-    if upper.startswith('#NEXUS'):
-        return 'nexus'
+    if upper.startswith("#NEXUS"):
+        return "nexus"
 
     # PhyloXML
-    if stripped.startswith('<?xml') and '<phyloxml' in upper:
-        return 'phyloxml'
+    if stripped.startswith("<?xml") and "<phyloxml" in upper:
+        return "phyloxml"
 
     # FASTA
-    if stripped.startswith('>'):
-        return 'fasta'
+    if stripped.startswith(">"):
+        return "fasta"
 
     # FASTQ — requires @ header AND a separate '+' line with a quality header.
     # Must NOT match FASTA files whose sequence lines happen to start with '@'.
-    if stripped.startswith('@'):
-        lines = content[:4096].split('\n')
+    if stripped.startswith("@"):
+        lines = content[:4096].split("\n")
         for i, line in enumerate(lines):
-            if i > 0 and line.startswith('+'):
+            if i > 0 and line.startswith("+"):
                 rest = line[1:].strip()
-                if not rest or rest == lines[0].lstrip('@').strip():
-                    return 'fastq'
+                if not rest or rest == lines[0].lstrip("@").strip():
+                    return "fastq"
 
     # GenBank
-    if upper.startswith('LOCUS ') or upper.startswith('ID   '):
-        return 'genbank'
+    if upper.startswith("LOCUS ") or upper.startswith("ID   "):
+        return "genbank"
 
     # EMBL
-    if upper.startswith('ID   ') and 'SQ ' in content[:8192]:
-        return 'embl'
+    if upper.startswith("ID   ") and "SQ " in content[:8192]:
+        return "embl"
 
     # Stockholm
-    if upper.startswith('# STOCKHOLM') or upper.startswith('#STOCKHOLM'):
-        return 'stockholm'
+    if upper.startswith("# STOCKHOLM") or upper.startswith("#STOCKHOLM"):
+        return "stockholm"
 
     # Clustal
-    if upper.startswith('CLUSTAL'):
-        return 'clustal'
+    if upper.startswith("CLUSTAL"):
+        return "clustal"
 
     # Phylip — starts with integer (ntax) then whitespace then another integer
-    if re.match(r'^\d+\s+\d+', stripped):
-        return 'phylip'
+    if re.match(r"^\d+\s+\d+", stripped):
+        return "phylip"
 
     # Newick — must contain parentheses and end with semicolon
-    if '(' in stripped and stripped.rstrip().endswith(';'):
-        return 'newick'
+    if "(" in stripped and stripped.rstrip().endswith(";"):
+        return "newick"
 
     return None
 
@@ -419,13 +456,13 @@ def validate_input_file(
     if ext in _EXT_FORMAT_MAP:
         detected_format = _EXT_FORMAT_MAP[ext]
     elif ext in ALL_KNOWN_EXTENSIONS:
-        detected_format = ext.lstrip('.')
+        detected_format = ext.lstrip(".")
 
     # Try content-based detection.  Read only the HEAD (first 8 KiB) so we
     # never load a multi-GB file into memory just to sniff its format; the
     # streaming malware scan below bounds memory independently.
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             head = f.read(8192)
     except (OSError, UnicodeDecodeError) as e:
         errors.append(f"Cannot read file content: {e}")
@@ -443,43 +480,41 @@ def validate_input_file(
         detected_format = content_format
     elif not detected_format:
         warns.append(
-            f"Unrecognized file extension '{ext}' and content format "
-            f"could not be determined."
+            f"Unrecognized file extension '{ext}' and content format " f"could not be determined."
         )
 
     result["format"] = detected_format  # type: ignore[assignment]
 
     # --- 6. Early anomalous content scan (streaming, bounded memory) ---
     mal_errors = scan_for_anomalous_content_stream(
-        file_path, label=file_path,
+        file_path,
+        label=file_path,
     )
     errors.extend(mal_errors)
 
     # --- 7. Format-specific validation ---
-    if detected_format == 'newick':
+    if detected_format == "newick":
         _validate_newick_file(file_path, result, content=None)
-    elif detected_format == 'nexus':
+    elif detected_format == "nexus":
         _validate_nexus_file(file_path, result)
-    elif detected_format == 'phyloxml':
+    elif detected_format == "phyloxml":
         _validate_phyloxml_file(file_path, result)
-    elif detected_format == 'fasta':
+    elif detected_format == "fasta":
         _validate_fasta_file(file_path, result)
-    elif detected_format == 'fastq':
+    elif detected_format == "fastq":
         _validate_fastq_file(file_path, result)
-    elif detected_format in ('genbank', 'embl'):
+    elif detected_format in ("genbank", "embl"):
         _validate_flatfile(file_path, result)
-    elif detected_format == 'phylip':
+    elif detected_format == "phylip":
         _validate_phylip_file(file_path, result)
-    elif detected_format == 'stockholm':
+    elif detected_format == "stockholm":
         _validate_stockholm_file(file_path, result)
-    elif detected_format == 'clustal':
+    elif detected_format == "clustal":
         _validate_clustal_file(file_path, result)
 
     # --- 8. Expected format check ---
     if expected_format and detected_format and detected_format != expected_format:
-        errors.append(
-            f"Expected format '{expected_format}' but detected '{detected_format}'"
-        )
+        errors.append(f"Expected format '{expected_format}' but detected '{detected_format}'")
         result["valid"] = False
 
     if errors:
@@ -492,6 +527,7 @@ def validate_input_file(
 # Per-format content validators
 # ---------------------------------------------------------------------------
 
+
 def _validate_newick_file(
     file_path: str,
     result: Dict[str, object],
@@ -501,17 +537,17 @@ def _validate_newick_file(
     warns: List[str] = result["warnings"]  # type: ignore[assignment]
     try:
         if content is None:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
         content = content.strip()
         if not content:
             errors.append("Newick file is empty")
             return
-        if not content.endswith(';'):
+        if not content.endswith(";"):
             errors.append("Newick content does not end with ';'")
-        if content.count('(') != content.count(')'):
+        if content.count("(") != content.count(")"):
             errors.append("Unbalanced parentheses in Newick content")
-        if content.count('[') != content.count(']'):
+        if content.count("[") != content.count("]"):
             warns.append("Unbalanced square brackets in Newick content")
     except OSError as e:
         errors.append(f"Error reading Newick file: {e}")
@@ -521,16 +557,16 @@ def _validate_nexus_file(file_path: str, result: Dict[str, object]) -> None:
     errors: List[str] = result["errors"]  # type: ignore[assignment]
     warns: List[str] = result["warnings"]  # type: ignore[assignment]
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
         content_upper = content.upper().strip()
-        if not content_upper.startswith('#NEXUS'):
+        if not content_upper.startswith("#NEXUS"):
             errors.append("Nexus file does not start with '#NEXUS'")
         # Collapse whitespace so "BEGIN\nTREES;" also matches
-        collapsed = re.sub(r'\s+', ' ', content_upper)
-        if not re.search(r'\bBEGIN\b.*?\bEND\s*;', collapsed):
+        collapsed = re.sub(r"\s+", " ", content_upper)
+        if not re.search(r"\bBEGIN\b.*?\bEND\s*;", collapsed):
             errors.append("Nexus file has no 'begin ... end;' block")
-        if 'BEGIN TREES' not in collapsed:
+        if "BEGIN TREES" not in collapsed:
             warns.append("Nexus file has no 'begin trees' block")
     except OSError as e:
         errors.append(f"Error reading Nexus file: {e}")
@@ -539,9 +575,9 @@ def _validate_nexus_file(file_path: str, result: Dict[str, object]) -> None:
 def _validate_phyloxml_file(file_path: str, result: Dict[str, object]) -> None:
     errors: List[str] = result["errors"]  # type: ignore[assignment]
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read(16384)
-        if '<phyloxml' not in content.lower():
+        if "<phyloxml" not in content.lower():
             errors.append("PhyloXML file does not contain '<phyloxml>' root element")
     except OSError as e:
         errors.append(f"Error reading PhyloXML file: {e}")
@@ -551,15 +587,15 @@ def _validate_fasta_file(file_path: str, result: Dict[str, object]) -> None:
     errors: List[str] = result["errors"]  # type: ignore[assignment]
     warns: List[str] = result["warnings"]  # type: ignore[assignment]
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             first_line = f.readline()
-        if not first_line.startswith('>'):
+        if not first_line.startswith(">"):
             errors.append("FASTA file does not start with '>' header line")
         # Count sequences for advisory info
         seq_count = 0
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             for line in f:
-                if line.startswith('>'):
+                if line.startswith(">"):
                     seq_count += 1
         if seq_count == 0:
             warns.append("FASTA file appears to contain no sequences")
@@ -570,11 +606,11 @@ def _validate_fasta_file(file_path: str, result: Dict[str, object]) -> None:
 def _validate_fastq_file(file_path: str, result: Dict[str, object]) -> None:
     errors: List[str] = result["errors"]  # type: ignore[assignment]
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             lines = [f.readline() for _ in range(4)]
-        if not lines[0].startswith('@'):
+        if not lines[0].startswith("@"):
             errors.append("FASTQ file does not start with '@' header line")
-        if len(lines) >= 3 and not lines[2].startswith('+'):
+        if len(lines) >= 3 and not lines[2].startswith("+"):
             errors.append("FASTQ file: third line does not start with '+'")
     except OSError as e:
         errors.append(f"Error reading FASTQ file: {e}")
@@ -584,12 +620,12 @@ def _validate_flatfile(file_path: str, result: Dict[str, object]) -> None:
     """Validate GenBank / EMBL flat files."""
     errors: List[str] = result["errors"]  # type: ignore[assignment]
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             head = f.read(512)
         fmt = result.get("format")
-        if fmt == 'genbank' and not head.upper().startswith('LOCUS'):
+        if fmt == "genbank" and not head.upper().startswith("LOCUS"):
             errors.append("GenBank file does not start with 'LOCUS' line")
-        elif fmt == 'embl' and not head.upper().startswith('ID   '):
+        elif fmt == "embl" and not head.upper().startswith("ID   "):
             errors.append("EMBL file does not start with 'ID' line")
     except OSError as e:
         errors.append(f"Error reading {result.get('format', 'flat')} file: {e}")
@@ -599,7 +635,7 @@ def _validate_phylip_file(file_path: str, result: Dict[str, object]) -> None:
     errors: List[str] = result["errors"]  # type: ignore[assignment]
     warns: List[str] = result["warnings"]  # type: ignore[assignment]
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             first_line = f.readline().strip()
         parts = first_line.split()
         if len(parts) < 2:
@@ -618,9 +654,9 @@ def _validate_phylip_file(file_path: str, result: Dict[str, object]) -> None:
 def _validate_stockholm_file(file_path: str, result: Dict[str, object]) -> None:
     errors: List[str] = result["errors"]  # type: ignore[assignment]
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             head = f.read(4096)
-        if '# STOCKHOLM' not in head.upper() and '#STOCKHOLM' not in head.upper():
+        if "# STOCKHOLM" not in head.upper() and "#STOCKHOLM" not in head.upper():
             errors.append("Stockholm file does not start with '# STOCKHOLM' header")
     except OSError as e:
         errors.append(f"Error reading Stockholm file: {e}")
@@ -629,9 +665,9 @@ def _validate_stockholm_file(file_path: str, result: Dict[str, object]) -> None:
 def _validate_clustal_file(file_path: str, result: Dict[str, object]) -> None:
     errors: List[str] = result["errors"]  # type: ignore[assignment]
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             head = f.read(4096)
-        if not head.upper().startswith('CLUSTAL'):
+        if not head.upper().startswith("CLUSTAL"):
             errors.append("Clustal file does not start with 'CLUSTAL' header")
     except OSError as e:
         errors.append(f"Error reading Clustal file: {e}")
@@ -639,8 +675,8 @@ def _validate_clustal_file(file_path: str, result: Dict[str, object]) -> None:
 
 # ── .nhx extension support ──────────────────────────────────────────────
 
-_EXT_FORMAT_MAP['.nhx'] = 'newick'
-TREE_EXTENSIONS.add('.nhx')
+_EXT_FORMAT_MAP[".nhx"] = "newick"
+TREE_EXTENSIONS.add(".nhx")
 
 
 # ════════════════════════════════════════════════════════════════════════
@@ -649,20 +685,20 @@ TREE_EXTENSIONS.add('.nhx')
 
 # Unicode bidi override characters that can hide malicious content
 _BIDI_CHARS = {
-    '\u202A',  # LEFT-TO-RIGHT EMBEDDING
-    '\u202B',  # RIGHT-TO-LEFT EMBEDDING
-    '\u202C',  # POP DIRECTIONAL FORMATTING
-    '\u202D',  # LEFT-TO-RIGHT OVERRIDE
-    '\u202E',  # RIGHT-TO-LEFT OVERRIDE
-    '\u2066',  # LEFT-TO-RIGHT ISOLATE
-    '\u2067',  # RIGHT-TO-LEFT ISOLATE
-    '\u2068',  # FIRST STRONG ISOLATE
-    '\u2069',  # POP DIRECTIONAL ISOLATE
-    '\u061C',  # ARABIC LETTER MARK
+    "\u202a",  # LEFT-TO-RIGHT EMBEDDING
+    "\u202b",  # RIGHT-TO-LEFT EMBEDDING
+    "\u202c",  # POP DIRECTIONAL FORMATTING
+    "\u202d",  # LEFT-TO-RIGHT OVERRIDE
+    "\u202e",  # RIGHT-TO-LEFT OVERRIDE
+    "\u2066",  # LEFT-TO-RIGHT ISOLATE
+    "\u2067",  # RIGHT-TO-LEFT ISOLATE
+    "\u2068",  # FIRST STRONG ISOLATE
+    "\u2069",  # POP DIRECTIONAL ISOLATE
+    "\u061c",  # ARABIC LETTER MARK
 }
 
 # Control characters that should never appear in node/sequence names
-_CONTROL_RE = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]')
+_CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]")
 
 # Bidi override characters compiled as a single character class so the scan
 # can use a regex pass (O(n) in C) instead of a per-character Python loop.
@@ -692,7 +728,7 @@ def scan_for_anomalous_content(
     # previous O(n) ``content[:pos].count('\n')`` slice that made the whole
     # scan O(n²) for content with many matches.
     line_starts: List[int] = [0]
-    for ln in content.split('\n')[:-1]:
+    for ln in content.split("\n")[:-1]:
         line_starts.append(line_starts[-1] + len(ln) + 1)
 
     # Check for control characters
@@ -768,9 +804,7 @@ def scan_for_anomalous_content_stream(
                         f"position {pos} — possible injection, rejecting"
                     )
                     if len(errors) >= 5:
-                        errors.append(
-                            f"{label}: (further control character warnings suppressed)"
-                        )
+                        errors.append(f"{label}: (further control character warnings suppressed)")
                         break
                 if len(errors) >= max_findings:
                     break
@@ -813,7 +847,7 @@ def scan_node_names_for_anomalous(
         # Control characters
         ctrl = _CONTROL_RE.findall(name)
         if ctrl:
-            chars = ', '.join(f'U+{ord(c):04X}' for c in ctrl[:3])
+            chars = ", ".join(f"U+{ord(c):04X}" for c in ctrl[:3])
             errors.append(
                 f"{label}: node name '{name[:40]}' contains control "
                 f"character(s) [{chars}] — rejecting"
@@ -821,7 +855,7 @@ def scan_node_names_for_anomalous(
         # Bidi overrides
         bidi = [c for c in name if c in _BIDI_CHARS]
         if bidi:
-            chars = ', '.join(f'U+{ord(c):04X}' for c in bidi[:3])
+            chars = ", ".join(f"U+{ord(c):04X}" for c in bidi[:3])
             errors.append(
                 f"{label}: node name '{name[:40]}' contains bidi "
                 f"override(s) [{chars}] — rejecting"
@@ -977,6 +1011,7 @@ def detect_taxonomy_circular_deps(
 # Deep tree validation
 # ════════════════════════════════════════════════════════════════════════
 
+
 def deep_validate_newick(
     content: str,
     *,
@@ -1008,8 +1043,13 @@ def deep_validate_newick(
     text = content.strip()
     if not text:
         errors.append(f"{label}: empty Newick content")
-        return {"errors": errors, "warnings": warns, "node_count": 0,
-                "leaf_count": 0, "leaf_names": []}
+        return {
+            "errors": errors,
+            "warnings": warns,
+            "node_count": 0,
+            "leaf_count": 0,
+            "leaf_names": [],
+        }
 
     # ── Anomalous content scan ──
     errors.extend(scan_for_anomalous_content(text, label=label, source="tree"))
@@ -1030,16 +1070,16 @@ def deep_validate_newick(
         if ch in ("'", '"'):
             in_quote = True
             quote_char = ch
-        elif ch == '(':
+        elif ch == "(":
             paren_depth += 1
             open_paren_count += 1
-        elif ch == ')':
+        elif ch == ")":
             paren_depth -= 1
             if paren_depth < 0:
                 errors.append(f"{label}: unmatched ')' at position {i}")
-        elif ch == '[':
+        elif ch == "[":
             bracket_depth += 1
-        elif ch == ']':
+        elif ch == "]":
             bracket_depth -= 1
             if bracket_depth < 0:
                 errors.append(f"{label}: unmatched ']' at position {i}")
@@ -1052,18 +1092,17 @@ def deep_validate_newick(
         errors.append(f"{label}: unterminated quote starting at end of string")
 
     # ── Trailing semicolon ──
-    if not text.endswith(';'):
+    if not text.endswith(";"):
         errors.append(f"{label}: Newick content does not end with ';'")
 
     # ── Negative branch lengths (CRITICAL) ──
-    neg_bl = re.findall(r'([A-Za-z0-9_.\'\]\)]*):(-[\d.eE+]+)', text)
+    neg_bl = re.findall(r"([A-Za-z0-9_.\'\]\)]*):(-[\d.eE+]+)", text)
     for node_ctx, bl_str in neg_bl:
         try:
             bl = float(bl_str)
             if bl < 0:
                 errors.append(
-                    f"{label}: CRITICAL — negative branch length {bl} "
-                    f"near '{node_ctx[-30:]}'"
+                    f"{label}: CRITICAL — negative branch length {bl} " f"near '{node_ctx[-30:]}'"
                 )
         except ValueError:
             pass
@@ -1074,7 +1113,7 @@ def deep_validate_newick(
     # regex heuristic when Bio.Phylo cannot parse the (possibly malformed)
     # tree.
     clean = strip_square_bracket_comments(text)
-    clean = re.sub(r':[^(),;]+', '', clean)
+    clean = re.sub(r":[^(),;]+", "", clean)
 
     terminals: List[str] = []
     internal_names: List[str] = []
@@ -1083,6 +1122,7 @@ def deep_validate_newick(
     try:
         from io import StringIO
         from Bio import Phylo
+
         tree = Phylo.read(StringIO(text), "newick")
         terminals = [c.name for c in tree.get_terminals() if c.name]
         internal_names = [c.name for c in tree.get_nonterminals() if c.name]
@@ -1102,13 +1142,13 @@ def deep_validate_newick(
         # Regex fallback: re-extract names; a node name immediately preceded
         # by ')' is an internal (parent) name, everything else is a tip.
         found_names = []
-        name_pattern = r'([(),;])\s*([^\(\),;]+?)\s*([),;])'
+        name_pattern = r"([(),;])\s*([^\(\),;]+?)\s*([),;])"
         for m in re.finditer(name_pattern, clean):
             name = m.group(2).strip().strip("'\"")
             if not name:
                 continue
             found_names.append(name)
-            if m.group(1) == ')':
+            if m.group(1) == ")":
                 internal_names.append(name)
         terminals = [n for n in found_names if n not in set(internal_names)]
         leaf_names = list(terminals)
@@ -1118,7 +1158,7 @@ def deep_validate_newick(
         node_count = leaf_count + open_paren_count
 
     # ── Empty node names (ERROR) ──
-    if re.search(r',\s*,', clean) or re.search(r'\(\s*,', clean):
+    if re.search(r",\s*,", clean) or re.search(r"\(\s*,", clean):
         errors.append(f"{label}: contains empty node names (consecutive commas)")
 
     # ── Duplicate TIP names (ERROR — fatal for taxonomy mapping) ──
@@ -1129,17 +1169,14 @@ def deep_validate_newick(
         name_counts[name] = name_counts.get(name, 0) + 1
     for name, count in name_counts.items():
         if count > 1:
-            errors.append(
-                f"{label}: duplicate tip name '{name}' appears {count} times"
-            )
+            errors.append(f"{label}: duplicate tip name '{name}' appears {count} times")
 
     # ── Self-loop detection ──
     # Check if any parenthesized group has the same taxon appearing as
     # both a child and a pseudo-parent (e.g. "(A,(A,B))" or "(A,A)")
-    if re.search(r'\(\s*([^(),]+)\s*,\s*\1\s*[,)]', clean):
+    if re.search(r"\(\s*([^(),]+)\s*,\s*\1\s*[,)]", clean):
         errors.append(
-            f"{label}: possible self-loop — same taxon appears multiple "
-            f"times in a single clade"
+            f"{label}: possible self-loop — same taxon appears multiple " f"times in a single clade"
         )
 
     # ── Anomalous node name scan ──
@@ -1166,14 +1203,14 @@ def summarize_nexus_trees(file_path: str) -> List[Dict[str, object]]:
     """
     summaries: List[Dict[str, object]] = []
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             content = f.read()
     except OSError:
         return summaries
 
     # Find begin trees ... end;
     trees_match = re.search(
-        r'\bbegin\s+trees\s*;(.*?)\bend\s*;', content, re.DOTALL | re.IGNORECASE
+        r"\bbegin\s+trees\s*;(.*?)\bend\s*;", content, re.DOTALL | re.IGNORECASE
     )
     if not trees_match:
         return summaries
@@ -1181,26 +1218,26 @@ def summarize_nexus_trees(file_path: str) -> List[Dict[str, object]]:
     trees_block = trees_match.group(1)
 
     # Find each tree declaration
-    for m in re.finditer(
-        r'\btree\s+(\S+)\s*=\s*(.*?)\s*;', trees_block, re.DOTALL | re.IGNORECASE
-    ):
+    for m in re.finditer(r"\btree\s+(\S+)\s*=\s*(.*?)\s*;", trees_block, re.DOTALL | re.IGNORECASE):
         tree_name = m.group(1)
         tree_body = m.group(2)
 
         # Strip [&...] annotations
-        clean_body = re.sub(r'\[&[^\]]*\]', '', tree_body)
+        clean_body = re.sub(r"\[&[^\]]*\]", "", tree_body)
 
         leaf_count = len(re.findall(r'[,(]\s*([A-Za-z0-9_.\'"][^,():;]*?)\s*:', clean_body))
         if leaf_count == 0:
             leaf_count = len(re.findall(r'[,(]\s*([A-Za-z0-9_.\'"][^,():;]*?)\s*[),;]', clean_body))
 
-        has_neg = bool(re.search(r':-[\d.]+', clean_body))
+        has_neg = bool(re.search(r":-[\d.]+", clean_body))
 
-        summaries.append({
-            "name": tree_name,
-            "leaf_count": leaf_count,
-            "has_negative_bl": has_neg,
-        })
+        summaries.append(
+            {
+                "name": tree_name,
+                "leaf_count": leaf_count,
+                "has_negative_bl": has_neg,
+            }
+        )
 
     return summaries
 
@@ -1277,16 +1314,16 @@ def deep_validate_fasta(
         expected_set = _ALPHABET_MAP[expected_alphabet]
 
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             for line_num, line in enumerate(f, start=1):
-                line_stripped = line.rstrip('\n\r')
+                line_stripped = line.rstrip("\n\r")
                 if not line_stripped:
                     continue
 
-                if line_stripped.startswith('>'):
+                if line_stripped.startswith(">"):
                     # Save previous sequence
                     if current_id is not None:
-                        seq_str = ''.join(current_seq_chars)
+                        seq_str = "".join(current_seq_chars)
                         lengths.append(len(seq_str))
                         seq_lines_for_alpha.append(seq_str)
                         seq_line_numbers.append(current_line)
@@ -1305,9 +1342,7 @@ def deep_validate_fasta(
                     else:
                         seen_ids[seq_id] = line_num
                     # Scan header for anomalous content
-                    id_errors = scan_node_names_for_anomalous(
-                        [seq_id], label=f"line {line_num}"
-                    )
+                    id_errors = scan_node_names_for_anomalous([seq_id], label=f"line {line_num}")
                     errors.extend(id_errors)
                     seq_count += 1
                     current_id = seq_id
@@ -1318,25 +1353,33 @@ def deep_validate_fasta(
                     if expected_set is not None:
                         for i, ch in enumerate(line_stripped):
                             if ch not in expected_set and len(invalid_chars) < 20:
-                                invalid_chars.append({
-                                    "line": line_num,
-                                    "column": i + 1,
-                                    "char": ch,
-                                    "seq_id": current_id,
-                                })
+                                invalid_chars.append(
+                                    {
+                                        "line": line_num,
+                                        "column": i + 1,
+                                        "char": ch,
+                                        "seq_id": current_id,
+                                    }
+                                )
 
         # Finalize last sequence
         if current_id is not None:
-            seq_str = ''.join(current_seq_chars)
+            seq_str = "".join(current_seq_chars)
             lengths.append(len(seq_str))
             seq_lines_for_alpha.append(seq_str)
             seq_line_numbers.append(current_line)
 
     except OSError as e:
         errors.append(f"Error reading FASTA file: {e}")
-        return {"errors": errors, "warnings": warns, "sequence_count": 0,
-                "alphabet": "unknown", "duplicate_ids": [],
-                "invalid_chars": [], "length_mismatch": False}
+        return {
+            "errors": errors,
+            "warnings": warns,
+            "sequence_count": 0,
+            "alphabet": "unknown",
+            "duplicate_ids": [],
+            "invalid_chars": [],
+            "length_mismatch": False,
+        }
 
     if seq_count == 0:
         warns.append("FASTA file contains no sequences")
@@ -1438,7 +1481,7 @@ def deep_validate_fastq(
         expected_set = _ALPHABET_MAP[expected_alphabet]
 
     try:
-        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+        with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             while True:
                 header = f.readline()
                 if not header:
@@ -1449,17 +1492,15 @@ def deep_validate_fastq(
 
                 line_base = read_count * 4 + 1
 
-                if not header.startswith('@'):
+                if not header.startswith("@"):
                     errors.append(
                         f"FASTQ: expected '@' header at line {line_base}, "
                         f"got '{header[:20].strip()}'"
                     )
                     break
 
-                if not plus_line or not plus_line.startswith('+'):
-                    errors.append(
-                        f"FASTQ: expected '+' separator at line {line_base + 2}"
-                    )
+                if not plus_line or not plus_line.startswith("+"):
+                    errors.append(f"FASTQ: expected '+' separator at line {line_base + 2}")
                     break
 
                 read_id = header[1:].strip().split()[0]
@@ -1475,9 +1516,7 @@ def deep_validate_fastq(
                     seen_ids[read_id] = line_base
 
                 # Scan read ID for anomalous content
-                id_errors = scan_node_names_for_anomalous(
-                    [read_id], label=f"line {line_base}"
-                )
+                id_errors = scan_node_names_for_anomalous([read_id], label=f"line {line_base}")
                 errors.extend(id_errors)
 
                 if len(seq) != len(qual):
@@ -1491,19 +1530,27 @@ def deep_validate_fastq(
                 if expected_set is not None:
                     for i, ch in enumerate(seq):
                         if ch not in expected_set:
-                            invalid_chars.append({
-                                "line": line_base + 1,
-                                "column": i + 1,
-                                "char": ch,
-                                "read_id": read_id,
-                            })
+                            invalid_chars.append(
+                                {
+                                    "line": line_base + 1,
+                                    "column": i + 1,
+                                    "char": ch,
+                                    "read_id": read_id,
+                                }
+                            )
 
                 read_count += 1
 
     except OSError as e:
         errors.append(f"Error reading FASTQ file: {e}")
-        return {"errors": errors, "warnings": warns, "read_count": 0,
-                "alphabet": "unknown", "duplicate_ids": [], "invalid_chars": []}
+        return {
+            "errors": errors,
+            "warnings": warns,
+            "read_count": 0,
+            "alphabet": "unknown",
+            "duplicate_ids": [],
+            "invalid_chars": [],
+        }
 
     if read_count == 0:
         warns.append("FASTQ file contains no reads")
@@ -1580,6 +1627,7 @@ def extract_sequence_ids(file_path) -> Iterator[str]:
 # Cross-validation: tree tips ↔ sequence IDs
 # ════════════════════════════════════════════════════════════════════════
 
+
 def cross_validate_tree_sequence(
     tree_tip_labels: List[str],
     sequence_ids: Iterable[str],
@@ -1614,8 +1662,7 @@ def cross_validate_tree_sequence(
     if only_in_tree:
         errors.append(
             f"{label}: {len(only_in_tree)} tip(s) in tree but not in "
-            f"sequences: {', '.join(only_in_tree[:5])}"
-            + ("..." if len(only_in_tree) > 5 else "")
+            f"sequences: {', '.join(only_in_tree[:5])}" + ("..." if len(only_in_tree) > 5 else "")
         )
     if only_in_seq:
         errors.append(
@@ -1641,6 +1688,7 @@ def cross_validate_tree_sequence(
 # UTF-8-sig fallback reader
 # ════════════════════════════════════════════════════════════════════════
 
+
 def read_text_with_fallback(
     file_path: str,
     *,
@@ -1659,26 +1707,22 @@ def read_text_with_fallback(
 
     # Try utf-8 first
     try:
-        with open(file_path, 'r', encoding='utf-8', newline='') as f:
+        with open(file_path, "r", encoding="utf-8", newline="") as f:
             return f.read(), warns
     except UnicodeDecodeError:
         pass
 
     # Try utf-8-sig (BOM-aware)
     try:
-        with open(file_path, 'r', encoding='utf-8-sig', newline='') as f:
+        with open(file_path, "r", encoding="utf-8-sig", newline="") as f:
             content = f.read()
-        warns.append(
-            f"{label}: file has UTF-8 BOM — decoded with utf-8-sig fallback"
-        )
+        warns.append(f"{label}: file has UTF-8 BOM — decoded with utf-8-sig fallback")
         return content, warns
     except UnicodeDecodeError:
         pass
 
     # Fallback to latin-1 (never fails)
-    with open(file_path, 'r', encoding='latin-1', newline='') as f:
+    with open(file_path, "r", encoding="latin-1", newline="") as f:
         content = f.read()
-    warns.append(
-        f"{label}: file is not valid UTF-8 — decoded with latin-1 fallback"
-    )
+    warns.append(f"{label}: file is not valid UTF-8 — decoded with latin-1 fallback")
     return content, warns

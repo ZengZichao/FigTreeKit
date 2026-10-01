@@ -47,16 +47,17 @@ except ImportError:
     # and finally to the static version defined above. Failures here are
     # non-fatal: we keep the static fallback rather than crashing.
     import logging
+
     logger = logging.getLogger(__name__)
     try:
         from setuptools_scm import get_version
+
         _scm_version = get_version(root="..", relative_to=__file__)
         if _scm_version:
             __version__ = _scm_version
     except Exception as exc:  # pragma: no cover - depends on SCM availability
         logger.debug(
-            "setuptools_scm version discovery unavailable; using static "
-            "version %s: %s",
+            "setuptools_scm version discovery unavailable; using static " "version %s: %s",
             __version__,
             exc,
         )
@@ -77,29 +78,39 @@ from .exceptions import (
 from .styler import FigTreeSettings, FigTreeStyler
 from .validators import TreeValidator
 from .validators import (
-    validate_input_file, TREE_EXTENSIONS, SEQUENCE_EXTENSIONS,
-    deep_validate_newick, deep_validate_fasta, deep_validate_fastq,
+    validate_input_file,
+    TREE_EXTENSIONS,
+    SEQUENCE_EXTENSIONS,
+    deep_validate_newick,
+    deep_validate_fasta,
+    deep_validate_fastq,
     summarize_nexus_trees,
     scan_for_anomalous_content,
     detect_taxonomy_circular_deps,
-    cross_validate_tree_sequence, read_text_with_fallback,
+    cross_validate_tree_sequence,
+    read_text_with_fallback,
     extract_sequence_ids,
 )
 from ._parser import extract_taxa_from_newick
 from .taxonomy import (
-    TaxonomyMapper, MonophylyAnalyzer, SPECIAL_IDENTIFIERS,
-    parse_taxonomy_auto, detect_taxonomy_format,
-    get_rank_prefixes, set_rank_prefixes, extend_rank_prefixes,
+    TaxonomyMapper,
+    MonophylyAnalyzer,
+    SPECIAL_IDENTIFIERS,
+    parse_taxonomy_auto,
+    detect_taxonomy_format,
+    get_rank_prefixes,
+    set_rank_prefixes,
+    extend_rank_prefixes,
 )
 from ._renderer import find_figtree_jar, render_with_figtree, render_multiple
 from ._figtree_setup import setup_figtree, check_figtree, print_setup_status
 from ._cli import apply_cli_args
 
-
 # ── Library-mode API (§8.2) ─────────────────────────────────────────────
 # Thin wrappers with standardized signatures for third-party workflow
 # integration (Snakemake/Nextflow).  These use plain Python types and
 # the standardized exception hierarchy.
+
 
 def parse_taxonomy(label: str, mode: str = "reverse") -> dict:
     """Parse a taxonomy label into a rank→value dict.
@@ -146,9 +157,7 @@ def is_monophyletic(tree, taxon_label: str, rooted: bool = True) -> bool:
             # Inline Newick/Nexus content (contains parentheses or newlines).
             styler = FigTreeStyler().load_content(tree)
     else:
-        raise TypeError(
-            "expected a tree path, Newick string, or Bio.Phylo tree"
-        )
+        raise TypeError("expected a tree path, Newick string, or Bio.Phylo tree")
     # Monophyly is decided by a unified MRCA-set comparison
     # (mrca_set == target_set) inside check_monophyly_by_group, which uses
     # Bio.Phylo's common_ancestor — no separate path/inline logic here.
@@ -183,18 +192,14 @@ def load_tree(path, validate: bool = True):
     if validate:
         vresult = validate_input_file(str(p))
         if not vresult["valid"]:
-            raise ValidationError(
-                "Tree file failed validation:\n" + "\n".join(vresult["errors"])
-            )
+            raise ValidationError("Tree file failed validation:\n" + "\n".join(vresult["errors"]))
         fmt = vresult["format"]
         if fmt == "newick":
-            with open(p, 'r', encoding='utf-8', errors='replace') as f:
+            with open(p, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
             dv = deep_validate_newick(content, label=p.name)
             if dv["errors"]:
-                raise ValidationError(
-                    "Tree failed deep validation:\n" + "\n".join(dv["errors"])
-                )
+                raise ValidationError("Tree failed deep validation:\n" + "\n".join(dv["errors"]))
         elif fmt == "nexus":
             summaries = summarize_nexus_trees(str(p))
             for ts in summaries:
@@ -257,9 +262,7 @@ def cross_validate(tree_path, seq_path, strict: bool = True) -> dict:
 
     result = cross_validate_tree_sequence(taxa, seq_ids)
     if strict and result.get("errors"):
-        raise PhyloFormatError(
-            "Cross-validation failed:\n" + "\n".join(result["errors"])
-        )
+        raise PhyloFormatError("Cross-validation failed:\n" + "\n".join(result["errors"]))
     return {
         "valid": not result.get("errors"),
         "matched": result.get("matched", 0),
@@ -267,6 +270,7 @@ def cross_validate(tree_path, seq_path, strict: bool = True) -> dict:
         "seq_only": result.get("only_in_sequences", []),
         "errors": result.get("errors", []),
     }
+
 
 __all__ = [
     # Core

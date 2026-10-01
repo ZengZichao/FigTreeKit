@@ -15,6 +15,7 @@ corpus. Run it whenever a conformance test is added or changed:
 
     python3 scripts/generate_conformance_index.py
 """
+
 from __future__ import annotations
 
 import csv
@@ -29,16 +30,31 @@ OUT = ROOT / "benchmarks" / "conformance_corpus_index.csv"
 # exercises. Keys are matched against the test name and its docstring, in
 # order, so the mapping is auditable rather than guessed at write-up time.
 BRANCH_RULES = [
-    (r"stock.*jar.*identity|jar.*identity", "binary identity of the stock FigTree 1.4.4 JAR (SHA-256)"),
-    (r"stock.*render|stock.*accept", "stock (unpatched) FigTree 1.4.4 parses and renders FigTreeKit output"),
-    (r"annotation.*format|golden.*format|format.*golden", "annotation serialisation format (hex colour / hilight arity / Font.decode)"),
+    (
+        r"stock.*jar.*identity|jar.*identity",
+        "binary identity of the stock FigTree 1.4.4 JAR (SHA-256)",
+    ),
+    (
+        r"stock.*render|stock.*accept",
+        "stock (unpatched) FigTree 1.4.4 parses and renders FigTreeKit output",
+    ),
+    (
+        r"annotation.*format|golden.*format|format.*golden",
+        "annotation serialisation format (hex colour / hilight arity / Font.decode)",
+    ),
     (r"topology", "round-trip preservation of tree topology"),
     (r"tip.*set|tipset", "round-trip preservation of the tip set"),
     (r"branch.*length", "round-trip preservation of branch lengths"),
     (r"comment.*position|position.*matrix", "bracket-comment position support matrix"),
     (r"translate", "BEAST TRANSLATE block round-trip (quoted / escaped / comma-bearing names)"),
-    (r"non.?ultrametric|node.*height|height", "iterative node-depth semantics on a non-ultrametric tree"),
-    (r"multi.?tree|tree.*declaration|scanner", "position-aware multi-tree replacement and declaration scanning"),
+    (
+        r"non.?ultrametric|node.*height|height",
+        "iterative node-depth semantics on a non-ultrametric tree",
+    ),
+    (
+        r"multi.?tree|tree.*declaration|scanner",
+        "position-aware multi-tree replacement and declaration scanning",
+    ),
     (r"collapse", "clade-collapse annotation and eligibility gating"),
     (r"render.*accept|accept.*render", "acceptance render through the bundled patched JAR"),
 ]
@@ -55,7 +71,9 @@ def branch_for(name: str, doc: str) -> str:
 def expected_strings(body: str) -> list[str]:
     """Pinned expected FigTree strings asserted in a test body."""
     found = []
-    for m in re.finditer(r"""assert(?:Equal|In)?\((?P<a>[^\n]*)\)|(?P<lit>[ru]?['"]\[&[^\n]*?['"])""", body):
+    for m in re.finditer(
+        r"""assert(?:Equal|In)?\((?P<a>[^\n]*)\)|(?P<lit>[ru]?['"]\[&[^\n]*?['"])""", body
+    ):
         lit = m.group("lit")
         if lit:
             found.append(lit.strip().lstrip("ru'\"").rstrip("'\""))
@@ -91,18 +109,26 @@ def main() -> int:
         doc_m = re.search(r'(?:"""|\'\'\')(.*?)(?:"""|\'\'\')', body, re.S)
         doc = (doc_m.group(1).strip().splitlines() or [""])[0] if doc_m else ""
         fixture = f"GOLDEN-{idx + 1:03d}"
-        rows.append({
-            "fixture_id": fixture,
-            "test_class": cls,
-            "test_function": meth,
-            "pytest_node_id": f"test/test_conformance.py::{cls}::{meth}",
-            "branch_covered": branch_for(meth, doc),
-            "pinned_expected_figtree_string": " | ".join(expected_strings(body)),
-            "docstring_first_line": doc,
-            "oracle": ("stock FigTree 1.4.4 binary" if "stock" in meth.lower() or "Stock" in cls
-                       else "patched FigTree JAR" if "render" in meth.lower()
-                       else "FigTree 1.4.4 Java sources (transcribed, pinned fixture)"),
-        })
+        rows.append(
+            {
+                "fixture_id": fixture,
+                "test_class": cls,
+                "test_function": meth,
+                "pytest_node_id": f"test/test_conformance.py::{cls}::{meth}",
+                "branch_covered": branch_for(meth, doc),
+                "pinned_expected_figtree_string": " | ".join(expected_strings(body)),
+                "docstring_first_line": doc,
+                "oracle": (
+                    "stock FigTree 1.4.4 binary"
+                    if "stock" in meth.lower() or "Stock" in cls
+                    else (
+                        "patched FigTree JAR"
+                        if "render" in meth.lower()
+                        else "FigTree 1.4.4 Java sources (transcribed, pinned fixture)"
+                    )
+                ),
+            }
+        )
     OUT.parent.mkdir(parents=True, exist_ok=True)
     with OUT.open("w", newline="", encoding="utf-8") as fh:
         w = csv.DictWriter(fh, fieldnames=list(rows[0].keys()))

@@ -40,14 +40,13 @@ _log = logging.getLogger("figtreekit")
 
 
 SPECIAL_IDENTIFIERS = {
-    "LUCA": {"description": "Last Universal Common Ancestor of Bacteria and Archaea",
-             "domains": ["Bacteria", "Archaea"]},
-    "LACA": {"description": "Last Archaeal Common Ancestor",
-             "domains": ["Archaea"]},
-    "LBCA": {"description": "Last Bacterial Common Ancestor",
-             "domains": ["Bacteria"]},
-    "root": {"description": "Root of the tree (all terminal taxa)",
-             "domains": None},
+    "LUCA": {
+        "description": "Last Universal Common Ancestor of Bacteria and Archaea",
+        "domains": ["Bacteria", "Archaea"],
+    },
+    "LACA": {"description": "Last Archaeal Common Ancestor", "domains": ["Archaea"]},
+    "LBCA": {"description": "Last Bacterial Common Ancestor", "domains": ["Bacteria"]},
+    "root": {"description": "Root of the tree (all terminal taxa)", "domains": None},
 }
 
 # Canonical set of special identifiers (uppercase-only for LUCA/LACA/LBCA)
@@ -167,8 +166,10 @@ def _build_prefix_maps(
 
 # ── Format A: Embedded taxonomy (_d_Bacteria_p_...) ─────────────────────
 
+
 def _parse_taxonomy_embedded(
-    text: str, mode: str = "reverse",
+    text: str,
+    mode: str = "reverse",
     prefixes: Optional[Dict[str, str]] = None,
 ) -> Dict[str, str]:
     """Parse embedded taxonomy from a label suffix.
@@ -236,7 +237,7 @@ def _parse_taxonomy_embedded_reverse(
         rank = embedded_map.get(m.group(0), f"unknown_{prefix}")
         start = m.end()
         end = markers[i + 1].start() if i + 1 < len(markers) else len(text)
-        value = text[start:end].strip().rstrip('_')
+        value = text[start:end].strip().rstrip("_")
         if rank not in result:
             result[rank] = value
         else:
@@ -286,7 +287,7 @@ def _parse_taxonomy_embedded_greedy(
         rank = embedded_map.get(m.group(0), f"unknown_{prefix}")
         start = m.end()
         end = markers[i + 1].start() if i + 1 < len(markers) else len(text)
-        value = text[start:end].strip().rstrip('_')
+        value = text[start:end].strip().rstrip("_")
         if value:
             result[rank] = value
         else:
@@ -301,14 +302,15 @@ def _parse_taxonomy_embedded_segment(
 ) -> Dict[str, str]:
     """From first _d_ onward, extract all markers in suffix segment."""
     result: Dict[str, str] = {}
-    first_d = re.search(r'_d_', text)
+    first_d = re.search(r"_d_", text)
     if not first_d:
         return result
-    segment = text[first_d.start():]
+    segment = text[first_d.start() :]
     return _parse_taxonomy_embedded_greedy(segment, prefixes=prefixes)
 
 
 # ── Format B: GTDB-style semicolon (d__Archaea;p__...) ──────────────────
+
 
 def _parse_taxonomy_string(
     taxonomy_str: str,
@@ -341,17 +343,16 @@ def _parse_taxonomy_string(
         matched = False
         for prefix, rank_name in gtdb_map.items():
             if part.startswith(prefix):
-                value = part[len(prefix):].strip()
+                value = part[len(prefix) :].strip()
                 # Validate: value must not contain separator or __
                 if sep in value:
                     raise ValidationError(
                         f"Malformed taxonomy value: {rank_name}='{value}' "
                         f"contains separator '{sep}'"
                     )
-                if '__' in value:
+                if "__" in value:
                     raise ValidationError(
-                        f"Malformed taxonomy value: {rank_name}='{value}' "
-                        f"contains '__'"
+                        f"Malformed taxonomy value: {rank_name}='{value}' " f"contains '__'"
                     )
                 result[rank_name] = value
                 if not value:
@@ -364,6 +365,7 @@ def _parse_taxonomy_string(
 
 
 # ── Unified auto-detection ──────────────────────────────────────────────
+
 
 def detect_taxonomy_format(text: str, prefixes: Optional[Dict[str, str]] = None) -> Optional[str]:
     """Detect which taxonomy format a string uses.
@@ -610,9 +612,7 @@ class TaxonomyMapper:
                 is_taxonomy_string_format = False
                 _, _, gtdb_prefixes, _ = _build_prefix_maps(self._prefixes)
 
-                if len(header) == 2 and any(
-                    header[1].startswith(p) for p in gtdb_prefixes
-                ):
+                if len(header) == 2 and any(header[1].startswith(p) for p in gtdb_prefixes):
                     # Case 1: no header — header IS the first data row
                     is_taxonomy_string_format = True
                     first_data_row = header
@@ -621,14 +621,15 @@ class TaxonomyMapper:
                     first_data_row = next(reader, None)
                     if first_data_row and len(first_data_row) >= 2:
                         is_taxonomy_string_format = any(
-                            first_data_row[1].startswith(p)
-                            for p in gtdb_prefixes
+                            first_data_row[1].startswith(p) for p in gtdb_prefixes
                         )
 
                 if is_taxonomy_string_format:
                     self._load_mapping_taxonomy_string(
-                        reader, first_data_row,
-                        sep=taxonomy_sep, ignore_malformed=ignore_malformed,
+                        reader,
+                        first_data_row,
+                        sep=taxonomy_sep,
+                        ignore_malformed=ignore_malformed,
                     )
                 else:
                     self._load_mapping_multi_column(header, reader)
@@ -640,12 +641,12 @@ class TaxonomyMapper:
 
         # Check for circular dependencies (§13: must be ERROR, refuse to load)
         from .validators import detect_taxonomy_circular_deps
+
         rows = [(name, tax) for name, tax in self._mapping.items()]
         circular = detect_taxonomy_circular_deps(rows)
         if circular:
             raise ValidationError(
-                "Circular dependency detected in taxonomy mapping:\n"
-                + "\n".join(circular)
+                "Circular dependency detected in taxonomy mapping:\n" + "\n".join(circular)
             )
 
         return self
@@ -671,7 +672,9 @@ class TaxonomyMapper:
         if first_data_row is not None:
             taxon = first_data_row[0].strip()
             try:
-                taxonomy = _parse_taxonomy_string(first_data_row[1], sep=sep, prefixes=self._prefixes)
+                taxonomy = _parse_taxonomy_string(
+                    first_data_row[1], sep=sep, prefixes=self._prefixes
+                )
             except ValidationError as e:
                 if ignore_malformed:
                     self._warnings.append(f"Line 1: {e}")
@@ -681,16 +684,12 @@ class TaxonomyMapper:
             if taxonomy:
                 self._mapping[taxon] = taxonomy
             else:
-                self._warnings.append(
-                    f"Line 1: No taxonomy data for '{taxon}'"
-                )
+                self._warnings.append(f"Line 1: No taxonomy data for '{taxon}'")
             start_line = 3
 
         for line_num, row in enumerate(reader, start=start_line):
             if len(row) < 2:
-                self._warnings.append(
-                    f"Line {line_num}: Insufficient columns, skipped"
-                )
+                self._warnings.append(f"Line {line_num}: Insufficient columns, skipped")
                 continue
 
             taxon = row[0].strip()
@@ -706,21 +705,15 @@ class TaxonomyMapper:
             if taxonomy:
                 self._mapping[taxon] = taxonomy
             else:
-                self._warnings.append(
-                    f"Line {line_num}: No taxonomy data for '{taxon}'"
-                )
+                self._warnings.append(f"Line {line_num}: No taxonomy data for '{taxon}'")
 
-    def _load_mapping_multi_column(
-        self, header: List[str], reader: Any
-    ) -> None:
+    def _load_mapping_multi_column(self, header: List[str], reader: Any) -> None:
         """Load mapping from multi-column format (one rank per column)."""
         rank_names = [h.strip() for h in header[1:]]
 
         for line_num, row in enumerate(reader, start=2):
             if len(row) < 2:
-                self._warnings.append(
-                    f"Line {line_num}: Insufficient columns, skipped"
-                )
+                self._warnings.append(f"Line {line_num}: Insufficient columns, skipped")
                 continue
 
             taxon = row[0].strip()
@@ -734,9 +727,7 @@ class TaxonomyMapper:
             if taxonomy:
                 self._mapping[taxon] = taxonomy
             else:
-                self._warnings.append(
-                    f"Line {line_num}: No taxonomy data for '{taxon}'"
-                )
+                self._warnings.append(f"Line {line_num}: No taxonomy data for '{taxon}'")
 
     def parse_labels(
         self,
@@ -777,9 +768,7 @@ class TaxonomyMapper:
                     result[label] = {k: v for k, v in match.groupdict().items() if v}
                 else:
                     result[label] = {}
-                    self._parse_warnings.append(
-                        f"Label '{label}' does not match pattern"
-                    )
+                    self._parse_warnings.append(f"Label '{label}' does not match pattern")
         else:
             # Auto-detect mode: try embedded then table markers
             for label in labels:
@@ -917,8 +906,7 @@ class TaxonomyMapper:
 
         total = len(labels)
         rank_coverage = {
-            rank: count / total * 100 if total > 0 else 0
-            for rank, count in rank_counts.items()
+            rank: count / total * 100 if total > 0 else 0 for rank, count in rank_counts.items()
         }
 
         return {
@@ -929,9 +917,7 @@ class TaxonomyMapper:
             "rank_coverage": rank_coverage,
         }
 
-    def validate_mapping_against_tree(
-        self, tree_labels: List[str]
-    ) -> Dict[str, object]:
+    def validate_mapping_against_tree(self, tree_labels: List[str]) -> Dict[str, object]:
         """Check consistency between mapping file labels and tree tips.
 
         Args:
@@ -1105,9 +1091,7 @@ class MonophylyAnalyzer:
                 - ``summary`` (dict): Summary statistics.
         """
         if tree is None:
-            raise ValueError(
-                "Cannot analyze monophyly: no tree has been loaded."
-            )
+            raise ValueError("Cannot analyze monophyly: no tree has been loaded.")
 
         # Get labels from tree if not provided
         if labels is None:
@@ -1185,8 +1169,7 @@ class MonophylyAnalyzer:
             "multi_tip_groups": comparable_groups,
             "multi_tip_monophyletic": comparable_mono,
             "monophyly_rate": (
-                comparable_mono / comparable_groups * 100
-                if comparable_groups > 0 else 0.0
+                comparable_mono / comparable_groups * 100 if comparable_groups > 0 else 0.0
             ),
         }
 
@@ -1197,9 +1180,7 @@ class MonophylyAnalyzer:
             "summary": summary,
         }
 
-    def _check_group_monophyly(
-        self, tree: Any, group_labels: List[str]
-    ) -> dict:
+    def _check_group_monophyly(self, tree: Any, group_labels: List[str]) -> dict:
         """Check if a group of taxa is monophyletic.
 
         Returns a dict with:
@@ -1222,7 +1203,7 @@ class MonophylyAnalyzer:
             target_set = set(group_labels)
             mrca_set = set(mrca_terminal_names)
 
-            is_monophyletic = (mrca_set == target_set)
+            is_monophyletic = mrca_set == target_set
             # Terminals under MRCA but outside the group are "intruders"
             # (they break monophyly); group taxa missing from the MRCA are
             # "extra" (could not be placed).
@@ -1291,9 +1272,7 @@ class MonophylyAnalyzer:
         self._warnings = []
 
         if tree is None:
-            raise ValueError(
-                "Cannot check monophyly: no tree has been loaded."
-            )
+            raise ValueError("Cannot check monophyly: no tree has been loaded.")
 
         if labels is None:
             labels = [t.name for t in tree.get_terminals() if t.name]
@@ -1323,13 +1302,15 @@ class MonophylyAnalyzer:
             return result
 
         mono_result = self._check_group_monophyly(tree, resolved)
-        result.update({
-            "is_monophyletic": mono_result["is_monophyletic"],
-            "mrca_found": mono_result["mrca_found"],
-            "mrca_terminals": mono_result["mrca_terminals"],
-            "intruder_taxa": mono_result["intruder_taxa"],
-            "extra_taxa": mono_result["extra_taxa"],
-        })
+        result.update(
+            {
+                "is_monophyletic": mono_result["is_monophyletic"],
+                "mrca_found": mono_result["mrca_found"],
+                "mrca_terminals": mono_result["mrca_terminals"],
+                "intruder_taxa": mono_result["intruder_taxa"],
+                "extra_taxa": mono_result["extra_taxa"],
+            }
+        )
 
         if not mono_result["is_monophyletic"]:
             result["warning"] = (

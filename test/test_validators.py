@@ -26,10 +26,10 @@ from figtreekit.validators import (
     cross_validate_tree_sequence,
 )
 
-
 # ══════════════════════════════════════════════════════════════════════
 # deep_validate_newick
 # ══════════════════════════════════════════════════════════════════════
+
 
 class TestDeepValidateNewick:
 
@@ -102,9 +102,7 @@ class TestDeepValidateNewick:
 
     def test_quoted_taxon_names_preserved(self):
         """Quoted taxon names should be parsed without errors."""
-        result = deep_validate_newick(
-            "('Species A':0.1,'Genus B':0.2);", label="test"
-        )
+        result = deep_validate_newick("('Species A':0.1,'Genus B':0.2);", label="test")
         # Quoted names themselves are fine; just check no false positives
         assert result["leaf_count"] >= 2
 
@@ -126,12 +124,11 @@ class TestDeepValidateNewick:
 # scan_for_anomalous_content
 # ══════════════════════════════════════════════════════════════════════
 
+
 class TestScanForAnomalousContent:
 
     def test_clean_content(self):
-        errors = scan_for_anomalous_content(
-            "(A:0.1,B:0.2);", label="tree.nwk"
-        )
+        errors = scan_for_anomalous_content("(A:0.1,B:0.2);", label="tree.nwk")
         assert errors == []
 
     def test_null_byte(self):
@@ -142,14 +139,14 @@ class TestScanForAnomalousContent:
 
     def test_bidi_override_lre(self):
         """Left-to-Right Embedding U+202A."""
-        content = f"({'A' if True else 'B'}:\u202A0.1,B:0.2);"
+        content = f"({'A' if True else 'B'}:\u202a0.1,B:0.2);"
         errors = scan_for_anomalous_content(content, label="test")
         assert len(errors) > 0
         assert any("U+202A" in e for e in errors)
 
     def test_bidi_override_rlo(self):
         """Right-to-Left Override U+202E."""
-        content = f"(A:0.1,\u202EB:0.2);"
+        content = f"(A:0.1,\u202eB:0.2);"
         errors = scan_for_anomalous_content(content, label="test")
         assert len(errors) > 0
         assert any("U+202E" in e for e in errors)
@@ -186,25 +183,20 @@ class TestScanForAnomalousContent:
 # scan_node_names_for_anomalous
 # ══════════════════════════════════════════════════════════════════════
 
+
 class TestScanNodeNamesForAnomalous:
 
     def test_clean_names(self):
-        errors = scan_node_names_for_anomalous(
-            ["A", "B", "C"], label="test"
-        )
+        errors = scan_node_names_for_anomalous(["A", "B", "C"], label="test")
         assert errors == []
 
     def test_control_char_in_name(self):
-        errors = scan_node_names_for_anomalous(
-            ["A", "B\x00ad"], label="test"
-        )
+        errors = scan_node_names_for_anomalous(["A", "B\x00ad"], label="test")
         assert len(errors) > 0
         assert any("U+0000" in e for e in errors)
 
     def test_bidi_in_name(self):
-        errors = scan_node_names_for_anomalous(
-            ["Good", "\u202EBad"], label="test"
-        )
+        errors = scan_node_names_for_anomalous(["Good", "\u202eBad"], label="test")
         assert len(errors) > 0
         assert any("U+202E" in e for e in errors)
 
@@ -213,63 +205,48 @@ class TestScanNodeNamesForAnomalous:
 # cross_validate_tree_sequence
 # ══════════════════════════════════════════════════════════════════════
 
+
 class TestCrossValidateTreeSequence:
 
     def test_perfect_match(self):
-        result = cross_validate_tree_sequence(
-            ["A", "B", "C"], ["A", "B", "C"], label="test"
-        )
+        result = cross_validate_tree_sequence(["A", "B", "C"], ["A", "B", "C"], label="test")
         assert result["errors"] == []
         assert result["matched"] == 3
 
     def test_tree_has_extra_tips(self):
-        result = cross_validate_tree_sequence(
-            ["A", "B", "C", "D"], ["A", "B", "C"], label="test"
-        )
+        result = cross_validate_tree_sequence(["A", "B", "C", "D"], ["A", "B", "C"], label="test")
         assert len(result["errors"]) > 0
         assert "D" in result["only_in_tree"]
 
     def test_seq_has_extra_ids(self):
-        result = cross_validate_tree_sequence(
-            ["A", "B"], ["A", "B", "C", "D"], label="test"
-        )
+        result = cross_validate_tree_sequence(["A", "B"], ["A", "B", "C", "D"], label="test")
         assert len(result["errors"]) > 0
         assert result["only_in_sequences"] == ["C", "D"]
 
     def test_complete_mismatch(self):
-        result = cross_validate_tree_sequence(
-            ["X", "Y"], ["A", "B"], label="test"
-        )
+        result = cross_validate_tree_sequence(["X", "Y"], ["A", "B"], label="test")
         assert len(result["errors"]) == 2
         assert result["matched"] == 0
 
     def test_partial_overlap(self):
-        result = cross_validate_tree_sequence(
-            ["A", "B", "C"], ["B", "C", "D"], label="test"
-        )
+        result = cross_validate_tree_sequence(["A", "B", "C"], ["B", "C", "D"], label="test")
         assert result["matched"] == 2
         assert "A" in result["only_in_tree"]
         assert "D" in result["only_in_sequences"]
 
     def test_empty_tree_labels(self):
-        result = cross_validate_tree_sequence(
-            [], ["A", "B"], label="test"
-        )
+        result = cross_validate_tree_sequence([], ["A", "B"], label="test")
         assert len(result["errors"]) > 0
         assert result["matched"] == 0
 
     def test_empty_sequence_ids(self):
-        result = cross_validate_tree_sequence(
-            ["A", "B"], [], label="test"
-        )
+        result = cross_validate_tree_sequence(["A", "B"], [], label="test")
         assert len(result["errors"]) > 0
         assert result["matched"] == 0
 
     def test_match_warning(self):
         """When everything matches, there should be a warning (not error)."""
-        result = cross_validate_tree_sequence(
-            ["A", "B"], ["A", "B"], label="test"
-        )
+        result = cross_validate_tree_sequence(["A", "B"], ["A", "B"], label="test")
         assert len(result["warnings"]) >= 1
         assert "match" in result["warnings"][0].lower()
 
@@ -278,12 +255,11 @@ class TestCrossValidateTreeSequence:
 # validate_biological_plausibility
 # ══════════════════════════════════════════════════════════════════════
 
+
 class TestValidateBiologicalPlausibility:
 
     def test_normal_tree_no_issues(self):
-        issues = TreeValidator.validate_biological_plausibility(
-            "((A:0.1,B:0.2):0.3,C:0.4);"
-        )
+        issues = TreeValidator.validate_biological_plausibility("((A:0.1,B:0.2):0.3,C:0.4);")
         assert issues == []
 
     def test_single_taxon_degenerate(self):
@@ -292,9 +268,7 @@ class TestValidateBiologicalPlausibility:
         assert any("single" in i.lower() for i in issues)
 
     def test_all_zero_branch_lengths(self):
-        issues = TreeValidator.validate_biological_plausibility(
-            "((A:0.0,B:0.0):0.0,C:0.0);"
-        )
+        issues = TreeValidator.validate_biological_plausibility("((A:0.0,B:0.0):0.0,C:0.0);")
         assert len(issues) > 0
         assert any("zero" in i.lower() for i in issues)
 
@@ -331,12 +305,11 @@ class TestValidateBiologicalPlausibility:
 # validate_input_file (existing public API)
 # ══════════════════════════════════════════════════════════════════════
 
+
 class TestValidateInputFile:
 
     def test_valid_newick_file(self):
-        with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.nwk', delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".nwk", delete=False) as f:
             f.write("((A:0.1,B:0.2):0.3,C:0.4);")
             path = f.name
         try:
@@ -352,9 +325,7 @@ class TestValidateInputFile:
         assert any("not found" in e.lower() for e in result["errors"])
 
     def test_empty_file(self):
-        with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.tre', delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".tre", delete=False) as f:
             path = f.name
         try:
             result = validate_input_file(path)
@@ -365,26 +336,21 @@ class TestValidateInputFile:
 
     def test_format_mismatch_extension_vs_content(self):
         """Extension says .nex but content is Newick."""
-        with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.nex', delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".nex", delete=False) as f:
             f.write("((A:0.1,B:0.2):0.3,C:0.4);")
             path = f.name
         try:
             result = validate_input_file(path)
             assert result["valid"] is True  # content-based wins
             assert any(
-                "content" in w.lower() or "extension" in w.lower()
-                for w in result["warnings"]
+                "content" in w.lower() or "extension" in w.lower() for w in result["warnings"]
             )
         finally:
             os.unlink(path)
 
     def test_content_based_detection_overrides_extension(self):
         """Content-based detection should override unrecognized extension."""
-        with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.xyz', delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".xyz", delete=False) as f:
             f.write("((A:0.1,B:0.2):0.3,C:0.4);")
             path = f.name
         try:
@@ -397,9 +363,7 @@ class TestValidateInputFile:
 
     def test_unrecognized_extension_no_content_match(self):
         """Completely unrecognized content + extension should warn."""
-        with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.xyz', delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".xyz", delete=False) as f:
             f.write("This is not any known format whatsoever.")
             path = f.name
         try:
@@ -407,10 +371,10 @@ class TestValidateInputFile:
             # Either a warning about unrecognized or content couldn't be determined
             all_msgs = [w.lower() for w in result["warnings"]]
             all_msgs.extend([e.lower() for e in result["errors"]])
-            assert any(
-                "unrecognized" in m or "could not" in m or "determine" in m
-                for m in all_msgs
-            ) or result["format"] is None
+            assert (
+                any("unrecognized" in m or "could not" in m or "determine" in m for m in all_msgs)
+                or result["format"] is None
+            )
         finally:
             os.unlink(path)
 
@@ -419,12 +383,11 @@ class TestValidateInputFile:
 # deep_validate_fasta (supplementary coverage)
 # ══════════════════════════════════════════════════════════════════════
 
+
 class TestDeepValidateFasta:
 
     def test_valid_simple_fasta(self):
-        with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.fa', delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".fa", delete=False) as f:
             f.write(">seq1\nATCG\n>seq2\nGCTA\n")
             path = f.name
         try:
@@ -435,9 +398,7 @@ class TestDeepValidateFasta:
             os.unlink(path)
 
     def test_duplicate_ids(self):
-        with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.fa', delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".fa", delete=False) as f:
             f.write(">seq1\nATCG\n>seq1\nGCTA\n")
             path = f.name
         try:
@@ -448,9 +409,7 @@ class TestDeepValidateFasta:
             os.unlink(path)
 
     def test_length_mismatch(self):
-        with tempfile.NamedTemporaryFile(
-            mode='w', suffix='.fa', delete=False
-        ) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".fa", delete=False) as f:
             f.write(">seq1\nATCG\n>seq2\nGCTAAA\n")
             path = f.name
         try:

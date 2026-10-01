@@ -65,6 +65,7 @@ def find_figtree_jar() -> Optional[str]:
     # 2. Saved path from setup-figtree
     try:
         from ._figtree_setup import get_saved_figtree_path
+
         saved = get_saved_figtree_path()
         if saved and saved.is_file():
             return str(saved)
@@ -202,10 +203,14 @@ def render_with_figtree(
     cmd = [
         "java",
         *shlex.split(java_opts),
-        "-jar", jar_path,
-        "-graphic", format,
-        "-width", str(width),
-        "-height", str(height),
+        "-jar",
+        jar_path,
+        "-graphic",
+        format,
+        "-width",
+        str(width),
+        "-height",
+        str(height),
         input_file,
         output_file,
     ]
@@ -231,7 +236,8 @@ def render_with_figtree(
 
         if success:
             _apply_requested_appearance(
-                output_file, format,
+                output_file,
+                format,
                 background_color=background_color,
                 foreground_color=foreground_color,
                 label_color=label_color,
@@ -242,22 +248,20 @@ def render_with_figtree(
         # preferring the most specific signal available.
         error_lines = [
             line.strip()
-            for line in (result.stdout + result.stderr).split('\n')
-            if 'Exception' in line or 'Error' in line
+            for line in (result.stdout + result.stderr).split("\n")
+            if "Exception" in line or "Error" in line
         ]
-        detail = "\n".join(error_lines) if error_lines else (
-            f"stdout: {result.stdout[:500]}\nstderr: {result.stderr[:500]}"
+        detail = (
+            "\n".join(error_lines)
+            if error_lines
+            else (f"stdout: {result.stdout[:500]}\nstderr: {result.stderr[:500]}")
         )
 
         if result.returncode != 0:
-            raise RenderError(
-                f"FigTree exited with code {result.returncode}\n{detail}"
-            )
+            raise RenderError(f"FigTree exited with code {result.returncode}\n{detail}")
 
         if not os.path.isfile(output_file):
-            raise RenderError(
-                f"FigTree rendering produced no output file: {output_file}\n{detail}"
-            )
+            raise RenderError(f"FigTree rendering produced no output file: {output_file}\n{detail}")
 
         if os.path.getsize(output_file) == 0:
             raise RenderError(
@@ -345,7 +349,12 @@ def render_multiple(
             output_file = os.path.join(output_dir, f"{basename}.{fmt.lower()}")
             try:
                 render_with_figtree(
-                    input_file, output_file, fmt, width, height, jar_path,
+                    input_file,
+                    output_file,
+                    fmt,
+                    width,
+                    height,
+                    jar_path,
                     timeout=timeout,
                 )
                 results["success"].append(output_file)

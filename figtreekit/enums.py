@@ -23,6 +23,7 @@ from enum import Enum
 
 class LayoutType(Enum):
     """Tree layout types supported by FigTree."""
+
     RECTILINEAR = "RECTILINEAR"
     POLAR = "POLAR"
     RADIAL = "RADIAL"
@@ -30,6 +31,7 @@ class LayoutType(Enum):
 
 class TransformType(Enum):
     """Tree transform types."""
+
     CLADOGRAM = "cladogram"
     PHYLOGRAM = "phylogram"
 
@@ -40,6 +42,7 @@ class RootingType(Enum):
     Values match the display strings used by FigTree 1.4.4's
     ``TreePreferences.java`` (not the Java constant names).
     """
+
     USER_SELECTION = "User Selection"
     MID_POINT = "Mid-point"
 
@@ -50,6 +53,7 @@ class OrderType(Enum):
     Values match the display strings used by FigTree 1.4.4's
     ``TreePreferences.java`` (not the Java constant names).
     """
+
     INCREASING_NODE_DENSITY = "Increasing Node Density"
     DECREASING_NODE_DENSITY = "Decreasing Node Density"
 
@@ -60,6 +64,7 @@ class FontStyle(Enum):
     These correspond to the integer codes used in ``java.awt.Font``:
     PLAIN=0, BOLD=1, ITALIC=2, BOLD|ITALIC=3.
     """
+
     PLAIN = 0
     BOLD = 1
     ITALIC = 2

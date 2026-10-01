@@ -81,12 +81,9 @@ def check_java() -> Tuple[bool, str]:
     java_path = shutil.which("java")
     if not java_path:
         return False, "Java not found in PATH"
-    
+
     try:
-        result = subprocess.run(
-            ["java", "-version"],
-            capture_output=True, text=True, timeout=10
-        )
+        result = subprocess.run(["java", "-version"], capture_output=True, text=True, timeout=10)
         version_info = result.stderr.strip() or result.stdout.strip()
         return True, version_info
     except Exception as e:
@@ -98,13 +95,10 @@ def check_ant() -> Tuple[bool, str]:
     ant_path = shutil.which("ant")
     if not ant_path:
         return False, "Apache Ant not found in PATH"
-    
+
     try:
-        result = subprocess.run(
-            ["ant", "-version"],
-            capture_output=True, text=True, timeout=10
-        )
-        version_info = result.stdout.strip().split('\n')[0]
+        result = subprocess.run(["ant", "-version"], capture_output=True, text=True, timeout=10)
+        version_info = result.stdout.strip().split("\n")[0]
         return True, version_info
     except Exception as e:
         return False, f"Error checking Ant: {e}"
@@ -112,12 +106,12 @@ def check_ant() -> Tuple[bool, str]:
 
 def check_figtree(jar_path: Optional[str] = None) -> Tuple[bool, str]:
     """Check if FigTree JAR is available.
-    
+
     Args:
         jar_path: Optional path to figtree.jar. If None, searches in:
                   1. Saved path from previous setup
                   2. Default install location
-    
+
     Returns:
         Tuple of (is_available, message)
     """
@@ -130,19 +124,18 @@ def check_figtree(jar_path: Optional[str] = None) -> Tuple[bool, str]:
             jar_path = get_figtree_jar_path()
     else:
         jar_path = Path(jar_path)
-    
+
     if not jar_path.exists():
         return False, f"FigTree JAR not found at {jar_path}"
-    
+
     # Try to run FigTree
     java_ok, java_msg = check_java()
     if not java_ok:
         return False, f"Java required: {java_msg}"
-    
+
     try:
         result = subprocess.run(
-            ["java", "-jar", str(jar_path), "-help"],
-            capture_output=True, text=True, timeout=10
+            ["java", "-jar", str(jar_path), "-help"], capture_output=True, text=True, timeout=10
         )
         if "FigTree" in result.stdout:
             return True, f"FigTree v{FIGTREE_VERSION} available at {jar_path}"
@@ -154,37 +147,38 @@ def check_figtree(jar_path: Optional[str] = None) -> Tuple[bool, str]:
 
 def download_figtree(target_dir: Path, verbose: bool = False) -> Path:
     """Download FigTree source code from GitHub.
-    
+
     Args:
         target_dir: Directory to download to.
         verbose: Print progress messages.
-    
+
     Returns:
         Path to downloaded source directory.
-    
+
     Raises:
         RenderError: If download fails.
     """
     import urllib.request
-    
+
     zip_url = FIGTREE_REPO
     zip_file = target_dir / f"figtree-{FIGTREE_VERSION}.zip"
     source_dir = target_dir / f"figtree-{FIGTREE_VERSION}"
-    
+
     # Skip if already downloaded
     if source_dir.exists():
         if verbose:
             print(f"FigTree source already exists at {source_dir}")
         return source_dir
-    
+
     target_dir.mkdir(parents=True, exist_ok=True)
-    
+
     if verbose:
         print(f"Downloading FigTree v{FIGTREE_VERSION} from GitHub...")
         print(f"  URL: {zip_url}")
-    
+
     try:
         import ssl
+
         # Verify the server certificate against the system trust store so the
         # download cannot be silently MITM'd. To opt out (e.g. behind a
         # corporate TLS-inspecting proxy) users may pass a custom context:
@@ -198,8 +192,8 @@ def download_figtree(target_dir: Path, verbose: bool = False) -> Path:
 
         if verbose:
             print(f"  Extracting to {target_dir}...")
-        
-        with zipfile.ZipFile(zip_file, 'r') as zf:
+
+        with zipfile.ZipFile(zip_file, "r") as zf:
             # Validate all paths to prevent zip slip attacks
             for member in zf.namelist():
                 member_path = (target_dir / member).resolve()
@@ -208,15 +202,15 @@ def download_figtree(target_dir: Path, verbose: bool = False) -> Path:
                         f"Zip entry '{member}' would extract outside target directory"
                     )
             zf.extractall(target_dir)
-        
+
         # Clean up zip file
         zip_file.unlink(missing_ok=True)
-        
+
         if verbose:
             print(f"  Download complete: {source_dir}")
-        
+
         return source_dir
-        
+
     except Exception as e:
         raise RenderError(f"Failed to download FigTree: {e}")
 
@@ -262,21 +256,21 @@ def apply_figtree_patches(source_dir: Path, verbose: bool = False) -> None:
 
 def compile_figtree(source_dir: Path, verbose: bool = False) -> Path:
     """Compile FigTree from source using Apache Ant.
-    
+
     Args:
         source_dir: Path to FigTree source directory.
         verbose: Print progress messages.
-    
+
     Returns:
         Path to compiled figtree.jar.
-    
+
     Raises:
         RenderError: If compilation fails.
     """
     build_xml = source_dir / "build.xml"
     if not build_xml.exists():
         raise RenderError(f"build.xml not found in {source_dir}")
-    
+
     # Check Ant
     ant_ok, ant_msg = check_ant()
     if not ant_ok:
@@ -288,9 +282,9 @@ def compile_figtree(source_dir: Path, verbose: bool = False) -> Path:
             f"  - Windows: https://ant.apache.org/bindownload.cgi\n"
             f"\n{ant_msg}"
         )
-    
+
     # Fix Java source/target version for modern JDK
-    build_xml_content = build_xml.read_text(encoding='utf-8')
+    build_xml_content = build_xml.read_text(encoding="utf-8")
     original_xml_content = build_xml_content
     if 'source="1.6"' in build_xml_content or 'source="1.8"' in build_xml_content:
         if verbose:
@@ -304,24 +298,24 @@ def compile_figtree(source_dir: Path, verbose: bool = False) -> Path:
         # and legacy source levels can be rejected by the active JDK. We must
         # not silently rewrite unrelated configurations, so we only warn and
         # let the user intervene if compilation then fails.
-        uses_release = 'release=' in build_xml_content
+        uses_release = "release=" in build_xml_content
         modern_target = re.search(r'(?:source|target)="(1\.[7-9]|[2-9]\d*)"', build_xml_content)
         if uses_release or modern_target:
             level = modern_target.group(1) if modern_target else "release"
             msg = (
                 f"FigTree build.xml targets a modern JDK level ({level}). "
-                "If compilation fails, pin source/target to \"1.8\" in build.xml."
+                'If compilation fails, pin source/target to "1.8" in build.xml.'
             )
             if verbose:
                 print(f"  Warning: {msg}")
             logging.getLogger(__name__).warning(msg)
     if build_xml_content != original_xml_content:
-        build_xml.write_text(build_xml_content, encoding='utf-8', newline='\n')
-    
+        build_xml.write_text(build_xml_content, encoding="utf-8", newline="\n")
+
     # Fix javax.activation issue for Java 9+
     dialog_file = source_dir / "src" / "figtree" / "treeviewer" / "DiscreteColourScaleDialog.java"
     if dialog_file.exists():
-        content = dialog_file.read_text(encoding='utf-8')
+        content = dialog_file.read_text(encoding="utf-8")
         if "import javax.activation.DataHandler;" in content:
             if verbose:
                 print("  Patching DiscreteColourScaleDialog.java for Java 9+...")
@@ -335,34 +329,30 @@ def compile_figtree(source_dir: Path, verbose: bool = False) -> Path:
                 public Object getTransferData(DataFlavor flavor) { return selectedRows; }
             };"""
             content = content.replace(old_code, new_code)
-            dialog_file.write_text(content, encoding='utf-8', newline='\n')
-    
+            dialog_file.write_text(content, encoding="utf-8", newline="\n")
+
     # Compile
     if verbose:
         print("  Compiling FigTree...")
-    
+
     try:
         result = subprocess.run(
-            ["ant", "dist"],
-            cwd=str(source_dir),
-            capture_output=True,
-            text=True,
-            timeout=120
+            ["ant", "dist"], cwd=str(source_dir), capture_output=True, text=True, timeout=120
         )
-        
+
         if result.returncode != 0:
             error_msg = result.stderr or result.stdout
             raise RenderError(f"Compilation failed:\n{error_msg}")
-        
+
         jar_path = source_dir / "dist" / "figtree.jar"
         if not jar_path.exists():
             raise RenderError("figtree.jar not found after compilation")
-        
+
         if verbose:
             print(f"  Compilation successful: {jar_path}")
-        
+
         return jar_path
-        
+
     except subprocess.TimeoutExpired:
         raise RenderError("Compilation timed out after 120 seconds")
     except Exception as e:
@@ -375,19 +365,19 @@ def setup_figtree(
     verbose: bool = True,
 ) -> Path:
     """Setup FigTree for use with FigTreeKit.
-    
+
     This function either:
     1. Downloads and compiles FigTree from source, or
     2. Validates an existing JAR path
-    
+
     Args:
         install_dir: Directory to install FigTree. Default: ~/.figtreekit/figtree
         jar_path: Path to existing figtree.jar. If provided, skips download/compile.
         verbose: Print progress messages.
-    
+
     Returns:
         Path to figtree.jar.
-    
+
     Raises:
         RenderError: If setup fails.
     """
@@ -398,11 +388,11 @@ def setup_figtree(
             raise RenderError(f"Specified JAR not found: {jar_path}")
         if verbose:
             print(f"Using existing FigTree JAR: {jar_path}")
-        
+
         # Save path for future use
         _save_figtree_path(jar_path)
         return jar_path
-    
+
     # Check if already installed
     default_jar = get_figtree_jar_path()
     if default_jar.exists():
@@ -411,7 +401,7 @@ def setup_figtree(
             if verbose:
                 print(f"FigTree already installed: {msg}")
             return default_jar
-    
+
     # Check prerequisites
     java_ok, java_msg = check_java()
     if not java_ok:
@@ -422,7 +412,7 @@ def setup_figtree(
             f"\nNote: FigTreeKit core features work without Java."
             f"Only rendering requires FigTree + Java."
         )
-    
+
     ant_ok, ant_msg = check_ant()
     if not ant_ok:
         raise RenderError(
@@ -435,30 +425,30 @@ def setup_figtree(
             f"\nAlternatively, compile FigTree manually and use:"
             f"  figtreekit setup-figtree --path /path/to/figtree.jar"
         )
-    
+
     # Download and compile
     if install_dir is None:
         install_dir = DEFAULT_INSTALL_DIR
-    
+
     if verbose:
         print(f"Setting up FigTree v{FIGTREE_VERSION}...")
         print(f"  Install directory: {install_dir}")
         print(f"  Java: {java_msg}")
         print(f"  Ant: {ant_msg}")
         print()
-    
+
     # Download
     source_dir = download_figtree(install_dir, verbose=verbose)
-    
+
     # Apply FigTreeKit patches before compiling
     apply_figtree_patches(source_dir, verbose=verbose)
-    
+
     # Compile
     jar_path = compile_figtree(source_dir, verbose=verbose)
-    
+
     # Save path
     _save_figtree_path(jar_path)
-    
+
     if verbose:
         print()
         print(f"FigTree setup complete!")
@@ -468,7 +458,7 @@ def setup_figtree(
         print("You can now use rendering features:")
         print("  figtreekit input.tre -o output.nex --render output.png")
         print("  figtreekit input.tre -o output.nex --render output.pdf")
-    
+
     return jar_path
 
 
@@ -478,14 +468,14 @@ def _save_figtree_path(jar_path: Path) -> None:
     config_dir.mkdir(parents=True, exist_ok=True)
     config_file = config_dir / "figtree_path.txt"
     # Always save absolute path
-    config_file.write_text(str(Path(jar_path).resolve()), encoding='utf-8', newline='\n')
+    config_file.write_text(str(Path(jar_path).resolve()), encoding="utf-8", newline="\n")
 
 
 def get_saved_figtree_path() -> Optional[Path]:
     """Get previously saved FigTree JAR path."""
     config_file = Path.home() / ".figtreekit" / "figtree_path.txt"
     if config_file.exists():
-        path = Path(config_file.read_text(encoding='utf-8').strip())
+        path = Path(config_file.read_text(encoding="utf-8").strip())
         if path.exists():
             return path
     return None
@@ -495,22 +485,22 @@ def print_setup_status() -> None:
     """Print current FigTree setup status."""
     print("FigTreeKit FigTree Integration Status")
     print("=" * 50)
-    
+
     # Check Java
     java_ok, java_msg = check_java()
     print(f"Java: {'✓' if java_ok else '✗'} {java_msg}")
-    
+
     # Check Ant
     ant_ok, ant_msg = check_ant()
     print(f"Ant:  {'✓' if ant_ok else '✗'} {ant_msg}")
-    
+
     # Check FigTree JAR
     jar_path = get_figtree_jar_path()
     saved_path = get_saved_figtree_path()
-    
+
     # Check environment variable
     env_jar = os.environ.get("FIGTREE_JAR")
-    
+
     print()
     print("FigTree JAR locations:")
     print(f"  Default:     {jar_path} {'✓' if jar_path.exists() else '✗'}")
@@ -518,7 +508,7 @@ def print_setup_status() -> None:
         print(f"  Saved:       {saved_path} {'✓' if saved_path.exists() else '✗'}")
     if env_jar:
         print(f"  Environment: {env_jar} {'✓' if Path(env_jar).exists() else '✗'}")
-    
+
     # Check if rendering is available
     print()
     figtree_ok, figtree_msg = check_figtree()

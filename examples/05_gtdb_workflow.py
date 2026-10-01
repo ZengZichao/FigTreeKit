@@ -42,8 +42,7 @@ DEFAULT_META = Path(DEFAULT_DIR) / "ar53_r232_metadata.tsv"
 def build_two_column_mapping(metadata_tsv: Path) -> str:
     """Reduce GTDB metadata (many columns) to the two-column mapping
     format accepted by FigTreeKit: ``accession<TAB>d__...;p__...;...``."""
-    out = tempfile.NamedTemporaryFile(
-        mode="w", suffix=".tsv", delete=False, encoding="utf-8")
+    out = tempfile.NamedTemporaryFile(mode="w", suffix=".tsv", delete=False, encoding="utf-8")
     n = 0
     with open(metadata_tsv, newline="", encoding="utf-8") as fh:
         reader = csv.DictReader(fh, delimiter="\t")
@@ -76,14 +75,19 @@ def main() -> int:
     # ------------------------------------------------------------------
     audit_styler = FigTreeStyler(str(tree_path))
     comp = audit_styler.check_taxonomy_completeness(mapping_file=mapping)
-    print(f"[audit] completeness summary: "
-          f"{ {k: v for k, v in comp.items() if isinstance(v, (int, float))} }")
+    print(
+        f"[audit] completeness summary: "
+        f"{ {k: v for k, v in comp.items() if isinstance(v, (int, float))} }"
+    )
     orders = audit_styler.analyze_taxonomy(
-        mapping_file=mapping, rank="order", style_monophyletic=False)
+        mapping_file=mapping, rank="order", style_monophyletic=False
+    )
     n_orders = len(orders["monophyletic"]) + len(orders["non_monophyletic"])
-    print(f"[order] groups={orders['summary'].get('total_groups', n_orders)} "
-          f"monophyletic={len(orders['monophyletic'])} "
-          f"non_monophyletic(skipped)={len(orders['non_monophyletic'])}")
+    print(
+        f"[order] groups={orders['summary'].get('total_groups', n_orders)} "
+        f"monophyletic={len(orders['monophyletic'])} "
+        f"non_monophyletic(skipped)={len(orders['non_monophyletic'])}"
+    )
 
     # ------------------------------------------------------------------
     # Panel A: fully expanded radial layout, phylum-level coloring
@@ -91,11 +95,12 @@ def main() -> int:
     # ------------------------------------------------------------------
     styler_a = FigTreeStyler(str(tree_path))
     styler_a.set_layout(LayoutType.RADIAL)
-    phyla = styler_a.analyze_taxonomy(
-        mapping_file=mapping, rank="phylum", style_monophyletic=True)
-    print(f"[phylum] monophyletic={len(phyla['monophyletic'])} "
-          f"non_monophyletic={len(phyla['non_monophyletic'])} "
-          f"unmapped_tips={len(phyla['unmapped'])}")
+    phyla = styler_a.analyze_taxonomy(mapping_file=mapping, rank="phylum", style_monophyletic=True)
+    print(
+        f"[phylum] monophyletic={len(phyla['monophyletic'])} "
+        f"non_monophyletic={len(phyla['non_monophyletic'])} "
+        f"unmapped_tips={len(phyla['unmapped'])}"
+    )
     out_a_nex = outdir / "gtdb_ar53_radial_expanded.nex"
     styler_a.export(str(out_a_nex))
     print(f"[done] exported {out_a_nex}")
@@ -108,20 +113,24 @@ def main() -> int:
     # ------------------------------------------------------------------
     styler_b = FigTreeStyler(str(tree_path))
     styler_b.set_layout(LayoutType.RECTILINEAR)
-    styler_b.analyze_taxonomy(
-        mapping_file=mapping, rank="phylum", style_monophyletic=True)
+    styler_b.analyze_taxonomy(mapping_file=mapping, rank="phylum", style_monophyletic=True)
     # A single mapped tip makes a group trivially exclusive; collapsing it is
     # meaningless and the styler skips a collapse whose MRCA has no children,
     # so only multi-tip groups are submitted.  Anything whose size the analyzer
     # did not report is still collapsed, so an unknown shape can never be
     # silently dropped.
-    to_collapse = [g for g, info in orders["monophyletic"].items()
-                   if group_tip_count(info) >= 2 or group_tip_count(info) == 0]
+    to_collapse = [
+        g
+        for g, info in orders["monophyletic"].items()
+        if group_tip_count(info) >= 2 or group_tip_count(info) == 0
+    ]
     singletons = len(orders["monophyletic"]) - len(to_collapse)
     for group in to_collapse:
         styler_b.collapse_by_group(group, mapping_file=mapping)
-    print(f"[order] collapsed={len(to_collapse)} "
-          f"(trivially exclusive single-tip groups left expanded: {singletons})")
+    print(
+        f"[order] collapsed={len(to_collapse)} "
+        f"(trivially exclusive single-tip groups left expanded: {singletons})"
+    )
     out_b_nex = outdir / "gtdb_ar53_rectilinear_collapsed.nex"
     styler_b.export(str(out_b_nex))
     print(f"[done] exported {out_b_nex}")
@@ -131,17 +140,27 @@ def main() -> int:
         # group_tip_count is imported at module scope; re-importing it here
         # would make it local to main() and break the comprehension above.
         from _audit import write_audit
-        write_audit(out_b_nex.with_suffix(""), rank="order", groups=orders,
-                    completeness=comp, nexus_path=out_b_nex,
-                    collapsed=to_collapse,
-                    extra={"workflow_script": "examples/05_gtdb_workflow.py",
-                           "expanded_nexus": str(out_a_nex)})
+
+        write_audit(
+            out_b_nex.with_suffix(""),
+            rank="order",
+            groups=orders,
+            completeness=comp,
+            nexus_path=out_b_nex,
+            collapsed=to_collapse,
+            extra={
+                "workflow_script": "examples/05_gtdb_workflow.py",
+                "expanded_nexus": str(out_a_nex),
+            },
+        )
     except Exception as exc:
         print(f"[audit] skipped: {exc}")
 
     # Optional rendering (requires Java + bundled patched JAR)
-    for styler, name in ((styler_a, "gtdb_ar53_radial_expanded.pdf"),
-                         (styler_b, "gtdb_ar53_rectilinear_collapsed.pdf")):
+    for styler, name in (
+        (styler_a, "gtdb_ar53_radial_expanded.pdf"),
+        (styler_b, "gtdb_ar53_rectilinear_collapsed.pdf"),
+    ):
         try:
             out_pdf = outdir / name
             styler.render(str(out_pdf), format="PDF", width=2400, height=1600)

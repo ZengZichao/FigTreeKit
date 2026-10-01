@@ -13,17 +13,18 @@ import pytest
 try:
     from hypothesis import given, settings, assume, HealthCheck
     from hypothesis import strategies as st
+
     HAS_HYPOTHESIS = True
 except ImportError:
     HAS_HYPOTHESIS = False
 
 from figtreekit import FigTreeStyler, LayoutType, CompatibilityWarning
 
-
 if HAS_HYPOTHESIS:
+
     def _newick_taxa_names():
         """Strategy for generating valid Newick taxon names."""
-        return st.from_regex(r'[A-Za-z][A-Za-z0-9_]{0,10}', fullmatch=True)
+        return st.from_regex(r"[A-Za-z][A-Za-z0-9_]{0,10}", fullmatch=True)
 
     def _newick_tree(min_size=2, max_size=8):
         """Strategy for generating valid Newick trees.
@@ -59,14 +60,14 @@ if HAS_HYPOTHESIS:
         )
         def test_round_trip_parse_export(self, tree):
             """Generated Newick trees should parse and export without errors."""
-            assume(tree.count('(') == tree.count(')'))
+            assume(tree.count("(") == tree.count(")"))
 
             full_tree = tree + ";"
             styler = FigTreeStyler()
             styler.load_content(full_tree)
             assert styler.get_tree_content() is not None
 
-            with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+            with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
                 path = f.name
             try:
                 styler.export(path)
@@ -85,13 +86,13 @@ if HAS_HYPOTHESIS:
         )
         def test_round_trip_preserves_taxa(self, tree):
             """Exported tree should contain the same taxa as the input."""
-            assume(tree.count('(') == tree.count(')'))
+            assume(tree.count("(") == tree.count(")"))
 
             full_tree = tree + ";"
             styler = FigTreeStyler()
             styler.load_content(full_tree)
 
-            with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+            with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
                 path = f.name
             try:
                 styler.export(path)
@@ -104,7 +105,7 @@ if HAS_HYPOTHESIS:
 
         @given(
             tree=_newick_tree(min_size=2, max_size=6),
-            color=st.from_regex(r'#[0-9A-Fa-f]{6}', fullmatch=True),
+            color=st.from_regex(r"#[0-9A-Fa-f]{6}", fullmatch=True),
         )
         @settings(
             max_examples=30,
@@ -113,7 +114,7 @@ if HAS_HYPOTHESIS:
         )
         def test_highlight_export_no_crash(self, tree, color):
             """Highlighting a clade and exporting should not crash."""
-            assume(tree.count('(') == tree.count(')'))
+            assume(tree.count("(") == tree.count(")"))
 
             full_tree = tree + ";"
             styler = FigTreeStyler()
@@ -121,11 +122,12 @@ if HAS_HYPOTHESIS:
 
             # Get first two taxa
             import re as _re
-            taxa = _re.findall(r'[A-Za-z][A-Za-z0-9_]*', full_tree)
+
+            taxa = _re.findall(r"[A-Za-z][A-Za-z0-9_]*", full_tree)
             if len(taxa) >= 2:
                 styler.highlight_clade(taxa[:2], color=color)
 
-            with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+            with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
                 path = f.name
             try:
                 styler.export(path)
@@ -149,7 +151,7 @@ if HAS_HYPOTHESIS:
             styler.set_layout(layout)
             styler.set_tip_labels(font_size=font_size)
 
-            with tempfile.NamedTemporaryFile(suffix='.nex', delete=False) as f:
+            with tempfile.NamedTemporaryFile(suffix=".nex", delete=False) as f:
                 path = f.name
             try:
                 styler.export(path)
@@ -167,17 +169,17 @@ if HAS_HYPOTHESIS:
         )
         def test_double_export_idempotent(self, tree):
             """Exporting the same styler twice should produce identical output."""
-            assume(tree.count('(') == tree.count(')'))
+            assume(tree.count("(") == tree.count(")"))
 
             full_tree = tree + ";"
             styler = FigTreeStyler()
             styler.load_content(full_tree)
-            taxa = re.findall(r'[A-Za-z][A-Za-z0-9_]*', full_tree)
+            taxa = re.findall(r"[A-Za-z][A-Za-z0-9_]*", full_tree)
             if len(taxa) >= 2:
                 styler.highlight_clade(taxa[:2], color="#FF0000")
 
-            path1 = tempfile.mktemp(suffix='.nex')
-            path2 = tempfile.mktemp(suffix='.nex')
+            path1 = tempfile.mktemp(suffix=".nex")
+            path2 = tempfile.mktemp(suffix=".nex")
             try:
                 styler.export(path1)
                 styler.export(path2)
