@@ -1,31 +1,30 @@
 name: CI
 
 # ---------------------------------------------------------------------------
-# Action versions awaiting a manual major-bump review
+# Action major versions: policy and current state
 # ---------------------------------------------------------------------------
 # .github/dependabot.yml deliberately ignores `version-update:semver-major`
 # for the github-actions ecosystem, so Dependabot will propose minor and
-# patch bumps but never a new major. Dependabot has already detected these
-# as available (the PRs were opened on 2026-10-01 and closed once the ignore
-# rule landed):
+# patch bumps but never a new major. That ignore rule stays: a major bump
+# swaps the action's Node runtime and the upgrade is not safe to merge
+# unreviewed. The cost is that a fix published only in a new major will
+# never arrive on its own, so majors are caught up by a reviewed commit
+# instead.
 #
-#   actions/checkout        v4 -> v7
-#   actions/setup-python    v5 -> v7
-#   actions/upload-artifact v4 -> v7
-#   codecov/codecov-action  v4 -> v7
-#
-# The ignore rule is the right default: a major bump swaps the action's
-# Node runtime and the upgrade is not safe to merge unreviewed. The cost is
-# that a fix published only in a new major will never arrive on its own.
-# Review these roughly monthly; codecov-action is the one to look at first,
-# because v4's tokenless upload for public repositories is the behaviour the
-# "tokenless uploads can fail on pushes" comment below is working around.
+# Catch-up history:
+#   2026-10-01  actions/checkout        v4 -> v7
+#               actions/setup-python    v5 -> v7
+#               actions/upload-artifact v4 -> v7
+#               codecov/codecov-action  v4 -> v7   (input `file` -> `files`,
+#                                    removed in the codecov-action v5 CLI rewrite)
+#   With that, every action here sits on its current major. The next catch-up
+#   is due when a major is published that CI has not yet reviewed; Dependabot
+#   will not surface it, so re-check the four actions above when touching CI.
 #
 # actions/setup-java and github/codeql-action are deliberately *not* in that
-# list: both were introduced by this change, and both were pinned to their
-# current major on arrival rather than to whatever major the surrounding
-# actions happen to sit on. A new dependency should not start two majors
-# behind on day one.
+# list: both were introduced at their current major on arrival rather than to
+# whatever major the surrounding actions happen to sit on. A new dependency
+# should not start two majors behind on day one.
 # ---------------------------------------------------------------------------
 
 on:
@@ -88,12 +87,12 @@ jobs:
         python-version: ['3.11']
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0  # Full history for setuptools_scm version discovery
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
 
@@ -106,15 +105,9 @@ jobs:
     # 8 is the floor: figtreekit/figtree_patched.jar is compiled for Java 8
     # and _figtree_patch/BUILD_PROVENANCE.md records the frozen measurement
     # environment as java 1.8.0_501, so this also makes CI agree with the
-    # provenance record.
-    #
-    # Note that this is the floor, not the only supported JDK. The Dockerfile
-    # installs Debian's current default JDK (21 on trixie) and end users will
-    # have something newer still, so nothing in CI currently exercises the
-    # render path on a modern JVM. Widening this to a java-version matrix
-    # would close that gap, but it would double an already runner-constrained
-    # matrix, so it is deliberately left as a follow-up rather than done
-    # here.
+    # provenance record. The other end of the range - a current JDK, the one
+    # the Dockerfile and most end users actually run - is covered by the
+    # separate `test-jdk21` job below, so no matrix leg has to carry both.
     #
     # Distribution is zulu, not temurin, and that is not interchangeable. JDK 8
     # has no macOS aarch64 build from Temurin - Adoptium only began shipping
@@ -200,12 +193,55 @@ jobs:
       # Non-blocking: tokenless uploads can fail on pushes; coverage report
       # is still produced locally by the pytest step above.
       continue-on-error: true
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v7
       with:
-        file: ./coverage.xml
+        # `files`, not `file`: the codecov-action v5 CLI rewrite removed the
+        # singular input, and v7 keeps that contract.
+        files: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
         fail_ci_if_error: false
+
+  test-jdk21:
+    # The `test` matrix above pins the floor JDK (zulu 8, matching the jar and
+    # the provenance record). This job covers the other end: the Dockerfile
+    # installs Debian's default JDK (21 on trixie) and end users typically run
+    # newer still, so the render path has to pass on a modern JVM too. One
+    # ubuntu-only leg closes that gap without doubling the macOS-constrained
+    # matrix. Not a required check yet - it is new and unproven - but it runs
+    # on every PR and push to main, so a modern-JVM regression is visible in
+    # the Checks tab from day one.
+    name: test (ubuntu-latest, jdk 21)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        fetch-depth: 0  # Full history for setuptools_scm version discovery
+
+    - name: Set up Python
+      uses: actions/setup-python@v7
+      with:
+        python-version: '3.11'
+
+    - name: Set up Java 21
+      uses: actions/setup-java@v6
+      with:
+        distribution: 'zulu'
+        java-version: '21'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[dev,render]"
+
+    - name: Test on a modern JVM
+      # Coverage is measured by the `test` job above; this leg exists to
+      # exercise the java-shellout paths (conformance, rendering) on JDK 21,
+      # and running the whole suite is the cheapest way to keep it honest.
+      run: |
+        pytest -v
 
   docker:
     runs-on: ubuntu-latest
@@ -214,7 +250,7 @@ jobs:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Build Docker image
       run: docker build -t figtreekit-ci .
@@ -230,12 +266,12 @@ jobs:
     needs: test
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0  # full_benchmark.py stamps the commit into its output
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: '3.11'
 
@@ -269,7 +305,7 @@ jobs:
         python benchmarks/full_benchmark.py --quick
 
     - name: Upload benchmark results
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: benchmark-results
         path: benchmarks/results.csv
@@ -285,12 +321,12 @@ jobs:
       id-token: write
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0  # Full history for setuptools_scm version discovery
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: '3.11'
 
