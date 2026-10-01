@@ -162,17 +162,15 @@ class _FigTreeKitFormatter(logging.Formatter):
 
 def _log_memory(label: str = "") -> None:
     """Log current process memory at DEBUG level if psutil is available."""
-    try:
+    # psutil is optional and even with it installed the probe must never
+    # disturb logging; a failure here is silently skipped by design.
+    with contextlib.suppress(Exception):
         import psutil
 
         proc = psutil.Process()
         mem = proc.memory_info()
         rss_mb = mem.rss / (1024 * 1024)
         logger.debug(f"Memory {label}: RSS={rss_mb:.1f} MB")
-    except ImportError:
-        pass  # psutil not installed — silently skip
-    except Exception:
-        pass
 
 
 # ── Step timer helper ───────────────────────────────────────────────────
