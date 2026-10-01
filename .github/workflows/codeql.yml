@@ -1,0 +1,50 @@
+name: CodeQL
+
+# Code scanning was not configured for this repository. The Python package is
+# the published surface, so python is the language that matters here; the four
+# patched Java files under _figtree_patch/src/ are analyzed upstream by FigTree
+# and are shipped as a compiled jar (see _figtree_patch/BUILD_PROVENANCE.md),
+# so there is no Java build system here for CodeQL to trace.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  # Weekly, so a finding that only becomes reachable through a dependency
+  # update still surfaces on a quiet repository.
+  schedule:
+    - cron: '31 6 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze (python)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v4
+      with:
+        # Python needs no build step, so there is nothing to configure beyond
+        # the language. queries/security-and-quality is the default suite and
+        # is stated explicitly so that the analysed scope is visible here.
+        languages: python
+        queries: security-and-quality
+
+    - name: Perform CodeQL analysis
+      uses: github/codeql-action/analyze@v4
+      with:
+        category: '/language:python'

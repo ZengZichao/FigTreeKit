@@ -103,11 +103,15 @@ Use Black for code formatting:
 
 ```bash
 # Format all files
-black figtreekit/ test/ examples/
+black figtreekit/ test/ benchmarks/ examples/ scripts/
 
 # Check formatting without making changes
-black --check figtreekit/ test/ examples/
+black --check figtreekit/ test/ benchmarks/ examples/ scripts/
 ```
+
+CI runs the `black --check` form with `--diff` so the report shows what it
+would change, but does not fail the build yet — see the enforcement table
+under **Review Process** below for the current state and why.
 
 ### Linting
 
@@ -300,11 +304,40 @@ Brief description of the changes.
 
 ### Review Process
 
-1. **Automated Checks**: CI/CD pipeline runs tests and linting
-2. **Code Review**: At least one maintainer reviews the code
+1. **Automated Checks**: CI must be green before the PR can be merged. The two
+   jobs `test (ubuntu-latest, 3.11)` and `test (macos-latest, 3.11)` are
+   configured as required status checks on `main`, and the branch is set to
+   require the PR to be up to date with `main` first. CodeQL analysis runs
+   alongside them.
+2. **Code Review**: self-review your own diff before requesting review. `main`
+   does **not** require a second approver — the project has a single
+   maintainer, so a mandatory review would block every change. If you want one,
+   ask another contributor to review before merging.
 3. **Feedback**: Address any review comments
-4. **Approval**: Maintainer approves the PR
+4. **Approval**: merge once CI is green and you are satisfied with the diff
 5. **Merge**: PR is merged into main branch
+
+### What CI does and does not enforce
+
+Knowing this saves a lot of surprise:
+
+| Check | Enforced? | Notes |
+|---|---|---|
+| `pytest` with a 60% coverage floor | **yes** | The only substantive gate. |
+| `flake8` syntax / undefined-name pass | **yes** | `--select=E9,F63,F7,F82` only. |
+| `flake8` style pass (line length, complexity) | no | `--exit-zero`; reports without failing. |
+| `black --check` | no | 37 of 42 files predate the current black style. Reported, not enforced. |
+| `mypy` | no | Just over a hundred pre-existing `disallow_untyped_defs` errors. Reported, not enforced. |
+| JAR SHA-256 vs `_figtree_patch/BUILD_PROVENANCE.md` | **yes** | `test/test_jar_provenance.py` |
+| `benchmarks/` measurement files vs their provenance record | **yes** | `test/test_benchmark_artifacts.py` |
+| Docker image build and self-test | on PRs only | |
+| `benchmarks/full_benchmark.py --quick` smoke run | on push to `main` only | Also the only thing that installs the `[benchmark]` extra, which is how a break in that extra gets caught. |
+
+`black` is pinned to `black>=26,<27` in the `dev` extra on purpose. Black
+changes its stable style between majors, so an unbounded bound would make
+`black --check` non-reproducible — the same commit failing under one black
+release and passing under the next. Bump the bound in the same commit that
+reformats.
 
 ## Reporting Issues
 
