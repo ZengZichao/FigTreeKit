@@ -1,0 +1,5 @@
+# Single-maintainer project: everything is owned by the maintainer.
+# This file exists so review requests and ownership are explicit in the
+# UI rather than implicit; main does not require an approving review to
+# merge (see CONTRIBUTING.md, Review Process).
+* @ZengZichao
