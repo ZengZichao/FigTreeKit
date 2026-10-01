@@ -661,7 +661,9 @@ def _cpu_name():
 
 def _ram_bytes():
     with contextlib.suppress(Exception):
-        out = subprocess.run(["sysctl", "-n", "hw.memsize"], capture_output=True, text=True, timeout=5)
+        out = subprocess.run(
+            ["sysctl", "-n", "hw.memsize"], capture_output=True, text=True, timeout=5
+        )
         if out.returncode == 0:
             return int(out.stdout.strip())
     return 0
