@@ -59,6 +59,23 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    # Only the ubuntu leg is a required status check on main. The macOS leg
+    # still runs, still reports, and is still visible in the Checks tab, but it
+    # does not gate the merge.
+    #
+    # Reason: this account cannot reliably be given macOS runners. Measured on
+    # 2026-10-01, the macOS job sat at steps=0 with no runner assigned for 57
+    # minutes while the ubuntu leg it had been queued alongside started two
+    # seconds later. With a required check that never reports, the PR is
+    # BLOCKED forever and the gate is worse than no gate.
+    #
+    # To restore it once macOS capacity is dependable, add the context back:
+    #   PUT /repos/<owner>/<repo>/branches/main/protection
+    #   required_status_checks.contexts = [
+    #     "test (ubuntu-latest, 3.11)", "test (macos-latest, 3.11)" ]
+    # Best signal that the PR is mergeable again: mergeStateStatus reads
+    # UNSTABLE (all required green, the non-required macOS leg still running)
+    # rather than BLOCKED.
     strategy:
       # Report both platforms even if one fails, so a single red matrix leg
       # does not hide the other's result.
