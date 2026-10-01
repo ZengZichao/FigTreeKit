@@ -13,13 +13,10 @@ These tests cover the public interfaces of the figtreekit.validators module:
 import os
 import tempfile
 
-import pytest
-
 from figtreekit.validators import (
     TreeValidator,
     deep_validate_newick,
     deep_validate_fasta,
-    deep_validate_fastq,
     scan_for_anomalous_content,
     scan_node_names_for_anomalous,
     validate_input_file,
@@ -139,7 +136,7 @@ class TestScanForAnomalousContent:
 
     def test_bidi_override_lre(self):
         """Left-to-Right Embedding U+202A."""
-        content = f"({'A' if True else 'B'}:\u202a0.1,B:0.2);"
+        content = f"(A:\u202a0.1,B:0.2);"
         errors = scan_for_anomalous_content(content, label="test")
         assert len(errors) > 0
         assert any("U+202A" in e for e in errors)

@@ -10,7 +10,6 @@ Usage:
     python examples/01_basic_usage.py
 """
 
-import sys
 import tempfile
 import os
 

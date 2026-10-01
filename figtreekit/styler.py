@@ -22,7 +22,7 @@ import colorsys
 import os
 import re
 import warnings
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -33,7 +33,6 @@ from .validators import TreeValidator, scan_for_anomalous_content, read_text_wit
 from .taxonomy import TaxonomyMapper, MonophylyAnalyzer
 from ._defaults import get_figtree_defaults
 from ._parser import (
-    apply_parsed_setting,
     extract_bracket_comments,
     extract_taxa_from_newick,
     load_existing_figtree_block,
@@ -813,7 +812,6 @@ class FigTreeStyler:
             from Bio import Phylo
             import io as _io
 
-            has_translate = bool(self._translate_block)
             for clade in tree.find_clades():
                 if clade.name:
                     # Strip leading bootstrap prefix (e.g. "100.0:" or "'99.0:")

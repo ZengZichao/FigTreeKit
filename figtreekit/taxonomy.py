@@ -32,7 +32,7 @@ import logging
 import re
 import warnings
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from .exceptions import CompatibilityWarning, ValidationError
 
@@ -51,7 +51,6 @@ SPECIAL_IDENTIFIERS = {
 
 # Canonical set of special identifiers (uppercase-only for LUCA/LACA/LBCA)
 _SPECIAL_IDS_UPPER = {"LUCA", "LACA", "LBCA"}
-_SPECIAL_IDS_ALL = _SPECIAL_IDS_UPPER | {"root"}
 
 # ── Configurable rank prefixes ──────────────────────────────────────────
 # This is the single source of truth for prefix → rank mapping.
@@ -137,9 +136,6 @@ def get_domain_rank_name() -> str:
 # Derived mappings (auto-rebuilt by set_rank_prefixes)
 _GTDB_RANK_PREFIXES: Dict[str, str] = {f"{k}__": v for k, v in _RANK_PREFIXES.items()}
 _EMBEDDED_RANK_PREFIXES: Dict[str, str] = {f"_{k}_": v for k, v in _RANK_PREFIXES.items()}
-
-# Delimiter parsing modes for format A
-_DELIMITER_MODES = ("reverse", "greedy", "segment")
 
 
 def _build_prefix_maps(

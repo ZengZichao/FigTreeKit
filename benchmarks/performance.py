@@ -79,7 +79,7 @@ def measure_peak_memory(func, *args, **kwargs) -> int:
     """Measure peak memory (bytes) of a function call using tracemalloc."""
     gc.collect()
     tracemalloc.start()
-    result = func(*args, **kwargs)
+    func(*args, **kwargs)
     _, peak = tracemalloc.get_traced_memory()
     tracemalloc.stop()
     gc.collect()
@@ -164,9 +164,7 @@ def benchmark_parse_and_export(n_taxa: int, n_repeats: int = 10) -> dict:
         "export_time_mean_s": round(export_result["mean"], 6),
         "export_time_sem_s": round(export_result["sem"], 6),
         "total_time_mean_s": round(parse_result["mean"] + export_result["mean"], 6),
-        "total_time_sem_s": round(
-            math.sqrt(parse_result["sem"] ** 2 + export_result["sem"] ** 2), 6
-        ),
+        "total_time_sem_s": round(math.hypot(parse_result["sem"], export_result["sem"]), 6),
         "peak_memory_bytes": peak_mem,
     }
 

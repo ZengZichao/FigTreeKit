@@ -15,9 +15,7 @@ and are not part of this repository.
 from gtdb_paths import gtdb_data_dir
 
 import argparse
-import csv
 import gc
-import io
 import json
 import platform
 import sys

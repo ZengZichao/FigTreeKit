@@ -19,6 +19,7 @@ Usage:
 """
 
 import argparse
+import contextlib
 import csv
 import gc
 import io
@@ -40,7 +41,7 @@ import numpy as np
 
 from gtdb_paths import gtdb_data_dir
 
-from figtreekit import FigTreeStyler, LayoutType
+from figtreekit import FigTreeStyler
 from figtreekit._version import __version__
 
 OUT = Path(__file__).parent
@@ -649,26 +650,22 @@ def _git_dirty():
 
 
 def _cpu_name():
-    try:
+    with contextlib.suppress(Exception):
         out = subprocess.run(
             ["sysctl", "-n", "machdep.cpu.brand_string"], capture_output=True, text=True, timeout=5
         )
         if out.returncode == 0 and out.stdout.strip():
             return out.stdout.strip()
-    except Exception:
-        pass
     return platform.processor() or "unknown"
 
 
 def _ram_bytes():
-    try:
+    with contextlib.suppress(Exception):
         out = subprocess.run(
             ["sysctl", "-n", "hw.memsize"], capture_output=True, text=True, timeout=5
         )
         if out.returncode == 0:
             return int(out.stdout.strip())
-    except Exception:
-        pass
     return 0
 
 

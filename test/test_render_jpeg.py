@@ -3,12 +3,10 @@ formats and JPEG previously had support but no test."""
 
 import os
 import shutil
-import subprocess
 import tempfile
 import unittest
-from unittest import mock
 
-from figtreekit import FigTreeStyler, RenderError
+from figtreekit import FigTreeStyler
 
 SIMPLE = "((A:0.1,B:0.2)C:0.3,D:0.4)E;"
 
@@ -41,7 +39,8 @@ class TestJpegFormatDeclared(unittest.TestCase):
     def test_format_map_contains_jpeg(self):
         from figtreekit import styler as st
 
-        text = open(st.__file__, encoding="utf-8").read()
+        with open(st.__file__, encoding="utf-8") as fh:
+            text = fh.read()
         self.assertIn("JPEG", text)
 
 
@@ -76,7 +75,7 @@ class TestJpegRender(unittest.TestCase):
                 _write_sample_image(out_path)
                 return R()
 
-            with mock.patch("subprocess.run", side_effect=fake_run):
+            with unittest.mock.patch("subprocess.run", side_effect=fake_run):
                 styler.render(out, format="JPEG")
             self.assertTrue(os.path.isfile(out), "no output written")
             self.assertIn("JPEG", captured["cmd"], "JPEG was not passed through to the JAR")

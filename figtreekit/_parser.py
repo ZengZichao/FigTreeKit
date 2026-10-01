@@ -22,7 +22,7 @@ import re
 import warnings
 from typing import Any, Dict, List, Optional, Tuple
 
-from .exceptions import CompatibilityWarning, ParseError
+from .exceptions import CompatibilityWarning
 
 __all__ = [
     "find_unquoted_semicolon",
@@ -512,7 +512,6 @@ def extract_bracket_comments(newick: str) -> List[Dict[str, Any]]:
     i = 0
     in_quote = None  # None, "'", or '"'
     current_name = ""
-    last_name = ""
     last_branch_length = ""
     after_close_paren = False
 
@@ -558,7 +557,6 @@ def extract_bracket_comments(newick: str) -> List[Dict[str, Any]]:
                 comments.append(
                     {"taxon_name": name, "comment": bracket_comment, "position_type": "after_name"}
                 )
-                last_name = name
             elif last_branch_length:
                 # Attached to a branch length
                 comments.append(
@@ -611,7 +609,6 @@ def extract_bracket_comments(newick: str) -> List[Dict[str, Any]]:
             after_close_paren = char == ")"
             current_name = ""
             last_branch_length = ""
-            last_name = ""
         else:
             if in_quote is None and char not in " \t\n\r":
                 current_name += char

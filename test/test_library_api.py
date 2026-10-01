@@ -9,17 +9,14 @@ Targets coverage of:
 import logging
 import os
 import signal
-import tempfile
 import textwrap
 import time
 from pathlib import Path
-from unittest.mock import patch, MagicMock
 
 import pytest
 
 from figtreekit import (
     FigTreeStyler,
-    LayoutType,
     MonophylyError,
     PhyloFormatError,
     ValidationError,
@@ -29,7 +26,6 @@ from figtreekit import (
     cross_validate,
 )
 from figtreekit._cli import (
-    ExitCode,
     _positive_int,
     _non_negative_int,
     _positive_float,

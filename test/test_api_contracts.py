@@ -7,13 +7,10 @@ Covers:
                  Stockholm, Clustal, PhyloXML), deep_validate_fasta/fastq
 """
 
-import os
 import subprocess
 import sys
-import tempfile
 import textwrap
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
@@ -24,10 +21,9 @@ from figtreekit._cli import (
     apply_cli_args,
     create_cli_parser,
 )
-from figtreekit import FigTreeStyler, LayoutType
+from figtreekit import FigTreeStyler
 from figtreekit.validators import (
     validate_input_file,
-    deep_validate_newick,
     deep_validate_fasta,
     deep_validate_fastq,
     scan_for_anomalous_content,
