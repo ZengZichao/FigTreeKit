@@ -16,7 +16,7 @@ jobs:
         python-version: ['3.11']
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0  # Full history for setuptools_scm version discovery
 
@@ -98,7 +98,7 @@ jobs:
     if: github.event_name == 'pull_request' || github.ref == 'refs/heads/main'
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Build Docker image
       run: docker build -t figtreekit-ci .
@@ -113,7 +113,7 @@ jobs:
     needs: test
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -145,7 +145,7 @@ jobs:
       id-token: write
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0  # Full history for setuptools_scm version discovery
 
