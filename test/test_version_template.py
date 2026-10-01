@@ -20,6 +20,7 @@ This is not hypothetical: the Dockerfile does ``COPY . /app`` and then
 in CI. See test_jar_provenance.py for the binary-provenance counterpart.
 """
 
+import ast
 import tomllib
 from pathlib import Path
 
@@ -62,6 +63,31 @@ def _render(config, scm):
     )
 
 
+def _rendered_assignments(rendered):
+    """Top-level ``name = <literal>`` bindings in the rendered template.
+
+    Parsed rather than executed. The template is repository data, and exec on
+    repository data is both a code-scanning finding and a bad habit; ast gives
+    the same answer - is this valid Python, and does it bind these names to
+    these values - without running anything.
+    """
+    tree = ast.parse(rendered)
+    assigned = {}
+    for node in tree.body:
+        if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+            continue
+        target = node.targets[0]
+        if not isinstance(target, ast.Name):
+            continue
+        try:
+            assigned[target.id] = ast.literal_eval(node.value)
+        except ValueError:
+            # __version_tuple__ is a tuple literal and parses fine; a non-literal
+            # binding simply is not asserted on.
+            continue
+    return assigned
+
+
 class TestVersionTemplateSurvivesMissingScm:
     def test_renders_when_scm_metadata_is_absent(self):
         """The exact failure the Docker build hit."""
@@ -97,25 +123,21 @@ class TestVersionTemplateSurvivesMissingScm:
                 index = template.find(placeholder, index + 1)
 
     def test_defines_every_name_the_package_imports(self):
-        rendered = _render(_scm_config(), _NoScm())
-        namespace = {}
-        exec(compile(rendered, "<version_file_template>", "exec"), namespace)
+        assigned = _rendered_assignments(_render(_scm_config(), _NoScm()))
         for name in REQUIRED_NAMES:
-            assert name in namespace, (
+            assert name in assigned, (
                 f"the generated _version.py would not define {name}; "
                 "figtreekit/__init__.py imports all three in one statement and "
-                "would fall through to a hardcoded version"
+                f"would fall through to a hardcoded version (defines {sorted(assigned)})"
             )
 
     def test_generated_file_is_valid_python_with_a_usable_version(self):
-        rendered = _render(_scm_config(), _NoScm())
-        namespace = {}
-        exec(compile(rendered, "<version_file_template>", "exec"), namespace)
-        assert namespace["__version__"] == "1.2.3"
+        assigned = _rendered_assignments(_render(_scm_config(), _NoScm()))
+        assert assigned["__version__"] == "1.2.3"
         # The two optional fields must be empty strings, never the literal
         # text "None" that a bare {scm_version.node} would render.
-        assert namespace["__git_hash__"] == ""
-        assert namespace["__version_date__"] == ""
+        assert assigned["__git_hash__"] == ""
+        assert assigned["__version_date__"] == ""
 
     def test_project_uses_version_file_not_the_deprecated_write_to(self):
         config = _scm_config()
