@@ -98,10 +98,18 @@ jobs:
     # would close that gap, but it would double an already runner-constrained
     # matrix, so it is deliberately left as a follow-up rather than done
     # here.
+    #
+    # Distribution is zulu, not temurin, and that is not interchangeable. JDK 8
+    # has no macOS aarch64 build from Temurin - Adoptium only began shipping
+    # Apple Silicon binaries at JDK 11 - and macos-latest is arm64. Asking for
+    # temurin/8 there fails in the setup step with "No matching version found
+    # for SemVer '8'. Architecture: aarch64" before a single test runs.
+    # Azul publishes JDK 8 for both linux x86_64 and macos aarch64, so one
+    # pin covers the whole matrix.
     - name: Set up Java 8
       uses: actions/setup-java@v6
       with:
-        distribution: 'temurin'
+        distribution: 'zulu'
         java-version: '8'
 
     - name: Install dependencies
@@ -217,7 +225,7 @@ jobs:
     - name: Set up Java 8
       uses: actions/setup-java@v6
       with:
-        distribution: 'temurin'
+        distribution: 'zulu'   # JDK 8 has no macOS aarch64 Temurin build; see the test job
         java-version: '8'
 
     - name: Install dependencies
