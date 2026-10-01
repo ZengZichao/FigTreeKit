@@ -304,11 +304,15 @@ Brief description of the changes.
 
 ### Review Process
 
-1. **Automated Checks**: CI must be green before the PR can be merged. The two
-   jobs `test (ubuntu-latest, 3.11)` and `test (macos-latest, 3.11)` are
-   configured as required status checks on `main`, and the branch is set to
-   require the PR to be up to date with `main` first. CodeQL analysis runs
-   alongside them.
+1. **Automated Checks**: CI must be green before the PR can be merged. Three
+   checks are configured as required status checks on `main`, via the
+   `require-main-checks` branch ruleset: `test (ubuntu-latest, 3.11)`,
+   `Analyze (python)` (CodeQL) and `docker`. The branch is also set to require
+   the PR to be up to date with `main` first. The macOS matrix leg and the
+   `test (ubuntu-latest, jdk 21)` leg run and report on every PR but do not
+   gate the merge — macOS because this account cannot reliably be given macOS
+   runners (a required check that never reports blocks the PR forever), the
+   JDK 21 leg because it is new and still proving itself.
 2. **Code Review**: self-review your own diff before requesting review. `main`
    does **not** require a second approver — the project has a single
    maintainer, so a mandatory review would block every change. If you want one,
@@ -323,14 +327,16 @@ Knowing this saves a lot of surprise:
 
 | Check | Enforced? | Notes |
 |---|---|---|
-| `pytest` with a 60% coverage floor | **yes** | The only substantive gate. |
+| `pytest` with a 60% coverage floor | **yes** | The only substantive test gate. |
 | `flake8` syntax / undefined-name pass | **yes** | `--select=E9,F63,F7,F82` only. |
 | `flake8` style pass (line length, complexity) | no | `--exit-zero`; reports without failing. |
 | `black --check` | no | 37 of 42 files predate the current black style. Reported, not enforced. |
 | `mypy` | no | Just over a hundred pre-existing `disallow_untyped_defs` errors. Reported, not enforced. |
+| CodeQL analysis (`Analyze (python)`) | **yes** | Required via the `require-main-checks` branch ruleset. |
+| Docker image build and self-test | **yes** (PRs) | Required on pull requests; runs non-gated on pushes to `main`. |
+| `pytest` on JDK 21 (`test (ubuntu-latest, jdk 21)`) | no | Covers the modern-JVM render path (the Dockerfile ships JDK 21). Runs and reports, does not gate yet. |
 | JAR SHA-256 vs `_figtree_patch/BUILD_PROVENANCE.md` | **yes** | `test/test_jar_provenance.py` |
 | `benchmarks/` measurement files vs their provenance record | **yes** | `test/test_benchmark_artifacts.py` |
-| Docker image build and self-test | on PRs only | |
 | `benchmarks/full_benchmark.py --quick` smoke run | on push to `main` only | Also the only thing that installs the `[benchmark]` extra, which is how a break in that extra gets caught. |
 
 `black` is pinned to `black>=26,<27` in the `dev` extra on purpose. Black
