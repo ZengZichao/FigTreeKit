@@ -36,8 +36,8 @@ from figtreekit.validators import (
     extract_sequence_ids,
 )
 
-
 # ── _detect_tree_count tests ──────────────────────────────────────────────
+
 
 class TestDetectTreeCount:
     def test_single_newick(self, tmp_path):
@@ -89,6 +89,7 @@ class TestDetectTreeCount:
 
 # ── _resolve_tree_indices tests ───────────────────────────────────────────
 
+
 class TestResolveTreeIndices:
     def test_single_tree(self):
         assert _resolve_tree_indices(None, 1, "test.nex") == [0]
@@ -128,6 +129,7 @@ class TestResolveTreeIndices:
 
 
 # ── apply_cli_args tests ──────────────────────────────────────────────────
+
 
 class TestApplyCliArgs:
     def test_apply_layout(self, tmp_path):
@@ -180,9 +182,9 @@ class TestApplyCliArgs:
         p.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         styler = FigTreeStyler(str(p))
         parser = create_cli_parser()
-        args = parser.parse_args([
-            str(p), "--font-name", "Arial", "--font-size", "10", "--font-style", "1"
-        ])
+        args = parser.parse_args(
+            [str(p), "--font-name", "Arial", "--font-size", "10", "--font-style", "1"]
+        )
         result = apply_cli_args(styler, args)
         assert result is styler
 
@@ -207,13 +209,17 @@ class TestApplyCliArgs:
 
 # ── CLI subprocess integration tests ─────────────────────────────────────
 
+
 class TestCLISubprocess:
     """Test CLI via subprocess to cover main() and _process_single_tree."""
 
     def _run_cli(self, args, cwd=None):
         cmd = [sys.executable, "-m", "figtreekit"] + args
         return subprocess.run(
-            cmd, capture_output=True, text=True, timeout=30,
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=30,
             cwd=cwd or str(Path(__file__).parent.parent),
         )
 
@@ -256,9 +262,9 @@ class TestCLISubprocess:
         tree_file = tmp_path / "input.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_file = tmp_path / "output.nex"
-        result = self._run_cli([
-            str(tree_file), "-o", str(out_file), "--layout", "polar", "--force"
-        ])
+        result = self._run_cli(
+            [str(tree_file), "-o", str(out_file), "--layout", "polar", "--force"]
+        )
         assert result.returncode == 0
         assert out_file.exists()
 
@@ -266,9 +272,9 @@ class TestCLISubprocess:
         tree_file = tmp_path / "input.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_file = tmp_path / "output.nex"
-        result = self._run_cli([
-            str(tree_file), "-o", str(out_file), "--layout", "radial", "--force"
-        ])
+        result = self._run_cli(
+            [str(tree_file), "-o", str(out_file), "--layout", "radial", "--force"]
+        )
         assert result.returncode == 0
 
     def test_multi_tree_first(self, tmp_path):
@@ -281,9 +287,9 @@ class TestCLISubprocess:
             END;
         """))
         out_file = tmp_path / "output.nex"
-        result = self._run_cli([
-            str(tree_file), "-o", str(out_file), "--multi-tree", "first", "--force"
-        ])
+        result = self._run_cli(
+            [str(tree_file), "-o", str(out_file), "--multi-tree", "first", "--force"]
+        )
         assert result.returncode == 0
 
     def test_multi_tree_no_strategy(self, tmp_path):
@@ -296,48 +302,48 @@ class TestCLISubprocess:
             END;
         """))
         out_file = tmp_path / "output.nex"
-        result = self._run_cli([
-            str(tree_file), "-o", str(out_file), "--force"
-        ])
+        result = self._run_cli([str(tree_file), "-o", str(out_file), "--force"])
         assert result.returncode == 2
 
     def test_set_param(self, tmp_path):
         tree_file = tmp_path / "input.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_file = tmp_path / "output.nex"
-        result = self._run_cli([
-            str(tree_file), "-o", str(out_file),
-            "--set", "tipLabels.fontSize=8",
-            "--set", "appearance.branchLineWidth=2.0",
-            "--force"
-        ])
+        result = self._run_cli(
+            [
+                str(tree_file),
+                "-o",
+                str(out_file),
+                "--set",
+                "tipLabels.fontSize=8",
+                "--set",
+                "appearance.branchLineWidth=2.0",
+                "--force",
+            ]
+        )
         assert result.returncode == 0
 
     def test_tip_labels_hide(self, tmp_path):
         tree_file = tmp_path / "input.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_file = tmp_path / "output.nex"
-        result = self._run_cli([
-            str(tree_file), "-o", str(out_file), "--tip-labels-hide", "--force"
-        ])
+        result = self._run_cli(
+            [str(tree_file), "-o", str(out_file), "--tip-labels-hide", "--force"]
+        )
         assert result.returncode == 0
 
     def test_quiet_mode(self, tmp_path):
         tree_file = tmp_path / "input.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_file = tmp_path / "output.nex"
-        result = self._run_cli([
-            str(tree_file), "-o", str(out_file), "-q", "--force"
-        ])
+        result = self._run_cli([str(tree_file), "-o", str(out_file), "-q", "--force"])
         assert result.returncode == 0
 
     def test_verbose_mode(self, tmp_path):
         tree_file = tmp_path / "input.tre"
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_file = tmp_path / "output.nex"
-        result = self._run_cli([
-            str(tree_file), "-o", str(out_file), "-v", "--force"
-        ])
+        result = self._run_cli([str(tree_file), "-o", str(out_file), "-v", "--force"])
         assert result.returncode == 0
 
     def test_no_clobber_existing(self, tmp_path):
@@ -345,9 +351,7 @@ class TestCLISubprocess:
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_file = tmp_path / "output.nex"
         out_file.write_text("existing")
-        result = self._run_cli([
-            str(tree_file), "-o", str(out_file), "--no-clobber"
-        ])
+        result = self._run_cli([str(tree_file), "-o", str(out_file), "--no-clobber"])
         # --no-clobber should refuse to overwrite (exit 0 with skip or exit 2)
         assert result.returncode in (0, 2)
 
@@ -366,9 +370,7 @@ class TestCLISubprocess:
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         seq_file = tmp_path / "seqs.fasta"
         seq_file.write_text(">A\nACGT\n>B\nACGT\n>C\nACGT\n")
-        result = self._run_cli([
-            str(tree_file), "--validate", "--sequences", str(seq_file)
-        ])
+        result = self._run_cli([str(tree_file), "--validate", "--sequences", str(seq_file)])
         assert result.returncode == 0
 
     def test_log_file(self, tmp_path):
@@ -376,15 +378,15 @@ class TestCLISubprocess:
         tree_file.write_text("((A:0.1,B:0.2):0.3,C:0.4);")
         out_file = tmp_path / "output.nex"
         log_file = tmp_path / "run.log"
-        result = self._run_cli([
-            str(tree_file), "-o", str(out_file),
-            "--log-file", str(log_file), "-v", "--force"
-        ])
+        result = self._run_cli(
+            [str(tree_file), "-o", str(out_file), "--log-file", str(log_file), "-v", "--force"]
+        )
         assert result.returncode == 0
         assert log_file.exists()
 
 
 # ── validators.py format-specific tests ───────────────────────────────────
+
 
 class TestFormatValidators:
     def test_validate_fastq_valid(self, tmp_path):
@@ -489,6 +491,7 @@ class TestFormatValidators:
 
 # ── deep_validate_fasta tests ─────────────────────────────────────────────
 
+
 class TestDeepValidateFasta:
     def test_valid_dna(self, tmp_path):
         p = tmp_path / "dna.fasta"
@@ -524,6 +527,7 @@ class TestDeepValidateFasta:
 
 # ── deep_validate_fastq tests ─────────────────────────────────────────────
 
+
 class TestDeepValidateFastq:
     def test_valid_fastq(self, tmp_path):
         p = tmp_path / "reads.fastq"
@@ -539,6 +543,7 @@ class TestDeepValidateFastq:
 
 
 # ── scan_for_anomalous_content tests ──────────────────────────────────────
+
 
 class TestScanAnomalousContent:
     def test_clean_content(self):
@@ -562,6 +567,7 @@ class TestScanAnomalousContent:
 
 # ── cross_validate_tree_sequence tests ────────────────────────────────────
 
+
 class TestCrossValidateTreeSequence:
     def test_perfect_match(self):
         result = cross_validate_tree_sequence(["A", "B", "C"], ["A", "B", "C"])
@@ -582,6 +588,7 @@ class TestCrossValidateTreeSequence:
 
 
 # ── read_text_with_fallback tests ─────────────────────────────────────────
+
 
 class TestReadTextWithFallback:
     def test_utf8_file(self, tmp_path):
@@ -606,6 +613,7 @@ class TestReadTextWithFallback:
 
 
 # ── extract_sequence_ids tests ────────────────────────────────────────────
+
 
 class TestExtractSequenceIds:
     def test_fasta_ids(self, tmp_path):

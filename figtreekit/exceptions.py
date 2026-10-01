@@ -23,6 +23,7 @@ from typing import Optional
 
 class FigTreeKitError(Exception):
     """Base exception for all FigTreeKit errors."""
+
     pass
 
 
@@ -50,11 +51,13 @@ class ParseError(FigTreeKitError):
 
 class ValidationError(FigTreeKitError):
     """Raised when input validation fails (e.g., invalid color, empty taxon list)."""
+
     pass
 
 
 class ExportError(FigTreeKitError):
     """Raised when Nexus file export fails."""
+
     pass
 
 
@@ -70,17 +73,20 @@ class RenderError(ExportError):
     Subclasses :class:`ExportError` so existing ``except ExportError``
     handlers continue to catch rendering failures.
     """
+
     pass
 
 
 class CompatibilityWarning(UserWarning):
     """Warning for issues that may cause FigTree to render incorrectly."""
+
     pass
 
 
 # ── Standardized aliases for library-mode API (§8.2) ───────────────────
 # These provide the exception names required by the development spec,
 # mapped to the existing hierarchy for backward compatibility.
+
 
 class PhyloFormatError(ParseError):
     """Raised when a phylogenetic file format is invalid or unrecognized.
@@ -91,6 +97,7 @@ class PhyloFormatError(ParseError):
     problems (negative branches, duplicate tips, ...) raise
     :class:`ValidationError` instead.
     """
+
     pass
 
 
@@ -99,6 +106,7 @@ class TaxonomyConflictError(ValidationError):
 
     Alias of :class:`ValidationError` for the standardized library API.
     """
+
     pass
 
 
@@ -107,4 +115,5 @@ class MonophylyError(ValidationError):
 
     Alias of :class:`ValidationError` for the standardized library API.
     """
+
     pass

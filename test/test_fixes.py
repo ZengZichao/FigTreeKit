@@ -21,16 +21,20 @@ class TestRenderWithFigTreeJavaOpts:
                 returncode = 0
                 stdout = "Creating PNG\n"
                 stderr = ""
+
             captured["cmd"] = cmd
             return Result
+
         return _fake_run
 
     def test_single_java_opt(self):
         captured = {}
-        with patch("figtreekit._renderer.shutil.which", return_value="/usr/bin/java"), \
-             patch("figtreekit._renderer.os.path.isfile", return_value=True), \
-             patch("figtreekit._renderer.os.path.getsize", return_value=100), \
-             patch("figtreekit._renderer.subprocess.run", side_effect=self._make_fake_run(captured)):
+        with (
+            patch("figtreekit._renderer.shutil.which", return_value="/usr/bin/java"),
+            patch("figtreekit._renderer.os.path.isfile", return_value=True),
+            patch("figtreekit._renderer.os.path.getsize", return_value=100),
+            patch("figtreekit._renderer.subprocess.run", side_effect=self._make_fake_run(captured)),
+        ):
             render_with_figtree("in.nex", "out.png", jar_path="figtree.jar", java_opts="-Xmx512m")
             cmd = captured["cmd"]
             assert "-Xmx512m" in cmd
@@ -39,12 +43,16 @@ class TestRenderWithFigTreeJavaOpts:
 
     def test_multiple_java_opts(self):
         captured = {}
-        with patch("figtreekit._renderer.shutil.which", return_value="/usr/bin/java"), \
-             patch("figtreekit._renderer.os.path.isfile", return_value=True), \
-             patch("figtreekit._renderer.os.path.getsize", return_value=100), \
-             patch("figtreekit._renderer.subprocess.run", side_effect=self._make_fake_run(captured)):
+        with (
+            patch("figtreekit._renderer.shutil.which", return_value="/usr/bin/java"),
+            patch("figtreekit._renderer.os.path.isfile", return_value=True),
+            patch("figtreekit._renderer.os.path.getsize", return_value=100),
+            patch("figtreekit._renderer.subprocess.run", side_effect=self._make_fake_run(captured)),
+        ):
             render_with_figtree(
-                "in.nex", "out.png", jar_path="figtree.jar",
+                "in.nex",
+                "out.png",
+                jar_path="figtree.jar",
                 java_opts="-Xmx1g -XX:+UseG1GC",
             )
             cmd = captured["cmd"]
@@ -82,6 +90,7 @@ class TestStylerRenderFormat:
 
     def test_render_rejects_directory_output(self, tmp_path):
         from figtreekit.exceptions import ExportError
+
         styler = FigTreeStyler().load_content("((A:0.1,B:0.2):0.3,C:0.4);")
         with pytest.raises(ExportError, match="directory"):
             styler.render(str(tmp_path))
@@ -92,19 +101,12 @@ class TestIterSequenceIds:
 
     def test_fasta_ids(self, tmp_path):
         f = tmp_path / "seqs.fasta"
-        f.write_text(
-            ">seq_1 extra info\nACGT\n"
-            ">seq_2\nTGCA\n"
-            ">seq_3 with space\nAATT\n"
-        )
+        f.write_text(">seq_1 extra info\nACGT\n" ">seq_2\nTGCA\n" ">seq_3 with space\nAATT\n")
         assert list(_iter_sequence_ids(f)) == ["seq_1", "seq_2", "seq_3"]
 
     def test_fastq_ids(self, tmp_path):
         f = tmp_path / "reads.fastq"
-        f.write_text(
-            "@read_1 comment\nACGT\n+\n!!!!\n"
-            "@read_2\nTGCA\n+\n!!!!\n"
-        )
+        f.write_text("@read_1 comment\nACGT\n+\n!!!!\n" "@read_2\nTGCA\n+\n!!!!\n")
         assert list(_iter_sequence_ids(f)) == ["read_1", "read_2"]
 
     def test_unsupported_extension_raises(self, tmp_path):
@@ -140,31 +142,42 @@ class TestRenderSuccessDetection:
         def _fake_run(cmd, **kwargs):
             class Result:
                 pass
+
             Result.returncode = returncode
             Result.stdout = stdout
             Result.stderr = stderr
             captured["cmd"] = cmd
             return Result
+
         return _fake_run
 
     def test_success_without_creating_stdout_marker(self):
         captured = {}
-        with patch("figtreekit._renderer.shutil.which", return_value="/usr/bin/java"), \
-             patch("figtreekit._renderer.os.path.isfile", return_value=True), \
-             patch("figtreekit._renderer.os.path.getsize", return_value=100), \
-             patch("figtreekit._renderer.subprocess.run", side_effect=self._make_fake_run(
-                 captured, returncode=0, stdout="Done\n", stderr=""
-             )):
+        with (
+            patch("figtreekit._renderer.shutil.which", return_value="/usr/bin/java"),
+            patch("figtreekit._renderer.os.path.isfile", return_value=True),
+            patch("figtreekit._renderer.os.path.getsize", return_value=100),
+            patch(
+                "figtreekit._renderer.subprocess.run",
+                side_effect=self._make_fake_run(captured, returncode=0, stdout="Done\n", stderr=""),
+            ),
+        ):
             assert render_with_figtree("in.nex", "out.png", jar_path="figtree.jar") is True
 
     def test_failure_on_nonzero_returncode(self):
         captured = {}
-        with patch("figtreekit._renderer.shutil.which", return_value="/usr/bin/java"), \
-             patch("figtreekit._renderer.os.path.isfile", return_value=True), \
-             patch("figtreekit._renderer.os.path.getsize", return_value=100), \
-             patch("figtreekit._renderer.subprocess.run", side_effect=self._make_fake_run(
-                 captured, returncode=1, stdout="", stderr="Some error\n"
-             )):
+        with (
+            patch("figtreekit._renderer.shutil.which", return_value="/usr/bin/java"),
+            patch("figtreekit._renderer.os.path.isfile", return_value=True),
+            patch("figtreekit._renderer.os.path.getsize", return_value=100),
+            patch(
+                "figtreekit._renderer.subprocess.run",
+                side_effect=self._make_fake_run(
+                    captured, returncode=1, stdout="", stderr="Some error\n"
+                ),
+            ),
+        ):
             from figtreekit.exceptions import ExportError
+
             with pytest.raises(ExportError):
                 render_with_figtree("in.nex", "out.png", jar_path="figtree.jar")

@@ -45,6 +45,7 @@ class NodeAnnotation:
         target_taxa: Taxon names used to find the MRCA node for injection.
         extra_params: Additional parameters (e.g., ``width``, ``offset`` for hilight).
     """
+
     annotation_type: str
     values: AnnotationValue
     target_taxa: Optional[List[str]] = None
@@ -70,6 +71,7 @@ class CladeCollapse:
               is drawn as a triangle spanning the original tip vertical
               range; original tip labels may still be shown.
     """
+
     target_taxa: List[str]
     label: Optional[str] = None
     group_name: Optional[str] = None

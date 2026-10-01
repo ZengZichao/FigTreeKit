@@ -25,12 +25,13 @@ def example_basic_styling(output_dir: str) -> None:
 
     newick = "(((A:0.1,B:0.2):0.3,(C:0.4,D:0.5):0.6):0.7,E:0.8);"
 
-    styler = FigTreeStyler() \
-        .load_content(newick) \
-        .set_layout(LayoutType.RECTILINEAR) \
-        .set_tip_labels(is_shown=True, font_name="Arial", font_size=12,
-                        font_style=FontStyle.PLAIN) \
+    styler = (
+        FigTreeStyler()
+        .load_content(newick)
+        .set_layout(LayoutType.RECTILINEAR)
+        .set_tip_labels(is_shown=True, font_name="Arial", font_size=12, font_style=FontStyle.PLAIN)
         .set_appearance(branch_line_width=2.0)
+    )
 
     output_file = os.path.join(output_dir, "basic_styled_tree.nex")
     styler.export(output_file)
@@ -46,15 +47,16 @@ def example_polar_layout(output_dir: str) -> None:
 
     newick = "(((A:0.1,B:0.2):0.3,(C:0.4,D:0.5):0.6):0.7,E:0.8);"
 
-    styler = FigTreeStyler() \
-        .load_content(newick) \
-        .set_layout(LayoutType.POLAR) \
-        .set_polar_layout(align_tip_labels=True, angular_range=360,
-                          root_angle=0, show_root=True) \
-        .set_appearance(branch_line_width=1.5,
-                        branch_color_attribute="height") \
-        .set_tip_labels(is_shown=True, font_name="Helvetica",
-                        font_size=10, font_style=FontStyle.BOLD)
+    styler = (
+        FigTreeStyler()
+        .load_content(newick)
+        .set_layout(LayoutType.POLAR)
+        .set_polar_layout(align_tip_labels=True, angular_range=360, root_angle=0, show_root=True)
+        .set_appearance(branch_line_width=1.5, branch_color_attribute="height")
+        .set_tip_labels(
+            is_shown=True, font_name="Helvetica", font_size=10, font_style=FontStyle.BOLD
+        )
+    )
 
     output_file = os.path.join(output_dir, "polar_styled_tree.nex")
     styler.export(output_file)
@@ -70,14 +72,16 @@ def example_clade_highlighting(output_dir: str) -> None:
 
     newick = "(((A:0.1,B:0.2):0.3,(C:0.4,D:0.5):0.6):0.7,E:0.8);"
 
-    styler = FigTreeStyler() \
-        .load_content(newick) \
-        .set_layout(LayoutType.RECTILINEAR) \
-        .set_tip_labels(is_shown=True, font_size=12) \
-        .set_appearance(branch_line_width=2.0) \
-        .highlight_clade(["A", "B"], color="#FF0000") \
-        .highlight_clade(["C", "D"], color="#00FF00") \
+    styler = (
+        FigTreeStyler()
+        .load_content(newick)
+        .set_layout(LayoutType.RECTILINEAR)
+        .set_tip_labels(is_shown=True, font_size=12)
+        .set_appearance(branch_line_width=2.0)
+        .highlight_clade(["A", "B"], color="#FF0000")
+        .highlight_clade(["C", "D"], color="#00FF00")
         .set_clade_color(["A", "B", "C", "D"], color="#0000FF")
+    )
 
     output_file = os.path.join(output_dir, "highlighted_tree.nex")
     styler.export(output_file)
@@ -93,11 +97,13 @@ def example_font_annotation(output_dir: str) -> None:
 
     newick = "(((A:0.1,B:0.2):0.3,(C:0.4,D:0.5):0.6):0.7,E:0.8);"
 
-    styler = FigTreeStyler() \
-        .load_content(newick) \
-        .set_layout(LayoutType.RECTILINEAR) \
-        .set_clade_font(["A", "B"], "Arial", FontStyle.BOLD, 14) \
+    styler = (
+        FigTreeStyler()
+        .load_content(newick)
+        .set_layout(LayoutType.RECTILINEAR)
+        .set_clade_font(["A", "B"], "Arial", FontStyle.BOLD, 14)
         .set_clade_font(["C", "D"], "Courier", FontStyle.ITALIC, 10)
+    )
 
     output_file = os.path.join(output_dir, "font_annotated_tree.nex")
     styler.export(output_file)

@@ -37,8 +37,7 @@ from figtreekit import FigTreeStyler, LayoutType
 from figtreekit.taxonomy import extend_rank_prefixes
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_TREE = (REPO_ROOT / "examples" / "data" /
-                "FigTree_withLACA_CLK_95CI.tree.recover")
+DEFAULT_TREE = REPO_ROOT / "examples" / "data" / "FigTree_withLACA_CLK_95CI.tree.recover"
 
 CI_MARKER = "[&95%="
 
@@ -50,8 +49,7 @@ def count_ci_comments(path: Path) -> int:
 
 def main() -> int:
     tree_path = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_TREE
-    outdir = (Path(sys.argv[2]) if len(sys.argv) > 2
-              else REPO_ROOT / "examples" / "output")
+    outdir = Path(sys.argv[2]) if len(sys.argv) > 2 else REPO_ROOT / "examples" / "output"
     outdir.mkdir(parents=True, exist_ok=True)
 
     if not tree_path.exists():
@@ -61,10 +59,17 @@ def main() -> int:
     # ── Custom rank prefixes matching the embedded format A labels ──
     # (equivalent of CLI ``--taxonomy-levels``; instance-scoped
     # TaxonomyMapper(prefixes=...) is preferred in long-running apps)
-    extend_rank_prefixes({
-        "d": "domain", "sp": "superphylum", "p": "phylum",
-        "c": "class", "o": "order", "f": "family", "g": "genus",
-    })
+    extend_rank_prefixes(
+        {
+            "d": "domain",
+            "sp": "superphylum",
+            "p": "phylum",
+            "c": "class",
+            "o": "order",
+            "f": "family",
+            "g": "genus",
+        }
+    )
 
     ci_in = count_ci_comments(tree_path)
 
@@ -73,35 +78,49 @@ def main() -> int:
 
     # ── Completeness audit (required before trusting any monophyly call) ──
     comp = styler.check_taxonomy_completeness()
-    print(f"[audit] completeness summary: "
-          f"{ {k: v for k, v in comp.items() if isinstance(v, (int, float))} }")
+    print(
+        f"[audit] completeness summary: "
+        f"{ {k: v for k, v in comp.items() if isinstance(v, (int, float))} }"
+    )
 
     # ── Phylum-level styling on embedded format A taxonomy ──
     phyla = styler.analyze_taxonomy(rank="phylum", style_monophyletic=True)
-    print(f"[phylum] total_groups={phyla['summary'].get('total_groups', '?')} "
-          f"monophyletic={len(phyla['monophyletic'])} "
-          f"non_monophyletic={len(phyla['non_monophyletic'])} "
-          f"unmapped_tips={len(phyla['unmapped'])}")
+    print(
+        f"[phylum] total_groups={phyla['summary'].get('total_groups', '?')} "
+        f"monophyletic={len(phyla['monophyletic'])} "
+        f"non_monophyletic={len(phyla['non_monophyletic'])} "
+        f"unmapped_tips={len(phyla['unmapped'])}"
+    )
 
     out_nex = outdir / "beast_laca_styled.nex"
     styler.export(str(out_nex))
     ci_out = count_ci_comments(out_nex)
     print(f"[done] exported {out_nex}")
     n_tips = len(Phylo.read(str(tree_path), "nexus").get_terminals())
-    print(f"[meta] tips={n_tips} "
-          f"95% CI comments in -> out: {ci_in} -> {ci_out} "
-          f"({'no loss' if ci_in == ci_out else 'LOSS DETECTED'})")
+    print(
+        f"[meta] tips={n_tips} "
+        f"95% CI comments in -> out: {ci_in} -> {ci_out} "
+        f"({'no loss' if ci_in == ci_out else 'LOSS DETECTED'})"
+    )
 
     # ── Machine-readable audit emitted alongside the release outputs ────────
     try:
         from _audit import write_audit
-        write_audit(outdir / "beast_laca", rank="phylum", groups=phyla,
-                    completeness=comp, nexus_path=out_nex,
-                    collapsed=(),          # colour-only workflow: no collapses
-                    extra={"workflow_script": "examples/06_beast_laca_workflow.py",
-                           "tips": n_tips,
-                           "hpd_annotations_in": ci_in,
-                           "hpd_annotations_out": ci_out})
+
+        write_audit(
+            outdir / "beast_laca",
+            rank="phylum",
+            groups=phyla,
+            completeness=comp,
+            nexus_path=out_nex,
+            collapsed=(),  # colour-only workflow: no collapses
+            extra={
+                "workflow_script": "examples/06_beast_laca_workflow.py",
+                "tips": n_tips,
+                "hpd_annotations_in": ci_in,
+                "hpd_annotations_out": ci_out,
+            },
+        )
     except Exception as exc:  # audit files are diagnostic, never fatal
         print(f"[audit] skipped: {exc}")
 

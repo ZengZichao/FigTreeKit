@@ -120,13 +120,14 @@ def benchmark_export(styler: FigTreeStyler, n_repeats: int = 10) -> dict:
 def benchmark_biopylo_nexus_export(tree_str: str, n_repeats: int = 10) -> dict:
     """Measure Bio.Phylo Nexus write time for comparison."""
     from Bio import Phylo
+
     times = []
     for _ in range(n_repeats):
         clean = tree_str
-        tree = list(Phylo.parse(io.StringIO(clean), 'newick'))[0]
+        tree = list(Phylo.parse(io.StringIO(clean), "newick"))[0]
         with tempfile.NamedTemporaryFile(suffix=".nex", delete=True) as f:
             start = time.perf_counter()
-            Phylo.write(tree, f.name, 'nexus')
+            Phylo.write(tree, f.name, "nexus")
             elapsed = time.perf_counter() - start
             times.append(elapsed)
     return {"mean": _mean(times), "sem": _sem(times)}
@@ -143,13 +144,13 @@ def benchmark_parse_and_export(n_taxa: int, n_repeats: int = 10) -> dict:
     styler.set_layout(LayoutType.POLAR)
     styler.set_tip_labels(is_shown=True, font_size=10)
     styler.set_appearance(branch_line_width=1.5)
-    
+
     # Add some annotations to trigger the full Bio.Phylo round-trip
     taxa = [f"T{i:05d}" for i in range(1, min(n_taxa + 1, 6))]
     if len(taxa) >= 2:
         styler.highlight_clade(taxa[:2], color="#FF0000")
         styler.set_clade_color(taxa[2:4] if len(taxa) >= 4 else taxa[:2], color="#00FF00")
-    
+
     export_result = benchmark_export(styler, n_repeats)
 
     with tempfile.NamedTemporaryFile(suffix=".nex", delete=True) as tmp:
@@ -175,7 +176,8 @@ def main():
 
     parser = argparse.ArgumentParser(description="FigTreeKit performance benchmark")
     parser.add_argument(
-        "--output", "-o",
+        "--output",
+        "-o",
         default="benchmarks/results.csv",
         help="Output CSV file path",
     )
@@ -213,7 +215,9 @@ def main():
     args = parser.parse_args()
 
     results = []
-    print(f"{'n_taxa':>8} {'parse(s)':>18} {'export(s)':>18} {'total(s)':>18} {'peak_mem':>12} {'tree(KB)':>10}")
+    print(
+        f"{'n_taxa':>8} {'parse(s)':>18} {'export(s)':>18} {'total(s)':>18} {'peak_mem':>12} {'tree(KB)':>10}"
+    )
     print("-" * 88)
 
     for n in args.sizes:
@@ -261,21 +265,27 @@ def main():
             biopylo_result = benchmark_biopylo_nexus_export(tree_str, args.repeats)
 
             # Ratio: FigTreeKit / Bio.Phylo (higher means FigTreeKit is slower)
-            ratio = pyfig_result["mean"] / biopylo_result["mean"] if biopylo_result["mean"] > 0 else float('inf')
+            ratio = (
+                pyfig_result["mean"] / biopylo_result["mean"]
+                if biopylo_result["mean"] > 0
+                else float("inf")
+            )
             print(
                 f"{n:>8} "
                 f"{pyfig_result['mean']:>8.6f} ± {pyfig_result['sem']:.6f} "
                 f"{biopylo_result['mean']:>8.6f} ± {biopylo_result['sem']:.6f} "
                 f"{ratio:>8.2f}x"
             )
-            competitive_rows.append({
-                "n_taxa": n,
-                "figtreekit_export_mean_s": round(pyfig_result["mean"], 6),
-                "figtreekit_export_sem_s": round(pyfig_result["sem"], 6),
-                "biophylo_export_mean_s": round(biopylo_result["mean"], 6),
-                "biophylo_export_sem_s": round(biopylo_result["sem"], 6),
-                "ratio": round(ratio, 3),
-            })
+            competitive_rows.append(
+                {
+                    "n_taxa": n,
+                    "figtreekit_export_mean_s": round(pyfig_result["mean"], 6),
+                    "figtreekit_export_sem_s": round(pyfig_result["sem"], 6),
+                    "biophylo_export_mean_s": round(biopylo_result["mean"], 6),
+                    "biophylo_export_sem_s": round(biopylo_result["sem"], 6),
+                    "ratio": round(ratio, 3),
+                }
+            )
 
         # Persist raw competitive data alongside the main results so every
         # reported cross-tool ratio is backed by an auditable artefact.
@@ -314,10 +324,11 @@ def main():
             cat_export = benchmark_export(styler_cat, args.repeats)
 
             # Ratio: caterpillar / balanced (>1 means caterpillar is slower)
-            ratio_exp = cat_export["mean"] / bal_export["mean"] if bal_export["mean"] > 0 else float('inf')
+            ratio_exp = (
+                cat_export["mean"] / bal_export["mean"] if bal_export["mean"] > 0 else float("inf")
+            )
             print(
-                f"{n:>8} {'balanced':>12} "
-                f"{bal_export['mean']:>12.6f} ± {bal_export['sem']:.6f}"
+                f"{n:>8} {'balanced':>12} " f"{bal_export['mean']:>12.6f} ± {bal_export['sem']:.6f}"
             )
             print(
                 f"{'':>8} {'caterpillar':>12} "
@@ -328,6 +339,7 @@ def main():
     # JVM cold-start measurement
     if args.jvm_cold_start:
         import subprocess
+
         print("\n--- JVM Cold-Start Time Measurement ---")
         print("Measuring approximate JVM startup overhead for FigTree rendering context...")
         print("(Using `java -version` as a proxy for JVM initialization overhead)")
@@ -338,7 +350,9 @@ def main():
             try:
                 subprocess.run(
                     ["java", "-version"],
-                    capture_output=True, text=True, timeout=30,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
                 )
                 elapsed = time.perf_counter() - start
                 jvm_times.append(elapsed)
@@ -350,9 +364,15 @@ def main():
         if jvm_times:
             jvm_mean = _mean(jvm_times)
             jvm_sem = _sem(jvm_times)
-            print(f"JVM cold start (java -version): {jvm_mean:.3f} ± {jvm_sem:.3f} s (n={len(jvm_times)})")
-            print("Note: FigTree JAR launch adds additional classloading overhead beyond this baseline.")
-            print("This measurement provides a lower bound for JVM cold-start penalty in FigTree rendering.")
+            print(
+                f"JVM cold start (java -version): {jvm_mean:.3f} ± {jvm_sem:.3f} s (n={len(jvm_times)})"
+            )
+            print(
+                "Note: FigTree JAR launch adds additional classloading overhead beyond this baseline."
+            )
+            print(
+                "This measurement provides a lower bound for JVM cold-start penalty in FigTree rendering."
+            )
 
 
 if __name__ == "__main__":

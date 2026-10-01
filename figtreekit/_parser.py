@@ -55,7 +55,7 @@ def find_unquoted_semicolon(content: str) -> int:
                 i += 2
                 continue
             in_quote = not in_quote
-        elif char == ';' and not in_quote:
+        elif char == ";" and not in_quote:
             return i
         i += 1
     return -1
@@ -83,11 +83,11 @@ def extract_tree_value(content: str) -> Optional[str]:
                 i += 1
             else:
                 in_quote = False
-        elif char == '[' and not in_quote:
+        elif char == "[" and not in_quote:
             bracket_depth += 1
-        elif char == ']' and not in_quote and bracket_depth > 0:
+        elif char == "]" and not in_quote and bracket_depth > 0:
             bracket_depth -= 1
-        elif char == ';' and not in_quote and bracket_depth == 0:
+        elif char == ";" and not in_quote and bracket_depth == 0:
             last_semicolon = i
             break
         i += 1
@@ -101,9 +101,9 @@ def extract_trees_block_content(trees_block: str) -> str:
     """Extract content between ``begin trees;`` and ``end;`` markers."""
     content = trees_block.strip()
     # Remove begin trees; prefix
-    content = re.sub(r'^\s*begin\s+trees\s*;', '', content, flags=re.IGNORECASE).strip()
+    content = re.sub(r"^\s*begin\s+trees\s*;", "", content, flags=re.IGNORECASE).strip()
     # Remove end; suffix
-    content = re.sub(r'\bend\s*;\s*$', '', content, flags=re.IGNORECASE).strip()
+    content = re.sub(r"\bend\s*;\s*$", "", content, flags=re.IGNORECASE).strip()
     return content
 
 
@@ -119,9 +119,7 @@ _TREE_NAME_PATTERN = re.compile(
 )
 
 
-def find_tree_declaration_spans(
-    trees_content: str, strict: bool = True
-) -> List[Tuple[int, int]]:
+def find_tree_declaration_spans(trees_content: str, strict: bool = True) -> List[Tuple[int, int]]:
     """Locate every ``tree NAME = <newick>;`` declaration via a character scan.
 
     Instead of a regular expression, this uses an explicit scanner that
@@ -174,9 +172,9 @@ def find_tree_declaration_spans(
                     in_quote = None
             elif char in ("'", '"'):
                 in_quote = char
-            elif char == '[':
+            elif char == "[":
                 bracket_depth += 1
-            elif char == ']':
+            elif char == "]":
                 if bracket_depth == 0:
                     if strict:
                         raise ValueError(
@@ -187,7 +185,7 @@ def find_tree_declaration_spans(
                     # Lenient mode: ignore the stray bracket (legacy).
                 else:
                     bracket_depth -= 1
-            elif char == ';' and bracket_depth == 0:
+            elif char == ";" and bracket_depth == 0:
                 break
             j += 1
         if j >= n:
@@ -228,42 +226,44 @@ def parse_nexus_content(content: str, tree_index: int = 0) -> Dict[str, Any]:
         ``tree_content``, ``all_trees``, ``figtree_block``.
     """
     result: Dict[str, Any] = {
-        'taxa_block': None,
-        'tree_block': None,
-        'translate_block': None,
-        'tree_content': None,
-        'all_trees': [],
-        'figtree_block': None,
+        "taxa_block": None,
+        "tree_block": None,
+        "translate_block": None,
+        "tree_content": None,
+        "all_trees": [],
+        "figtree_block": None,
     }
 
     # Use re.IGNORECASE on original content so match positions are correct
-    taxa_match = re.search(r'\bbegin\s+taxa\s*;(.*?)\bend\s*;', content, re.DOTALL | re.IGNORECASE)
+    taxa_match = re.search(r"\bbegin\s+taxa\s*;(.*?)\bend\s*;", content, re.DOTALL | re.IGNORECASE)
     if taxa_match:
-        result['taxa_block'] = content[taxa_match.start():taxa_match.end()]
+        result["taxa_block"] = content[taxa_match.start() : taxa_match.end()]
 
-    trees_match = re.search(r'\bbegin\s+trees\s*;(.*?)\bend\s*;', content, re.DOTALL | re.IGNORECASE)
+    trees_match = re.search(
+        r"\bbegin\s+trees\s*;(.*?)\bend\s*;", content, re.DOTALL | re.IGNORECASE
+    )
     if not trees_match:
         return result
 
-    result['tree_block'] = content[trees_match.start():trees_match.end()]
-    tree_block = result['tree_block']
+    result["tree_block"] = content[trees_match.start() : trees_match.end()]
+    tree_block = result["tree_block"]
 
     # Extract translate block
     translate_match = re.search(
-        r'\btranslate\s+(.+?)(?=;tree\b|;end\b|;)', tree_block, re.DOTALL | re.IGNORECASE
+        r"\btranslate\s+(.+?)(?=;tree\b|;end\b|;)", tree_block, re.DOTALL | re.IGNORECASE
     )
     if translate_match:
-        translate_start = tree_block.lower().find('translate')
+        translate_start = tree_block.lower().find("translate")
         translate_content = tree_block[translate_start:]
         translate_end = find_unquoted_semicolon(translate_content)
         if translate_end != -1:
-            result['translate_block'] = translate_content[:translate_end + 1]
+            result["translate_block"] = translate_content[: translate_end + 1]
 
     # Extract ALL tree declarations with their full content
-    all_tree_matches = list(re.finditer(
-        r'tree\s+(\S+)\s*=\s*', tree_block, re.DOTALL | re.IGNORECASE
-    ))
-    result['all_trees'] = [m.group(0) for m in all_tree_matches]
+    all_tree_matches = list(
+        re.finditer(r"tree\s+(\S+)\s*=\s*", tree_block, re.DOTALL | re.IGNORECASE)
+    )
+    result["all_trees"] = [m.group(0) for m in all_tree_matches]
 
     if all_tree_matches:
         # Validate tree_index
@@ -279,7 +279,7 @@ def parse_nexus_content(content: str, tree_index: int = 0) -> Dict[str, Any]:
         selected_match = all_tree_matches[tree_index]
         tree_start = selected_match.end()
         tree_value = extract_tree_value(tree_block[tree_start:])
-        result['tree_content'] = tree_value.strip() if tree_value else None
+        result["tree_content"] = tree_value.strip() if tree_value else None
 
         if len(all_tree_matches) > 1:
             warnings.warn(
@@ -290,9 +290,11 @@ def parse_nexus_content(content: str, tree_index: int = 0) -> Dict[str, Any]:
             )
 
     # Extract existing figtree block
-    figtree_match = re.search(r'\bbegin\s+figtree\s*;(.*?)\bend\s*;', content, re.DOTALL | re.IGNORECASE)
+    figtree_match = re.search(
+        r"\bbegin\s+figtree\s*;(.*?)\bend\s*;", content, re.DOTALL | re.IGNORECASE
+    )
     if figtree_match:
-        result['figtree_block'] = content[figtree_match.start():figtree_match.end()]
+        result["figtree_block"] = content[figtree_match.start() : figtree_match.end()]
 
     return result
 
@@ -309,21 +311,21 @@ def strip_square_bracket_comments(text: str) -> str:
     Handles arbitrarily nested brackets correctly (e.g. ``[a[b]c]``).
     Returns *text* unchanged if there are no bracket comments.
     """
-    if '[' not in text:
+    if "[" not in text:
         return text
     result: List[str] = []
     depth = 0
     for ch in text:
-        if ch == '[':
+        if ch == "[":
             depth += 1
-        elif ch == ']':
+        elif ch == "]":
             if depth > 0:
                 depth -= 1
             else:
                 result.append(ch)
         elif depth == 0:
             result.append(ch)
-    return ''.join(result)
+    return "".join(result)
 
 
 def extract_taxa_from_newick(tree_content: str) -> List[str]:
@@ -339,7 +341,7 @@ def extract_taxa_from_newick(tree_content: str) -> List[str]:
         import io
 
         content = strip_square_bracket_comments(tree_content)
-        trees = list(Phylo.parse(io.StringIO(content), 'newick'))
+        trees = list(Phylo.parse(io.StringIO(content), "newick"))
         if not trees:
             warnings.warn(
                 "Bio.Phylo returned no trees, falling back to regex-based "
@@ -354,9 +356,9 @@ def extract_taxa_from_newick(tree_content: str) -> List[str]:
         for clade in trees[0].get_terminals():
             name = clade.name
             if name and name not in seen:
-                if re.match(r'^\d*\.\d+$', name):
+                if re.match(r"^\d*\.\d+$", name):
                     continue
-                if ' ' in name or "'" in name or ';' in name:
+                if " " in name or "'" in name or ";" in name:
                     escaped_name = name.replace("'", "''")
                     taxa.append(f"'{escaped_name}'")
                 else:
@@ -409,9 +411,9 @@ def _fallback_extract_taxa(content: str) -> List[str]:
                 else:
                     name_chars.append(content[j])
                 j += 1
-            
+
             if j < len(content):  # Found closing quote
-                name = ''.join(name_chars)
+                name = "".join(name_chars)
                 if name and name not in seen:
                     # Don't filter numeric names - they're valid taxa
                     escaped_name = name.replace("'", "''")
@@ -423,7 +425,7 @@ def _fallback_extract_taxa(content: str) -> List[str]:
 
     # Unquoted taxa names - match after '(', ',', or at start of string
     # Also handle numeric names and names starting with digits
-    pattern = r'(?:^|[\(,])\s*([^\(\)\[\]\:\,\s]+)(?=\s*[\:\),;])'
+    pattern = r"(?:^|[\(,])\s*([^\(\)\[\]\:\,\s]+)(?=\s*[\:\),;])"
     for match in re.finditer(pattern, content):
         name = match.group(1)
         if name.startswith("'"):
@@ -431,7 +433,7 @@ def _fallback_extract_taxa(content: str) -> List[str]:
         if name and name not in seen:
             # Filter float-like names (e.g., '0.5') that are likely branch lengths
             # But allow pure integer names (e.g., '1', '2') common in BEAST output
-            if re.match(r'^\d*\.\d+$', name):
+            if re.match(r"^\d*\.\d+$", name):
                 continue
             taxa.append(name)
             seen.add(name)
@@ -447,24 +449,23 @@ def apply_parsed_setting(settings: Any, key: str, value: str) -> None:
     value = value.strip()
 
     parsed_value: Any = value
-    if value.lower() in ('true', 'false'):
-        parsed_value = value.lower() == 'true'
-    elif value == 'null':
+    if value.lower() in ("true", "false"):
+        parsed_value = value.lower() == "true"
+    elif value == "null":
         parsed_value = None
     elif value.startswith('"') and value.endswith('"'):
         # Unescape backslash-escaped characters (reverse of serialize_value)
         inner = value[1:-1]
         parsed_value = (
-            inner
-            .replace('\\\\', '\x00')  # \\ → sentinel
-            .replace('\\"', '"')       # \" → "
-            .replace('\x00', '\\')     # sentinel → \
+            inner.replace("\\\\", "\x00")  # \\ → sentinel
+            .replace('\\"', '"')  # \" → "
+            .replace("\x00", "\\")  # sentinel → \
         )
-    elif value.startswith('#'):
+    elif value.startswith("#"):
         parsed_value = value
     else:
         try:
-            if '.' in value or 'e' in value.lower():
+            if "." in value or "e" in value.lower():
                 parsed_value = float(value)
             else:
                 parsed_value = int(value)
@@ -479,11 +480,11 @@ def apply_parsed_setting(settings: Any, key: str, value: str) -> None:
 
 def load_existing_figtree_block(settings: Any, figtree_block: str) -> None:
     """Load existing figtree settings from a parsed block into ``settings``."""
-    for line in figtree_block.split('\n'):
+    for line in figtree_block.split("\n"):
         line = line.strip()
-        if not line or line.startswith('begin figtree') or line.startswith('end;'):
+        if not line or line.startswith("begin figtree") or line.startswith("end;"):
             continue
-        for match in re.finditer(r'set\s+([^=]+?)\s*=\s*([^;]+);', line):
+        for match in re.finditer(r"set\s+([^=]+?)\s*=\s*([^;]+);", line):
             apply_parsed_setting(settings, match.group(1).strip(), match.group(2).strip())
 
 
@@ -492,6 +493,7 @@ def load_existing_figtree_block(settings: Any, figtree_block: str) -> None:
 # Bio.Phylo during parsing. These two functions extract comments with their
 # attachment points before parsing and re-insert them after serialization,
 # so BEAST metadata survives the round trip.
+
 
 def extract_bracket_comments(newick: str) -> List[Dict[str, Any]]:
     """Extract bracket comments from a Newick string, preserving their positions.
@@ -509,9 +511,9 @@ def extract_bracket_comments(newick: str) -> List[Dict[str, Any]]:
     # First, find all bracket comments with their positions
     i = 0
     in_quote = None  # None, "'", or '"'
-    current_name = ''
-    last_name = ''
-    last_branch_length = ''
+    current_name = ""
+    last_name = ""
+    last_branch_length = ""
     after_close_paren = False
 
     while i < len(newick):
@@ -536,15 +538,15 @@ def extract_bracket_comments(newick: str) -> List[Dict[str, Any]]:
             else:
                 in_quote = None
                 current_name += char
-        elif char == '[' and in_quote is None:
+        elif char == "[" and in_quote is None:
             # Start of bracket comment
             bracket_start = i
             depth = 1
             i += 1
             while i < len(newick) and depth > 0:
-                if newick[i] == '[':
+                if newick[i] == "[":
                     depth += 1
-                elif newick[i] == ']':
+                elif newick[i] == "]":
                     depth -= 1
                 i += 1
             bracket_comment = newick[bracket_start:i]
@@ -553,61 +555,65 @@ def extract_bracket_comments(newick: str) -> List[Dict[str, Any]]:
             if current_name.strip():
                 # Attached to a taxon name
                 name = current_name.strip().strip("'").strip('"')
-                comments.append({
-                    'taxon_name': name,
-                    'comment': bracket_comment,
-                    'position_type': 'after_name'
-                })
+                comments.append(
+                    {"taxon_name": name, "comment": bracket_comment, "position_type": "after_name"}
+                )
                 last_name = name
             elif last_branch_length:
                 # Attached to a branch length
-                comments.append({
-                    'taxon_name': None,
-                    'comment': bracket_comment,
-                    'position_type': 'after_branch_length',
-                    'branch_length': last_branch_length
-                })
+                comments.append(
+                    {
+                        "taxon_name": None,
+                        "comment": bracket_comment,
+                        "position_type": "after_branch_length",
+                        "branch_length": last_branch_length,
+                    }
+                )
             elif after_close_paren:
                 # Attached to an internal node (follows ')').  Recorded so
                 # that the caller can warn — this position cannot currently
                 # be re-inserted reliably.
-                comments.append({
-                    'taxon_name': None,
-                    'comment': bracket_comment,
-                    'position_type': 'after_internal_node',
-                })
+                comments.append(
+                    {
+                        "taxon_name": None,
+                        "comment": bracket_comment,
+                        "position_type": "after_internal_node",
+                    }
+                )
             else:
                 # Root-level/block attribute (e.g. '[&R]' before the first
                 # parenthesis) or otherwise unattached.
-                comments.append({
-                    'taxon_name': None,
-                    'comment': bracket_comment,
-                    'position_type': 'unattached',
-                })
+                comments.append(
+                    {
+                        "taxon_name": None,
+                        "comment": bracket_comment,
+                        "position_type": "unattached",
+                    }
+                )
 
-            current_name = ''
-            last_branch_length = ''
+            current_name = ""
+            last_branch_length = ""
             after_close_paren = False
             continue
-        elif char == ':':
+        elif char == ":":
             # Branch length follows
             i += 1
             bl_start = i
-            while i < len(newick) and newick[i] not in '(),;[':
+            while i < len(newick) and newick[i] not in "(),;[":
                 i += 1
             last_branch_length = newick[bl_start:i]
-            current_name = ''
+            current_name = ""
             after_close_paren = False
             continue
-        elif char in '(),;':
+        elif char in "(),;":
             # Reset tracking; ')' marks a potential internal-node attachment
             # point for a following bracket comment.
-            after_close_paren = (char == ')')
-            current_name = ''
-            last_branch_length = ''
-            last_name = ''
+            after_close_paren = char == ")"
+            current_name = ""
+            last_branch_length = ""
+            last_name = ""
         else:
-            if in_quote is None and char not in ' \t\n\r':
+            if in_quote is None and char not in " \t\n\r":
                 current_name += char
             elif in_quote is not None:
                 current_name += char
@@ -627,7 +633,7 @@ def _comment_survived(comment: str, result: str) -> bool:
     if comment in result:
         return True
     inner = comment.strip()
-    if inner.startswith('[') and inner.endswith(']'):
+    if inner.startswith("[") and inner.endswith("]"):
         inner = inner[1:-1]
     return bool(inner) and inner in result
 
@@ -647,9 +653,9 @@ def reinsert_bracket_comments(newick: str, comments: List[Dict[str, Any]]) -> st
 
     # Process comments attached to taxon names
     for comment_info in comments:
-        if comment_info['position_type'] == 'after_name':
-            taxon_name = comment_info['taxon_name']
-            bracket_comment = comment_info['comment']
+        if comment_info["position_type"] == "after_name":
+            taxon_name = comment_info["taxon_name"]
+            bracket_comment = comment_info["comment"]
 
             if not taxon_name:
                 continue
@@ -663,12 +669,12 @@ def reinsert_bracket_comments(newick: str, comments: List[Dict[str, Any]]) -> st
             # Build candidate patterns: try quoted first, then unquoted
             # This handles the case where Bio.Phylo may or may not quote the name
             escaped_name = taxon_name.replace("'", "''")
-            has_special = ' ' in taxon_name or "'" in taxon_name
+            has_special = " " in taxon_name or "'" in taxon_name
 
             # Pattern 1: quoted name followed by separator
             quoted_pattern = f"'{re.escape(escaped_name)}'(?=\\s*[:\\),;])"
             # Pattern 2: unquoted name followed by separator (word boundary)
-            unquoted_pattern = r'(?<![A-Za-z0-9_])' + re.escape(taxon_name) + r'(?=\s*[:\),;])'
+            unquoted_pattern = r"(?<![A-Za-z0-9_])" + re.escape(taxon_name) + r"(?=\s*[:\),;])"
 
             inserted = False
             # Try quoted pattern first
@@ -693,10 +699,10 @@ def reinsert_bracket_comments(newick: str, comments: List[Dict[str, Any]]) -> st
                     CompatibilityWarning,
                 )
 
-        elif comment_info['position_type'] == 'after_branch_length':
+        elif comment_info["position_type"] == "after_branch_length":
             # The comment may already have survived via Biopython's
             # ``Clade.comment`` round-trip; only warn when it is truly lost.
-            if _comment_survived(comment_info['comment'], result):
+            if _comment_survived(comment_info["comment"], result):
                 continue
             # Bracket comments attached to branch lengths (e.g., :0.123[&posterior=0.95])
             # cannot be reliably re-inserted via text matching because Bio.Phylo may
@@ -710,18 +716,18 @@ def reinsert_bracket_comments(newick: str, comments: List[Dict[str, Any]]) -> st
                 CompatibilityWarning,
             )
 
-        elif comment_info['position_type'] in ('after_internal_node', 'unattached'):
+        elif comment_info["position_type"] in ("after_internal_node", "unattached"):
             # Already preserved through the Clade.comment round-trip?
-            if _comment_survived(comment_info['comment'], result):
+            if _comment_survived(comment_info["comment"], result):
                 continue
             # Comments attached to internal nodes (after ')') or unattached
             # root-level attributes cannot be re-located reliably after
             # serialization; emit an explicit warning instead of failing
             # silently.
             where = (
-                'an internal node'
-                if comment_info['position_type'] == 'after_internal_node'
-                else 'the tree root or block level'
+                "an internal node"
+                if comment_info["position_type"] == "after_internal_node"
+                else "the tree root or block level"
             )
             warnings.warn(
                 f"Bracket comment {comment_info.get('comment', '[&...]')!r} attached "

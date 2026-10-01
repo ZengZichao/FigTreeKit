@@ -29,10 +29,10 @@ from figtreekit import FigTreeStyler
 from figtreekit._parser import strip_square_bracket_comments
 from figtreekit.exceptions import CompatibilityWarning
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _export_text(styler: FigTreeStyler) -> str:
     with tempfile.TemporaryDirectory() as tmp:
@@ -66,8 +66,7 @@ def _splits(newick: str) -> set:
     """Bipartition representation of a tree (tip-name frozensets)."""
     tree = Phylo.read(StringIO(newick), "newick")
     return frozenset(
-        frozenset(t.name for t in clade.get_terminals())
-        for clade in tree.find_clades()
+        frozenset(t.name for t in clade.get_terminals()) for clade in tree.find_clades()
     )
 
 
@@ -83,6 +82,7 @@ def _branch_lengths(newick: str) -> dict:
 # ---------------------------------------------------------------------------
 # 1. Golden annotation formats (FigTree 1.4.4 serialization)
 # ---------------------------------------------------------------------------
+
 
 class TestAnnotationFormatGolden:
     TREE = "((A:0.1,B:0.2):0.3,(C:0.4,D:0.5):0.6);"
@@ -119,6 +119,7 @@ class TestAnnotationFormatGolden:
     def test_integer_float_serialized_without_decimal(self):
         # Prevents Java Integer.parseInt("1.0") ClassCastException.
         from figtreekit._serializer import serialize_value
+
         assert serialize_value(1.0) == "1"
         assert serialize_value(2.5) == "2.5"
         assert serialize_value(True) == "true"
@@ -127,6 +128,7 @@ class TestAnnotationFormatGolden:
 # ---------------------------------------------------------------------------
 # 2. Topology / branch-length preservation round-trips
 # ---------------------------------------------------------------------------
+
 
 class TestTopologyPreservation:
     TREE = "((A:0.1,B:0.2):0.3,(C:0.4,D:0.5):0.6,(E:0.7,F:0.8):0.9);"
@@ -173,17 +175,16 @@ class TestTopologyPreservation:
 # injected FigTree attributes into the existing comment.
 # ---------------------------------------------------------------------------
 
+
 class TestCommentPositionMatrix:
     def test_tip_attached_comment_preserved(self):
-        s = FigTreeStyler().load_content(
-            "((A[&posterior=0.95]:0.1,B:0.2):0.3,C:0.4);")
+        s = FigTreeStyler().load_content("((A[&posterior=0.95]:0.1,B:0.2):0.3,C:0.4);")
         s.set_clade_color(["A", "B"], "#00ff00")
         out = _tree_line(_export_text(s))
         assert "[&posterior=0.95]" in out
 
     def test_internal_node_comment_preserved_and_merged(self):
-        s = FigTreeStyler().load_content(
-            "((A:0.1,B:0.2)[&support=90]:0.3,C:0.4);")
+        s = FigTreeStyler().load_content("((A:0.1,B:0.2)[&support=90]:0.3,C:0.4);")
         s.set_clade_color(["A", "B"], "#00ff00")
         with warnings.catch_warnings():
             warnings.simplefilter("error", CompatibilityWarning)
@@ -193,15 +194,13 @@ class TestCommentPositionMatrix:
         assert "!color=#00ff00" in out
 
     def test_branch_length_comment_preserved(self):
-        s = FigTreeStyler().load_content(
-            "((A:0.1[&note=x],B:0.2):0.3,C:0.4);")
+        s = FigTreeStyler().load_content("((A:0.1[&note=x],B:0.2):0.3,C:0.4);")
         s.set_clade_color(["A", "B"], "#00ff00")
         out = _tree_line(_export_text(s))
         assert "[&note=x]" in out
 
     def test_root_attribute_preserved(self):
-        s = FigTreeStyler().load_content(
-            "[&R] ((A:0.1,B:0.2):0.3,C:0.4);")
+        s = FigTreeStyler().load_content("[&R] ((A:0.1,B:0.2):0.3,C:0.4);")
         s.set_clade_color(["A", "B"], "#00ff00")
         out = _tree_line(_export_text(s))
         assert "[&R]" in out
@@ -210,6 +209,7 @@ class TestCommentPositionMatrix:
 # ---------------------------------------------------------------------------
 # 4. BEAST translate-block round-trip
 # ---------------------------------------------------------------------------
+
 
 class TestTranslateRoundTrip:
     NEXUS = """#NEXUS
@@ -250,8 +250,8 @@ end;
         block = "translate\n1 'It''s taxon',\n2 Other;\n"
         s = FigTreeStyler().load_content(
             "#NEXUS\nbegin taxa;\ndimensions ntax=2;\ntaxlabels 1 2;\nend;\n"
-            "begin trees;\n" + block +
-            "tree T1 = (1:0.1,2:0.2);\nend;\n")
+            "begin trees;\n" + block + "tree T1 = (1:0.1,2:0.2);\nend;\n"
+        )
         mapping = s._parse_translate_block()
         assert mapping == {"It's taxon": "1", "Other": "2"}
 
@@ -259,8 +259,8 @@ end;
         block = 'translate\n1 "Homo sapiens, lineage A",\n2 B;\n'
         s = FigTreeStyler().load_content(
             "#NEXUS\nbegin taxa;\ndimensions ntax=2;\ntaxlabels 1 2;\nend;\n"
-            "begin trees;\n" + block +
-            "tree T1 = (1:0.1,2:0.2);\nend;\n")
+            "begin trees;\n" + block + "tree T1 = (1:0.1,2:0.2);\nend;\n"
+        )
         mapping = s._parse_translate_block()
         assert mapping["Homo sapiens, lineage A"] == "1"
 
@@ -268,6 +268,7 @@ end;
 # ---------------------------------------------------------------------------
 # 5. Node-depth semantics pinned on a non-ultrametric tree
 # ---------------------------------------------------------------------------
+
 
 class TestNonUltrametricNodeHeight:
     TREE = "((A:0.5,B:0.1):0.2,C:2.0);"
@@ -303,6 +304,7 @@ class TestNonUltrametricNodeHeight:
 # 6. Multi-tree replacement semantics (scanner-based)
 # ---------------------------------------------------------------------------
 
+
 class TestMultiTreeReplacementConformance:
     NEXUS_TEMPLATE = (
         "#NEXUS\nbegin taxa;\ndimensions ntax=3;\ntaxlabels A B C;\nend;\n"
@@ -327,8 +329,8 @@ class TestMultiTreeReplacementConformance:
 
     def test_quoted_tree_name_with_semicolon(self):
         from figtreekit._parser import find_tree_declaration_spans
-        spans = find_tree_declaration_spans(
-            "tree 'T;2' = (A:0.2,B:0.2);\ntree T3 = (A:0.3,B:0.3);")
+
+        spans = find_tree_declaration_spans("tree 'T;2' = (A:0.2,B:0.2);\ntree T3 = (A:0.3,B:0.3);")
         assert len(spans) == 2
 
 
@@ -338,6 +340,7 @@ class TestTreeDeclarationScannerValidation:
 
     def _spans(self, content, strict=True):
         from figtreekit._parser import find_tree_declaration_spans
+
         return find_tree_declaration_spans(content, strict=strict)
 
     def test_unmatched_closing_bracket_rejected(self):
@@ -361,8 +364,7 @@ class TestTreeDeclarationScannerValidation:
         assert len(spans) == 1
 
     def test_valid_declarations_pass_strict_scan(self):
-        spans = self._spans(
-            "tree T1 = [&lnP=-1] (A:0.1,B:0.1);\ntree 'T;2' = (A:0.2,B:0.2);")
+        spans = self._spans("tree T1 = [&lnP=-1] (A:0.1,B:0.1);\ntree 'T;2' = (A:0.2,B:0.2);")
         assert len(spans) == 2
 
 
@@ -370,8 +372,10 @@ class TestTreeDeclarationScannerValidation:
 # 7. Rendering acceptance with the bundled patched FigTree JAR
 # ---------------------------------------------------------------------------
 
+
 def _jar_path() -> Path:
     import figtreekit
+
     return Path(figtreekit.__file__).parent / "figtree_patched.jar"
 
 
@@ -386,8 +390,7 @@ class TestRenderAcceptance:
     annotations."""
 
     def _styled_file(self, tmp_path):
-        s = FigTreeStyler().load_content(
-            "((A:0.1,B:0.2):0.3,(C:0.4,D:0.5):0.6);")
+        s = FigTreeStyler().load_content("((A:0.1,B:0.2):0.3,(C:0.4,D:0.5):0.6);")
         s.set_clade_color(["A", "B"], "#ff0000")
         s.highlight_clade(["C", "D"], color="#00ff00")
         path = tmp_path / "styled.nex"
@@ -398,9 +401,10 @@ class TestRenderAcceptance:
         nex = self._styled_file(tmp_path)
         png = tmp_path / "out.png"
         result = subprocess.run(
-            ["java", "-jar", str(_jar_path()), "-graphic", "PNG",
-             str(nex), str(png)],
-            capture_output=True, text=True, timeout=120,
+            ["java", "-jar", str(_jar_path()), "-graphic", "PNG", str(nex), str(png)],
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
         assert result.returncode == 0, result.stderr[-500:]
         assert png.exists() and png.read_bytes()[:8] == b"\x89PNG\r\n\x1a\n"
@@ -409,9 +413,10 @@ class TestRenderAcceptance:
         nex = self._styled_file(tmp_path)
         pdf = tmp_path / "out.pdf"
         result = subprocess.run(
-            ["java", "-jar", str(_jar_path()), "-graphic", "PDF",
-             str(nex), str(pdf)],
-            capture_output=True, text=True, timeout=120,
+            ["java", "-jar", str(_jar_path()), "-graphic", "PDF", str(nex), str(pdf)],
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
         assert result.returncode == 0, result.stderr[-500:]
         assert pdf.exists() and pdf.read_bytes()[:5] == b"%PDF-"
@@ -420,9 +425,10 @@ class TestRenderAcceptance:
         nex = self._styled_file(tmp_path)
         svg = tmp_path / "out.svg"
         result = subprocess.run(
-            ["java", "-jar", str(_jar_path()), "-graphic", "SVG",
-             str(nex), str(svg)],
-            capture_output=True, text=True, timeout=120,
+            ["java", "-jar", str(_jar_path()), "-graphic", "SVG", str(nex), str(svg)],
+            capture_output=True,
+            text=True,
+            timeout=120,
         )
         assert result.returncode == 0, result.stderr[-500:]
         assert svg.exists()
@@ -434,20 +440,16 @@ class TestRenderAcceptance:
 # 8. Independent acceptance by STOCK FigTree 1.4.4 (review D2/C10 oracle)
 # ---------------------------------------------------------------------------
 
+
 def _stock_jar_path() -> Path:
     return Path(__file__).resolve().parents[1] / "_figtree_patch" / "figtree_original.jar"
 
 
 # SHA-256 of the preserved stock (unpatched) FigTree 1.4.4 build, pinned
 # for binary identity of the independent oracle (auditability, review C10).
-STOCK_JAR_SHA256 = (
-    "0d488f82297563a2327ced57e85bc40204f70e0d34de38d51db4da1998be0346"
-)
+STOCK_JAR_SHA256 = "0d488f82297563a2327ced57e85bc40204f70e0d34de38d51db4da1998be0346"
 
-_HAVE_STOCK = (
-    shutil.which("java") is not None
-    and _stock_jar_path().exists()
-)
+_HAVE_STOCK = shutil.which("java") is not None and _stock_jar_path().exists()
 
 
 @pytest.mark.skipif(not _HAVE_STOCK, reason="java or stock FigTree JAR unavailable")
@@ -461,13 +463,13 @@ class TestStockFigTreeAcceptance:
 
     def test_stock_jar_identity(self):
         import hashlib
+
         h = hashlib.sha256(_stock_jar_path().read_bytes()).hexdigest()
         assert h == STOCK_JAR_SHA256
 
     @pytest.mark.parametrize("fmt", ["PDF", "PNG"])
     def test_stock_figtree_renders_figtreekit_output(self, fmt, tmp_path):
-        styler = FigTreeStyler().load_content(
-            "(((A:0.1,B:0.2):0.3,(C:0.4,D:0.5):0.6):0.7,E:0.8);")
+        styler = FigTreeStyler().load_content("(((A:0.1,B:0.2):0.3,(C:0.4,D:0.5):0.6):0.7,E:0.8);")
         styler.set_clade_color(["A", "B"], "#ff0000")
         styler.highlight_clade(["C", "D"], color="#00ff00")
         nex = tmp_path / "stock_oracle_in.nex"
@@ -475,9 +477,10 @@ class TestStockFigTreeAcceptance:
         styler.export(str(nex))
         result = subprocess.run(
             # Stock CLI argument order: -graphic FMT <input> <output>
-            ["java", "-jar", str(_stock_jar_path()),
-             "-graphic", fmt, str(nex), str(out)],
-            capture_output=True, text=True, timeout=180,
+            ["java", "-jar", str(_stock_jar_path()), "-graphic", fmt, str(nex), str(out)],
+            capture_output=True,
+            text=True,
+            timeout=180,
         )
         assert result.returncode == 0, result.stderr[-500:]
         assert out.is_file() and out.stat().st_size > 0

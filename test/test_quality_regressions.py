@@ -41,10 +41,10 @@ from figtreekit.taxonomy import get_domain_rank_name
 from figtreekit.validators import scan_node_names_for_anomalous
 from figtreekit.exceptions import ValidationError
 
-
 # ===========================================================================
 # 数字末端名必须在 Newick 往返中保留
 # ===========================================================================
+
 
 class TestNumericTipPreserved:
     """Numeric leaf labels (BEAST style, and translate IDs) must be preserved."""
@@ -97,6 +97,7 @@ class TestNumericTipPreserved:
 # FASTA/FASTQ 校验不得触发 DeprecationWarning
 # ===========================================================================
 
+
 class TestNoDeprecationWarning:
     """deep_validate_fasta / deep_validate_fastq must use the non-deprecated
     scanner and must not trigger a DeprecationWarning."""
@@ -107,28 +108,21 @@ class TestNoDeprecationWarning:
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             res = deep_validate_fasta(str(fasta))
-        deprecations = [w for w in caught
-                        if issubclass(w.category, DeprecationWarning)]
-        assert not deprecations, (
-            "deep_validate_fasta emitted DeprecationWarning(s): "
-            + str([str(w.message) for w in deprecations])
+        deprecations = [w for w in caught if issubclass(w.category, DeprecationWarning)]
+        assert not deprecations, "deep_validate_fasta emitted DeprecationWarning(s): " + str(
+            [str(w.message) for w in deprecations]
         )
         assert isinstance(res, dict)
 
     def test_fastq_no_deprecation_warning(self, tmp_path):
         fastq = tmp_path / "reads.fastq"
-        fastq.write_text(
-            "@read1\nACGTACGT\n+\n!!!!!!!!\n"
-            "@read2\nACGTACGT\n+\n!!!!!!!!\n"
-        )
+        fastq.write_text("@read1\nACGTACGT\n+\n!!!!!!!!\n" "@read2\nACGTACGT\n+\n!!!!!!!!\n")
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             res = deep_validate_fastq(str(fastq))
-        deprecations = [w for w in caught
-                        if issubclass(w.category, DeprecationWarning)]
-        assert not deprecations, (
-            "deep_validate_fastq emitted DeprecationWarning(s): "
-            + str([str(w.message) for w in deprecations])
+        deprecations = [w for w in caught if issubclass(w.category, DeprecationWarning)]
+        assert not deprecations, "deep_validate_fastq emitted DeprecationWarning(s): " + str(
+            [str(w.message) for w in deprecations]
         )
         assert isinstance(res, dict)
 
@@ -141,6 +135,7 @@ class TestNoDeprecationWarning:
 # ===========================================================================
 # hilight 高度须使用 _get_min_tip_height（jebl 约定）
 # ===========================================================================
+
 
 class TestHilightHeight:
     """hilight band height must be computed with the same jebl time-backward
@@ -164,8 +159,7 @@ class TestHilightHeight:
             if is_term:
                 return depth
             return max(
-                max_tip_depth_from_root(ch, depth + (ch.branch_length or 0.0))
-                for ch in node.clades
+                max_tip_depth_from_root(ch, depth + (ch.branch_length or 0.0)) for ch in node.clades
             )
 
         def max_dist_in_subtree(node, depth=0.0):
@@ -173,8 +167,7 @@ class TestHilightHeight:
             if is_term:
                 return depth
             return max(
-                max_dist_in_subtree(ch, depth + (ch.branch_length or 0.0))
-                for ch in node.clades
+                max_dist_in_subtree(ch, depth + (ch.branch_length or 0.0)) for ch in node.clades
             )
 
         node_depth = styler._calculate_node_height(tree, mrca)
@@ -256,6 +249,7 @@ class TestHilightHeight:
 # 分类学表格环依赖检测（有向图）
 # ===========================================================================
 
+
 class TestCircularDeps:
     """detect_taxonomy_circular_deps must (a) find genuine chained cycles and
     (b) not report normal GTDB tables."""
@@ -295,6 +289,7 @@ class TestCircularDeps:
 # 注解应用统一引擎
 # ===========================================================================
 
+
 class TestAnnotationMerge:
     """color / font annotations must behave identically whether applied via the
     public _apply_annotations_to_tree path or the full _resolve_annotations_copy
@@ -306,8 +301,7 @@ class TestAnnotationMerge:
         # Path 1: direct _apply_annotations_to_tree
         s1 = FigTreeStyler()
         s1.load_content(self.TREE)
-        ann = NodeAnnotation(annotation_type="color", values="#ff0000",
-                             target_taxa=["A", "B"])
+        ann = NodeAnnotation(annotation_type="color", values="#ff0000", target_taxa=["A", "B"])
         tree = s1._parse_tree_with_biopython(s1._tree_content)
         s1._apply_annotations_to_tree(tree, [ann])
         mrca1 = s1._find_mrca_clade(tree, ["A", "B"])
@@ -326,8 +320,7 @@ class TestAnnotationMerge:
     def test_font_annotation_still_works(self):
         s = FigTreeStyler()
         s.load_content(self.TREE)
-        s.set_clade_font(["A", "B"], font_name="Arial",
-                         font_style=1, font_size=12)
+        s.set_clade_font(["A", "B"], font_name="Arial", font_style=1, font_size=12)
         out = s._resolve_annotations_copy()
         assert "!font=" in out
 
@@ -335,6 +328,7 @@ class TestAnnotationMerge:
 # ===========================================================================
 # node_count 语义
 # ===========================================================================
+
 
 class TestNodeCount:
     """node_count must be the TOTAL node count (leaf + internal)."""
@@ -362,6 +356,7 @@ class TestNodeCount:
 # 可配置 domain 等级名（特殊标识符）
 # ===========================================================================
 
+
 @pytest.fixture
 def rank_prefix_restore():
     """Restore the global rank-prefix configuration after each test."""
@@ -381,9 +376,7 @@ class TestConfigurableDomain:
         mapper.parse_labels(self.LABELS)
         assert get_domain_rank_name() == "domain"
         assert len(mapper.resolve_taxon_group(self.LABELS, "LUCA")) == 2
-        assert mapper.resolve_taxon_group(self.LABELS, "LBCA") == [
-            "SP1_d_Bacteria_p_Firmicutes"
-        ]
+        assert mapper.resolve_taxon_group(self.LABELS, "LBCA") == ["SP1_d_Bacteria_p_Firmicutes"]
 
     def test_after_remap_domain_rank(self, rank_prefix_restore):
         # Remap d -> superkingdom (keep other ranks so parsing still works)
@@ -396,14 +389,13 @@ class TestConfigurableDomain:
         mapper.parse_labels(self.LABELS)
         # Special identifiers must still resolve correctly after remapping
         assert len(mapper.resolve_taxon_group(self.LABELS, "LUCA")) == 2
-        assert mapper.resolve_taxon_group(self.LABELS, "LBCA") == [
-            "SP1_d_Bacteria_p_Firmicutes"
-        ]
+        assert mapper.resolve_taxon_group(self.LABELS, "LBCA") == ["SP1_d_Bacteria_p_Firmicutes"]
 
 
 # ===========================================================================
 # 含括号路径须当作文件而非内联 Newick 处理
 # ===========================================================================
+
 
 class TestIsMonophyleticPath:
     """is_monophyletic must treat an existing file path (even one containing
