@@ -8,6 +8,8 @@
 [![Software DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.22043258-green.svg)](https://doi.org/10.5281/zenodo.22043258)
 [![Preprint DOI](https://img.shields.io/badge/preprint-10.64898/2026.08.27.747475-blue.svg)](https://doi.org/10.64898/2026.08.27.747475)
 [![Bioinformatics](https://img.shields.io/badge/topic-bioinformatics-green.svg)](https://github.com/ZengZichao/FigTreeKit)
+[![CI](https://github.com/ZengZichao/FigTreeKit/actions/workflows/ci.yml/badge.svg)](https://github.com/ZengZichao/FigTreeKit/actions/workflows/ci.yml)
+[![ORCID](https://img.shields.io/badge/ORCID-0000--0001--6553--970X-a6ce39?logo=orcid&logoColor=white)](https://orcid.org/0000-0001-6553-970X)
 
 [中文文档](https://github.com/ZengZichao/FigTreeKit/blob/main/README_CN.md) | [English](#)
 
