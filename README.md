@@ -30,14 +30,14 @@ Typical use cases include:
 - **FigTree-Compatible Output**: Generates Nexus files with `[&!hilight]`, `[&!color]`, `[&!font]` annotations
 - **Pythonic API**: Method chaining for intuitive tree styling
 - **Taxonomy-Aware Analysis**: Automatic taxonomy extraction from labels (embedded `_d_`/`_p_`/`_g_`/`_s_`/`_ss_` format and table `d__`/`p__` format)
-- **Monophyly Detection**: Check if taxa form monophyletic groups, with special identifiers (LUCA/LACA/LBCA)
+- **Monophyly Detection**: Check whether the relevant terminal taxa form monophyletic groups, with support for the special identifiers (LUCA/LACA/LBCA)
 - **Clade Collapse**: Collapse clades by taxonomic group name with monophyly validation
 - **Multi-Tree Handling**: Detect and process multiple trees with `split`/`first`/`last`/`random` modes
-- **Deep Input Validation**: Structural checks, negative branch detection, duplicate tip names, malicious character scanning
+- **Deep Input Validation**: Structural checks, negative branch detection, duplicate tip names, control-character and Unicode bidi-override scanning
 - **Real-Time Logging**: ISO 8601 timestamps, stdout flush, optional log file output
 - **Self-Test Mode**: `--self-test` verifies dependencies, parsing, taxonomy, and monophyly logic
 - **Batch Processing**: Process multiple tree files via CLI
-- **Image Rendering**: Export to PNG/PDF/SVG/JPEG without opening FigTree GUI (requires FigTree JAR); for command-line rendering of very large trees, [TreeViewer](https://doi.org/10.1002/ece3.10873) is also worth considering.
+- **Image Rendering**: Export to PNG/PDF/SVG/JPEG without opening FigTree GUI (requires FigTree JAR); for command-line rendering of large trees, [TreeViewer](https://doi.org/10.1002/ece3.10873) is also worth considering.
 
 ---
 
@@ -49,7 +49,7 @@ Typical use cases include:
 | Python API | ✅ | ❌ | ✅ | ✅ | ❌ |
 | Inject FigTree annotations (`!hilight`/`!color`/`!font`) | ✅ | N/A | ❌ | ❌ | ❌ |
 | Taxonomy-aware collapse / monophyly check | ✅ | manual | ⚠️ partial | ⚠️ partial | ❌ |
-| Deep input validation (brackets, negative branches, malicious chars) | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Deep input validation (brackets, negative branches, control characters, etc.) | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Batch CLI processing | ✅ | ❌ | ❌ | ✅ | ✅ |
 | Image rendering (PNG/PDF/SVG/JPEG) | ✅ | ✅ | ❌ | ✅ | ✅ |
 
@@ -64,7 +64,7 @@ See [docs/comparison_EN.md](docs/comparison_EN.md) for the full comparison matri
 ```bash
 pip install figtreekit
 
-# Also apply the requested --background-color/--foreground-color to raster
+# To make the requested --background-color/--foreground-color take effect in raster
 # output (the post-render appearance pass needs Pillow):
 pip install "figtreekit[render]"
 ```
@@ -82,7 +82,7 @@ pip install -e .
 
 - **Required**: Python 3.11, Biopython (>=1.80, <2.0)
 - **Optional**: psutil (for memory logging), Java 8+ (for rendering)
-- **Tested on**: macOS (Apple Silicon) and Ubuntu Linux, Python 3.11, in continuous integration
+- **Tested on**: macOS (Apple Silicon) and Ubuntu Linux (CI runners), Python 3.11, all verified in continuous integration
 
 ### Self-Test
 
@@ -92,7 +92,7 @@ After installation, verify everything works:
 figtreekit --self-test
 ```
 
-This runs 11 built-in checks (dependencies, parsing, taxonomy, monophyly) and requires no external files. See the Quick Start section for expected output.
+This runs 11 built-in checks (dependencies, parsing, taxonomy, and monophyly logic) and requires no external files. See the [Quick Start](#quick-start) section for expected output.
 
 ---
 
@@ -186,13 +186,13 @@ styler.export("collapsed.nex")
 ### CLI Usage
 
 ```bash
-# Collapse by taxon group name
+# Collapse clades by taxonomic group name
 figtreekit tree.nwk -o collapsed.nex --clade Cyanobacteriota
 
 # Strict mode (abort if not monophyletic)
 figtreekit tree.nwk -o collapsed.nex --clade Cyanobacteriota --strict
 
-# Multiple clades
+# Pass multiple clades at once (--clade can be repeated)
 figtreekit tree.nwk -o out.nex --clade Cyanobacteriota --clade Proteobacteria
 
 # Custom taxonomy parsing
@@ -273,7 +273,7 @@ figtreekit tree.nwk --validate --sequences sequences.fasta
 
 Checks include:
 - Duplicate sequence IDs (ERROR)
-- Alphabet validation (DNA/RNA/protein) with invalid character reporting
+- Alphabet validation (DNA/RNA/protein) with invalid-character line numbers
 - Alignment length consistency (WARNING)
 
 See [Input Format Details](#input-format-details) for FASTA/FASTQ format specifications.
@@ -305,7 +305,7 @@ FigTreeKit performs comprehensive validation on all input files:
 
 ### Adversarial Input Protection
 
-- Control characters (`\x00`-`\x1f`) in node names → CRITICAL
+- Control characters (`\x00`-`\x08`, `\x0b`-`\x0c`, `\x0e`-`\x1f`, `\x7f`-`\x9f`; TAB/LF/CR excluded) → CRITICAL
 - Unicode bidi overrides (`\u202E`) → CRITICAL
 - Circular dependencies in taxonomy tables → ERROR
 - Empty files (0 bytes) → CRITICAL
@@ -340,15 +340,17 @@ FigTreeKit injects annotations into the Newick tree string:
 
 | Annotation | Format | Description |
 |------------|--------|-------------|
-| `!hilight` | `[&!hilight={tipCount,height,color}]` | Background highlight for a clade. `tipCount` = number of tips, `height` = node height from root, `color` = hex RGB. |
+| `!hilight` | `[&!hilight={tipCount,height,color}]` | Background highlight for a clade. `tipCount` = number of tips, `height` = node height (minimum descendant tip height), `color` = hex RGB. |
 | `!color` | `[&!color=#RRGGBB]` | Branch color applied to the MRCA node. |
 | `!font` | `[&!font=Name-STYLE-size]` | Font annotation (Java `Font.decode()` format). STYLE: `PLAIN`, `BOLD`, `ITALIC`, `BOLDITALIC`. |
 | `!stroke` | `[&!stroke=N]` | Branch stroke width (forward compatibility; FigTree 1.4.4 ignores this). |
 
 **Example** — highlighting clade (A,B):
 ```
-((A:0.1,B:0.2)[&!hilight={2,0.3,#ff0000}]:0.3,C:0.4);
+((A:0.10000,B:0.20000):0.30000[&!hilight={2,0.0,#ff0000}],C:0.40000):0.00000;
 ```
+
+> Note: the block above is actual exported content — the annotation immediately follows the branch length of the node it applies to (here the MRCA of (A,B)), and branch lengths are always formatted to 5 decimals by the Newick writer.
 
 ### Output File Naming
 
@@ -444,27 +446,27 @@ Input File
     │
     ▼
 ┌─────────────────┐
-│  Format Detect   │  (Newick / Nexus / FASTA / FASTQ)
+│  Format Detect  │  (Newick / Nexus / FASTA / FASTQ)
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│  Deep Validation │  (brackets, branch lengths, duplicates, malicious chars)
+│  Deep Validation│  (brackets, branch lengths, duplicates, control chars)
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│ Multi-Tree Check │  (ask / split / first / last / random / all)
+│ Multi-Tree Check│  (ask / split / first / last / random / all)
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│ Taxonomy Parse   │  (embedded _d_/_p_ or table d__/p__)
+│ Taxonomy Parse  │  (embedded _d_/_p_ or table d__/p__)
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│ Style & Collapse │  (clade highlights, colors, monophyly check)
+│ Style & Collapse│  (clade highlights, colors, monophyly check)
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│  Export / Render │  (Nexus output, optional PNG/PDF/SVG/JPEG)
+│  Export / Render│  (Nexus output, optional PNG/PDF/SVG/JPEG)
 └─────────────────┘
 ```
 
@@ -476,7 +478,7 @@ Input File
 - **Translate blocks**: BEAST-style numeric taxon IDs are automatically resolved
 - **Encoding**: Files with BOM (UTF-8-sig) or legacy encodings (latin-1) are handled transparently
 - **Large trees**: Trees with >10,000 tips trigger a resource warning; use `--low-memory` mode
-- **Empty taxa names**: Detected and rejected as ERROR (cannot map taxonomy)
+- **Empty taxon names**: Detected and rejected as ERROR (cannot map taxonomy)
 - **Duplicate tip names**: Detected and rejected as ERROR (would cause taxonomy mapping conflicts)
 
 ---
@@ -526,7 +528,7 @@ figtreekit --help
 
 ### Common Options
 
-> For the complete and up-to-date list, run `figtreekit --help`.
+> For the complete and up-to-date list of options, run `figtreekit --help`.
 
 ```
 positional arguments:
@@ -536,7 +538,7 @@ options:
   -o, --output OUTPUT   Output Nexus file (or directory for batch)
   --validate            Check compatibility without exporting
   -v, --verbose         Increase verbosity (-v INFO, -vv DEBUG) (default: WARNING)
-  -q, --quiet           Suppress non-error output
+  -q, --quiet           Suppress all non-error output
   --version             Show version, git commit hash, date and dependencies
   --self-test           Run self-diagnostic checks
   --config FILE         JSON config file
@@ -621,6 +623,7 @@ styler.set_clade_color_all(["A", "B"], color="#2196F3")  # color all branches in
 # MRCA-level color to avoid FigTree ClassCastException.
 # Use set_clade_color_all() as the recommended alternative.
 styler.set_clade_font(["A"], font_name="Arial", font_style=FontStyle.BOLD, font_size=14)
+styler.set_clade_stroke(["A", "B"], stroke_width=2.0)
 
 # Labels
 styler.set_tip_labels(is_shown=True, font_size=12)
@@ -637,7 +640,7 @@ styler.set_radial_layout(spread=1.0)
 styler.set_rectilinear_layout(curvature=0, root_length=0)
 
 # Trees
-styler.set_trees(rooting=True, transform=TransformType.PHYLOGRAM)
+styler.set_trees(rooting=True, transform=True, transform_type=TransformType.PHYLOGRAM)
 
 # Legend / node decorations
 styler.set_legend(is_shown=True, position="bottom")
@@ -785,7 +788,9 @@ styler.configure_taxonomy(
 # Direct mapper usage
 mapper = TaxonomyMapper()
 mapper.load_mapping("taxonomy.tsv")
-groups = mapper.identify_groups(rank="genus")
+# labels are the terminal taxa to be grouped (parsed from the loaded tree)
+labels = [t.name for t in styler.parse_tree().get_terminals()]
+groups = mapper.identify_groups(labels, rank="genus")
 
 # Taxonomy analysis with automatic monophyly detection (requires pattern or mapping_file)
 result = styler.analyze_taxonomy(mapping_file="taxonomy.tsv", rank="phylum")
@@ -817,7 +822,7 @@ from figtreekit import (
 tax = parse_taxonomy("d__Bacteria;p__Cyanobacteriota", mode="reverse")
 # -> {"domain": "Bacteria", "phylum": "Cyanobacteriota", ...}
 
-# Check monophyly (standardized signature)
+# Check monophyly (standardized signature; rooted is kept for signature compatibility but currently has no effect)
 mono = is_monophyletic("tree.nwk", "Cyanobacteriota", rooted=True)
 # -> True / False
 
@@ -831,7 +836,7 @@ report = cross_validate("tree.nwk", "sequences.fasta", strict=True)
 
 ---
 
-## Error Codes
+## Exit Codes and Exceptions
 
 | Code | Meaning | Description |
 |------|---------|-------------|
@@ -848,7 +853,8 @@ report = cross_validate("tree.nwk", "sequences.fasta", strict=True)
 | `FigTreeKitError` | `Exception` | Base class for all FigTreeKit exceptions |
 | `ParseError` | `FigTreeKitError` | Tree/sequence file parsing errors |
 | `ValidationError` | `FigTreeKitError` | Input validation failure |
-| `ExportError` | `FigTreeKitError` | Export/render errors |
+| `ExportError` | `FigTreeKitError` | Nexus file export failures |
+| `RenderError` | `ExportError` | FigTree JAR rendering or renderer-setup failures |
 | `PhyloFormatError` | `ParseError` | File format error (library mode API alias) |
 | `TaxonomyConflictError` | `ValidationError` | Taxonomy conflict (library mode API alias) |
 | `MonophylyError` | `ValidationError` | Monophyly analysis error (library mode API alias) |
@@ -872,20 +878,20 @@ Press `Ctrl+C` to gracefully terminate — progress is displayed, temporary file
 
 ### Portability Design
 
-- **Encoding**: UTF-8 with BOM and latin-1 fallback handled transparently
+- **Encoding**: UTF-8 first, with transparent utf-8-sig (BOM) and latin-1 fallbacks
 - **Newlines**: Unix `\n` on all platforms
 - **Paths**: `pathlib.Path` throughout (platform-independent path handling)
-- **Temporary files**: Auto-cleaned on exit, permissions set to 0o600 (HPC-safe), including Ctrl+C
+- **Temporary files**: Auto-cleaned on exit (including after `Ctrl+C` interrupts), with permissions set to 0o600 (HPC-safe)
 
-> **Note**: The full test suite runs on macOS and Ubuntu (Python 3.11) in continuous integration, and both are supported deployment environments. Windows is **not** verified: it has never been run in CI or locally, so compatibility with Windows is not claimed.
+> **Note**: Although the code uses platform-independent design patterns, the full test suite runs only on macOS and Ubuntu (Python 3.11) in continuous integration, and both are supported deployment environments. Windows is **not** verified: it has never been run in CI or locally, so compatibility with Windows is not claimed.
 
 ---
 
 ## Large-Scale Data
 
 For trees with more than 10,000 tips:
-- An INFO log entry warns about memory requirements
-- Use `--low-memory` to stream sequence IDs during cross-validation
+- A WARNING log entry flags the memory requirement
+- Use `--low-memory` to reduce memory usage by streaming sequence IDs during cross-validation
 - Install `psutil` for DEBUG-level memory logging
 
 ### Resource Estimates
@@ -901,16 +907,23 @@ For trees with more than 10,000 tips:
 
 ## FigTree Rendering Setup
 
-> **Alternative note**: FigTreeKit rendering relies on the FigTree JAR to preserve FigTree annotations and styles in automated workflows. If you only need a **cross-platform GUI/CLI tool to render very large trees** (>100,000 taxa) without FigTree-compatible Nexus annotations, consider [TreeViewer](https://doi.org/10.1002/ece3.10873).
+> **Alternative note**: FigTreeKit rendering relies on the FigTree JAR to preserve FigTree annotations and styles in automated workflows. If you only need a **cross-platform GUI/CLI tool to directly render very large trees** (>100,000 tips) without FigTree-compatible Nexus annotations, consider [TreeViewer](https://doi.org/10.1002/ece3.10873).
+
+### Check Status
 
 ```bash
-# Check status
 figtreekit --check-figtree
+```
 
-# Download and compile
+### Download and Compile
+
+```bash
 figtreekit --setup-figtree
+```
 
-# Use existing JAR
+### Use Existing JAR
+
+```bash
 figtreekit --setup-figtree --figtree-jar /path/to/figtree.jar
 ```
 
@@ -1008,15 +1021,15 @@ When you redistribute FigTreeKit or the patched FigTree JAR, the copyleft terms 
 
 ## Tested Environment
 
-This software is developed and tested on the following environment:
+This software is developed and tested in the following environments:
 
 | OS | Python | Biopython | Status |
 |----|--------|-----------|--------|
 | macOS (Apple Silicon) | 3.11 | 1.87 / 1.88 | ✅ Pass (CI) |
-| Ubuntu Linux (CI runner) | 3.11 | 1.87 / 1.88 | ✅ Pass (CI) |
+| Ubuntu Linux (CI runners) | 3.11 | 1.87 / 1.88 | ✅ Pass (CI) |
 | Windows | – | – | ⚠️ Not verified |
 
-> **Note**: Deployment environments verified in CI are macOS and Ubuntu with Python 3.11. The published benchmark and coverage figures were produced in a separate frozen environment (see `benchmarks/benchmark_meta.json`: macOS, Apple M5, Python 3.14.6, Biopython 1.87, Java 1.8.0_501) because the benchmark ladder needs a newer interpreter than the deployment pin; both environment files ship in the release (`environment.yml` for deployment, `environment-benchmark.yml` for the benchmark). Compatibility with Windows, and with Python versions other than 3.11 (deployment) and 3.14.6 (benchmark), has not been verified.
+> **Note**: Deployment environments verified in CI are macOS and Ubuntu with Python 3.11. The published benchmark and coverage figures were produced in a separate frozen environment (see `benchmarks/benchmark_meta.json`: macOS, Apple M5, Python 3.14.6, Biopython 1.87, Java 1.8.0_501) because the benchmark size ladder (from 50 to 10,000 tips) needs a newer interpreter than the deployment pin; both environment files ship in the release (`environment.yml` for deployment, `environment-benchmark.yml` for the benchmark). Compatibility with Windows, and with Python versions other than 3.11 (deployment) and 3.14.6 (benchmark), has not been verified.
 
 To reproduce the exact environment:
 ```bash

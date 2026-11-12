@@ -1,6 +1,6 @@
 # FigTreeKit
 
-**系统发育树 FigTree 可视化样式编程工具**
+**面向 FigTree 可视化的系统发育树程序化样式工具**
 
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
 [![License: GPL v2+](https://img.shields.io/badge/License-GPL%20v2+-blue.svg)](https://spdx.org/licenses/GPL-2.0-or-later.html)
@@ -9,7 +9,7 @@
 [![Preprint DOI](https://img.shields.io/badge/preprint-10.64898/2026.08.27.747475-blue.svg)](https://doi.org/10.64898/2026.08.27.747475)
 [![Bioinformatics](https://img.shields.io/badge/topic-bioinformatics-green.svg)](https://github.com/ZengZichao/FigTreeKit)
 
-[English](https://github.com/ZengZichao/FigTreeKit/blob/main/README_EN.md) | [中文](#)
+[English](https://github.com/ZengZichao/FigTreeKit/blob/main/README_EN.md) | [中文文档](#)
 
 ---
 
@@ -18,24 +18,24 @@
 FigTreeKit 是一个 Python 库，用于系统发育树的程序化出版级样式设置。它解决了进化生物学和比较基因组学中**可复现、可脚本化的树可视化**问题——将原始 Newick/Nexus 树转换为带注解的、出版级质量的图形，兼容 [FigTree](http://tree.bio.ed.ac.uk/software/figtree/)。
 
 典型使用场景：
-- 对系统发育基因组学树进行分类群高亮
+- 在系统发育基因组学数据树上按分类群添加高亮样式
 - 批量处理数百棵基因树，保持一致的格式
-- 按分类群名称验证和折叠分支
-- 从 BEAST/RAxML/IQ-TREE 输出生成出版级图片
+- 按分类群名称验证并折叠类群（clade，即演化支）
+- 由 BEAST/RAxML/IQ-TREE 输出生成出版级图形
 
 ### 核心特性
 
 - **FigTree 兼容输出**：生成带 `[&!hilight]`、`[&!color]`、`[&!font]` 注解的 Nexus 文件
 - **Pythonic API**：方法链式调用，直观的树样式设置
 - **分类学感知分析**：自动从标签提取分类信息（嵌入式 `_d_`/`_p_`/`_g_`/`_s_`/`_ss_` 格式和表格 `d__`/`p__` 格式）
-- **单系群检测**：检测类群是否为单系群，支持特殊标识符（LUCA/LACA/LBCA）
-- **分支折叠**：按分类群名称折叠分支，带单系性验证
+- **单系性检测**：检测相关末端分类单元是否构成单系群，支持特殊标识符（LUCA/LACA/LBCA）
+- **类群折叠**：按分类群名称折叠目标类群，折叠前先验证其单系性
 - **多树处理**：检测并处理多棵树，支持 `split`/`first`/`last`/`random` 模式
-- **深度输入验证**：结构检查、负分支检测、重复末端名、恶意字符扫描
+- **深度输入验证**：结构检查、负分支检测、重复末端名、控制字符与双向文本覆盖扫描
 - **实时日志**：ISO 8601 时间戳、stdout 刷新、可选日志文件输出
-- **自检模式**：`--self-test` 验证依赖、解析、分类学和单系群逻辑
+- **自检模式**：`--self-test` 验证依赖、解析、分类学和单系性逻辑
 - **批量处理**：通过 CLI 处理多个树文件
-- **图片渲染**：无需打开 FigTree GUI 即可导出 PNG/PDF/SVG（需要 FigTree JAR）；若只需命令行直接渲染超大规模树，也可考虑 [TreeViewer](https://doi.org/10.1002/ece3.10873)
+- **图片渲染**：无需打开 FigTree GUI 即可导出 PNG/PDF/SVG/JPEG（需要 FigTree JAR）；若只需在命令行渲染大规模树，也可考虑 [TreeViewer](https://doi.org/10.1002/ece3.10873)
 
 ---
 
@@ -46,10 +46,10 @@ FigTreeKit 是一个 Python 库，用于系统发育树的程序化出版级样�
 | 程序化/脚本化样式 | ✅ | ❌ | ⚠️ 有限 | ⚠️ 有限 | ✅ (CLI) |
 | Python API | ✅ | ❌ | ✅ | ✅ | ❌ |
 | 注入 FigTree 注解（`!hilight`/`!color`/`!font`） | ✅ | N/A | ❌ | ❌ | ❌ |
-| 分类学感知折叠 / 单系群检测 | ✅ | 手动 | ⚠️ 部分 | ⚠️ 部分 | ❌ |
-| 深度输入验证（括号、负分支、恶意字符等） | ✅ | ❌ | ❌ | ❌ | ❌ |
+| 分类学感知折叠 / 单系性检测 | ✅ | 手动 | ⚠️ 部分 | ⚠️ 部分 | ❌ |
+| 深度输入验证（括号、负分支、控制字符等） | ✅ | ❌ | ❌ | ❌ | ❌ |
 | 批量 CLI 处理 | ✅ | ❌ | ❌ | ✅ | ✅ |
-| 图片渲染（PNG/PDF/SVG） | ✅ | ✅ | ❌ | ✅ | ✅ |
+| 图片渲染（PNG/PDF/SVG/JPEG） | ✅ | ✅ | ❌ | ✅ | ✅ |
 
 完整功能矩阵与复现方法见 [docs/comparison_CN.md](docs/comparison_CN.md)。
 
@@ -80,7 +80,7 @@ pip install -e .
 
 - **必需**：Python 3.11，Biopython (>=1.80, <2.0)
 - **可选**：psutil（内存日志），Java 8+（渲染）
-- **测试平台**：macOS Tahoe 26.5.2（Apple Silicon）
+- **测试平台**：macOS（Apple Silicon）与 Ubuntu Linux（CI 运行器），Python 3.11，均在持续集成中验证
 
 ### 自检
 
@@ -90,7 +90,7 @@ pip install -e .
 figtreekit --self-test
 ```
 
-详见快速开始章节的预期输出。
+该命令运行 11 项内置检查（依赖、解析、分类学、单系性逻辑），无需任何外部输入文件。预期输出详见[快速开始](#快速开始)章节。
 
 ---
 
@@ -117,7 +117,7 @@ figtreekit --self-test
   All 11 checks passed.
 ```
 
-### 2. Python API
+### 2. Python API 基础用法
 
 ```python
 from figtreekit import FigTreeStyler, LayoutType, FontStyle
@@ -130,7 +130,7 @@ styler.set_tip_labels(is_shown=True, font_size=12)
 styler.export("output.nex")
 ```
 
-### 3. 命令行
+### 3. 命令行用法
 
 ```bash
 figtreekit input.tre -o output.nex --layout polar --tip-labels-show
@@ -184,9 +184,16 @@ styler.export("collapsed.nex")
 ### CLI 用法
 
 ```bash
+# 按分类群名称折叠类群
 figtreekit tree.nwk -o collapsed.nex --clade Cyanobacteriota
+
+# 严格模式（非单系群时终止）
 figtreekit tree.nwk -o collapsed.nex --clade Cyanobacteriota --strict
+
+# 一次传入多个类群（--clade 可重复指定）
 figtreekit tree.nwk -o out.nex --clade Cyanobacteriota --clade Proteobacteria
+
+# 自定义分类学解析
 figtreekit tree.nwk -o out.nex --taxonomy-delimiter-mode greedy
 figtreekit tree.nwk -o out.nex --taxonomy-table-sep "|"
 figtreekit tree.nwk -o out.nex --taxonomy-levels "k:kingdom,ss:subspecies"
@@ -196,10 +203,10 @@ figtreekit tree.nwk -o out.nex --taxonomy-levels "k:kingdom,ss:subspecies"
 
 | 标识符 | 描述 |
 |--------|------|
-| `LUCA` | 最后共同祖先（所有 Bacteria + Archaea） |
+| `LUCA` | 最后普遍共同祖先（所有 Bacteria + Archaea） |
 | `LACA` | 最后古菌共同祖先 |
 | `LBCA` | 最后细菌共同祖先 |
-| `root` | 树的根节点（所有末端） |
+| `root` | 树的根节点（所有末端分类单元） |
 
 ```python
 result = styler.check_monophyly_by_group("LUCA")
@@ -207,7 +214,7 @@ result = styler.check_monophyly_by_group("LUCA")
 
 ### 外部分类学表格
 
-当标签不含分类信息时，可提供映射文件（TSV/CSV，两列格式）。详见输入格式详情章节。
+当标签不含分类信息时，可提供映射文件（TSV/CSV，两列格式）。完整规范详见[输入格式详情](#输入格式详情)章节。
 
 ```bash
 figtreekit tree.nwk -o out.nex --clade Cyanobacteriales
@@ -217,7 +224,7 @@ figtreekit tree.nwk -o out.nex --clade Cyanobacteriales
 
 ## 多树处理
 
-当文件包含多棵树时：
+当文件包含多棵树（如含多条 `tree` 语句的 Nexus 文件）时：
 
 ```bash
 figtreekit multi.nex -o out.nex                    # 默认：打印摘要并终止（退出码 2）
@@ -235,10 +242,19 @@ figtreekit multi.nex -o out.nex --multi-tree all    # 同 split，处理所有�
 FigTreeKit 可验证 FASTA/FASTQ 文件：
 
 ```bash
+# 验证 FASTA
 figtreekit sequences.fasta --validate
+
+# 指定期望的分子类型进行验证
 figtreekit sequences.fasta --validate --mol-type DNA
+
+# 跳过比对长度检查
 figtreekit aligned.fasta --validate --skip-length-check
+
+# 将树末端名与序列 ID 做交叉验证
 figtreekit tree.nwk -o out.nex --sequences sequences.fasta
+
+# 在验证模式下同时执行交叉验证
 figtreekit tree.nwk --validate --sequences sequences.fasta
 ```
 
@@ -249,11 +265,13 @@ figtreekit tree.nwk --validate --sequences sequences.fasta
 - 字母表验证（DNA/RNA/protein）并报告无效字符行号
 - 比对长度一致性（WARNING）
 
-详见输入格式详情章节的 FASTA/FASTQ 格式规范。
+详见[输入格式详情](#输入格式详情)章节的 FASTA/FASTQ 格式规范。
 
 ---
 
 ## 深度输入验证
+
+FigTreeKit 对所有输入文件执行全面验证：
 
 ### 树文件
 
@@ -264,7 +282,7 @@ figtreekit tree.nwk --validate --sequences sequences.fasta
 | 空节点名 | ERROR |
 | 重复末端名 | ERROR |
 | 自循环检测 | ERROR |
-| 控制字符 / Unicode 双向文本 | CRITICAL（终止） |
+| 控制字符 / Unicode 双向文本覆盖字符 | CRITICAL（终止） |
 
 ### 序列文件
 
@@ -276,7 +294,7 @@ figtreekit tree.nwk --validate --sequences sequences.fasta
 
 ### 对抗性输入防护
 
-- 控制字符（`\x00`-`\x1f`）→ CRITICAL
+- 控制字符（`\x00`-`\x08`、`\x0b`-`\x0c`、`\x0e`-`\x1f`、`\x7f`-`\x9f`；不含 TAB/LF/CR）→ CRITICAL
 - Unicode 双向文本覆盖（`\u202E`）→ CRITICAL
 - 分类学表格循环依赖 → ERROR
 - 空文件（0 字节）→ CRITICAL
@@ -307,21 +325,30 @@ end;
 
 ### 注解格式
 
+FigTreeKit 将注解注入到 Newick 树字符串中：
+
 | 注解 | 格式 | 描述 |
 |------|------|------|
-| `!hilight` | `[&!hilight={tipCount,height,color}]` | clade 背景高亮 |
-| `!color` | `[&!color=#RRGGBB]` | 分支颜色 |
-| `!font` | `[&!font=Name-STYLE-size]` | 字体注解（Java `Font.decode()` 格式） |
-| `!stroke` | `[&!stroke=N]` | 分支描边宽度（前向兼容） |
+| `!hilight` | `[&!hilight={tipCount,height,color}]` | 类群背景高亮。`tipCount` = 该类群内的末端数量，`height` = 该节点后代末端的最小高度，`color` = 十六进制 RGB 颜色。 |
+| `!color` | `[&!color=#RRGGBB]` | 作用于 MRCA 节点的分支颜色。 |
+| `!font` | `[&!font=Name-STYLE-size]` | 字体注解（Java `Font.decode()` 格式）。STYLE 取值：`PLAIN`、`BOLD`、`ITALIC`、`BOLDITALIC`。 |
+| `!stroke` | `[&!stroke=N]` | 分支描边宽度（前向兼容；FigTree 1.4.4 会忽略此注解）。 |
+
+**示例** — 高亮类群 (A,B)：
+```
+((A:0.10000,B:0.20000):0.30000[&!hilight={2,0.0,#ff0000}],C:0.40000):0.00000;
+```
+
+> 说明：以上为实际导出内容——注解紧随其所作用节点（此处为 (A,B) 的 MRCA）的分支长度之后，分支长度由 Newick 写出器统一格式化为 5 位小数。
 
 ### 输出文件命名
 
-| 模式 | 输出模式 |
+| 模式 | 输出文件命名 |
 |------|---------|
 | 单棵树 | `<output>.nex`（用户指定） |
 | 批量 | `<input_stem>.nex` 在输出目录中 |
 | 多树 split | `<output>_tree1.nex`、`<output>_tree2.nex`、... |
-| 折叠 clade | 同输入（clade 就地替换） |
+| 折叠类群 | 同输入（类群就地替换） |
 
 ---
 
@@ -346,6 +373,16 @@ FigTreeKit 遵循以下标准：
 - 保留括号注释：`(A:0.1[&posterior=0.95],B:0.2);`
 
 **Nexus**（`.nex`, `.nexus`, `.nx`）：
+```
+#NEXUS
+begin taxa;
+    dimensions ntax=3;
+    taxlabels A B C ;
+end;
+begin trees;
+    tree TREE1 = ((A:0.1,B:0.2):0.3,C:0.4);
+end;
+```
 - 支持 translate block（BEAST 格式）
 - 保留所有树（全部写入输出）
 - 解析并合并现有的 `figtree` block
@@ -365,11 +402,12 @@ RS_GCF_000013425.1	d__Archaea;p__Euryarchaeota;c__Methanomicrobia;o__Methanosarc
 无表头：
 ```
 GB_GCA_000252485.1	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Cyanobacteriales;f__Prochloraceae;g__Prochloron;s__
+RS_GCF_000013425.1	d__Archaea;p__Euryarchaeota;c__Methanomicrobia;o__Methanosarcinales;f__Methanosarcinaceae;g__Methanosarcina;s__
 ```
 
-- 分隔符：tab（`.tsv`）或逗号（`.csv`），自动检测
+- 分隔符：tab（`.tsv`）或逗号（`.csv`），按文件扩展名自动检测
 - 强制分隔符：`--table-sep ","`
-- 缺失等级（如 `s__` 无值）→ 存储为空字符串
+- 缺失分类级别（如 `s__` 无值）→ 存储为空字符串
 - 格式错误行：`--ignore-malformed` 跳过而非终止
 
 ### 支持的输入格式汇总
@@ -397,39 +435,39 @@ GB_GCA_000252485.1	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Cyanobact
     │
     ▼
 ┌─────────────────┐
-│  格式检测        │  (Newick / Nexus / FASTA / FASTQ)
+│  格式检测       │  (Newick / Nexus / FASTA / FASTQ)
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│  深度验证        │  (括号、分支长度、重复、恶意字符)
+│  深度验证       │  (括号、分支长度、重复、控制字符)
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│ 多树检查         │  (ask / split / first / last / random / all)
+│ 多树检查        │  (ask / split / first / last / random / all)
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│ 分类学解析       │  (嵌入式 _d_/_p_ 或表格 d__/p__)
+│ 分类学解析      │  (嵌入式 _d_/_p_ 或表格 d__/p__)
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│ 样式与折叠       │  (clade 高亮、颜色、单系性检查)
+│ 样式与折叠      │  (类群高亮、颜色、单系性检查)
 └────────┬────────┘
          ▼
 ┌─────────────────┐
-│  导出 / 渲染     │  (Nexus 输出，可选 PNG/PDF/SVG)
+│  导出 / 渲染    │  (Nexus 输出，可选 PNG/PDF/SVG/JPEG)
 └─────────────────┘
 ```
 
 ### 常见问题与边界情况
 
-- **引号分类单元名**：含空格或特殊字符的名称必须在 Newick 中单引号包裹
+- **引号分类单元名**：含空格或特殊字符的名称必须在 Newick 中单引号包裹：`('Species A':0.1,'Species B':0.2);`
 - **缺失分支长度**：无分支长度的树有效；FigTree 将显示等长分支
 - **多歧分支**：未解析节点（超过 2 个子节点）完全支持
 - **Translate block**：BEAST 风格的数字分类 ID 自动解析
 - **编码**：带 BOM（UTF-8-sig）或旧编码（latin-1）的文件透明处理
 - **大树**：超过 10,000 个末端的树触发资源警告；使用 `--low-memory` 模式
-- **空分类名**：检测并拒绝为 ERROR（无法映射分类学）
+- **空分类单元名**：检测并拒绝为 ERROR（无法映射分类学）
 - **重复末端名**：检测并拒绝为 ERROR（会导致分类学映射冲突）
 
 ---
@@ -459,6 +497,7 @@ GB_GCA_000252485.1	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Cyanobact
 ### 日志文件
 
 ```bash
+# 将日志写入文件（全部级别，UTF-8）
 figtreekit tree.nwk -o out.nex --log-file figtreekit.log
 ```
 
@@ -488,7 +527,7 @@ figtreekit --help
   -o, --output OUTPUT   输出 Nexus 文件（或批量输出目录）
   --validate            仅检查兼容性不导出
   -v, --verbose         增加详细度 (-v INFO, -vv DEBUG)（默认: WARNING）
-  -q, --quiet           抑制非错误输出
+  -q, --quiet           抑制所有非错误输出
   --version             显示版本、Git 提交哈希、日期和依赖
   --self-test           运行自诊断检查
   --config FILE         JSON 配置文件
@@ -498,15 +537,15 @@ figtreekit --help
   --strip-annotations   移除树中的括号注释（NHX/bootstrap/posterior）以减小文件体积
 
 树:
-  --clade NAME          按分类群名称折叠 clade
+  --clade NAME          按分类群名称折叠类群
   --strict              非单系群时终止（默认: 警告并跳过）
   --multi-tree MODE     多树处理（默认: ask）
                         选项: ask/split/first/last/random/all
   --rooted              设置树为有根树
-  --unrooted            设置树为无根树（与 --rooted 互斥时优先生效）
+  --unrooted            设置树为无根树（与 --rooted 同时指定时，本选项优先）
 
 分类学:
-  --taxonomy-levels SPEC          扩展等级前缀（如 "k:kingdom,ss:subspecies"）
+  --taxonomy-levels SPEC          扩展分类级别前缀（如 "k:kingdom,ss:subspecies"）
   --taxonomy-delimiter-mode MODE  reverse/greedy/segment（默认: reverse）
   --taxonomy-table-sep CHAR       分类字符串分隔符（默认: ";"）
   --taxonomy-source-priority P    embedded/table（默认: table）
@@ -565,11 +604,11 @@ styler.set_polar_layout(angular_range=270, root_angle=45)
 # 外观
 styler.set_appearance(background_color="#FFFFFF", branch_line_width=2.0)
 
-# Clade 注解
+# 类群注解
 styler.highlight_clade(["A", "B"], color="#FF0000")
 styler.set_clade_color(["A", "B"], color="#2196F3")
 styler.set_clade_color_all(["A", "B"], color="#2196F3")  # 子树全部分支着色
-# 注意：set_clade_color + highlight_clade 作用于相同分类群时，
+# 注意：set_clade_color + highlight_clade 作用于相同分类单元时，
 # MRCA 级别的颜色会被丢弃以避免 FigTree ClassCastException。
 # 推荐使用 set_clade_color_all() 替代。
 styler.set_clade_font(["A"], font_name="Arial", font_style=FontStyle.BOLD, font_size=14)
@@ -590,7 +629,7 @@ styler.set_radial_layout(spread=1.0)
 styler.set_rectilinear_layout(curvature=0, root_length=0)
 
 # 树属性
-styler.set_trees(rooting=True, transform=TransformType.PHYLOGRAM)
+styler.set_trees(rooting=True, transform=True, transform_type=TransformType.PHYLOGRAM)
 
 # 图例 / 节点装饰
 styler.set_legend(is_shown=True, position="bottom")
@@ -613,7 +652,7 @@ styler.render("tree.png")
 styler.render("tree.pdf", format="PDF", width=1600, height=1000)
 ```
 
-### 单系群与折叠
+### 单系性与折叠
 
 ```python
 # 检查单系性
@@ -621,12 +660,13 @@ result = styler.check_monophyly(["A", "B", "C"])
 result = styler.check_monophyly_by_group("Cyanobacteriales")
 result = styler.check_monophyly_by_group("LUCA")
 
-# 折叠分支
+# 折叠类群
 styler.collapse_clade(["A", "B"], label="Clade1")
 styler.collapse_by_group("Cyanobacteriales")
 styler.collapse_by_group("Cyanobacteriales", label="Cyano")
 
-# 嵌套折叠：同时折叠内外分支（自动按大小排序处理）
+# 嵌套折叠：同时折叠内层与外层类群
+# （自动按类群大小排序，内层优先处理）
 styler.collapse_clade(["A", "B"], label="Inner")
 styler.collapse_clade(["A", "B", "C"], label="Outer")  # Inner 和 Outer 都会出现在输出中
 
@@ -648,7 +688,7 @@ styler.clear_collapses()
 # 移除树中所有括号注释（NHX、bootstrap、posterior 等），减小输出文件体积
 styler.strip_annotations()
 
-# 获取 clade 详细信息（MRCA、后代末端、单系性等）
+# 获取类群详细信息（MRCA、后代末端、单系性等）
 info = styler.get_clade_info(["A", "B", "C"])
 print(info["is_monophyletic"], info["mrca_terminal_count"])
 ```
@@ -695,7 +735,7 @@ for err in dv["errors"]:
 dv = deep_validate_fasta("seqs.fasta", expected_alphabet="DNA")
 dv = deep_validate_fastq("reads.fastq", expected_alphabet="DNA")
 
-# Styler 级别验证
+# 树样式器（Styler）级别验证
 issues = styler.validate()
 
 # 生物学合理性检查（退化的树、全零分支、超大树警告）
@@ -725,7 +765,7 @@ tax = parse_taxonomy_auto("GB_GCA_000252485.1_d_Bacteria_p_Cyanobacteriota_c_Cya
 tax = parse_taxonomy_auto("d__Archaea;p__Euryarchaeota;s__")
 # {"domain": "Archaea", "phylum": "Euryarchaeota", "species": ""}
 
-# Styler 分类学配置
+# 树样式器（Styler）分类学配置
 styler.configure_taxonomy(
     delimiter_mode="reverse",      # reverse / greedy / segment
     table_sep=";",
@@ -737,9 +777,11 @@ styler.configure_taxonomy(
 # 直接使用映射器
 mapper = TaxonomyMapper()
 mapper.load_mapping("taxonomy.tsv")
-groups = mapper.identify_groups(rank="genus")
+# labels 为待分组的末端标签（从已加载的树解析得到）
+labels = [t.name for t in styler.parse_tree().get_terminals()]
+groups = mapper.identify_groups(labels, rank="genus")
 
-# 分类学分析并自动识别单系群（需提供 pattern 或 mapping_file）
+# 分类学分析并自动检测单系性（需提供 pattern 或 mapping_file）
 result = styler.analyze_taxonomy(mapping_file="taxonomy.tsv", rank="phylum")
 # 便捷方法：等价于 analyze_taxonomy(mapping_file=...)
 result = styler.analyze_taxonomy_from_mapping("taxonomy.tsv", rank="phylum")
@@ -751,12 +793,12 @@ taxonomy = styler.parse_label_taxonomy("genus_species")
 completeness = styler.check_taxonomy_completeness(mapping_file="taxonomy.tsv")
 ```
 
-### 库模式 API（Library Mode API）
+### 库模式 API
 
 ```python
 from figtreekit import (
     parse_taxonomy,        # 标准化分类学解析
-    is_monophyletic,       # 单系群判定
+    is_monophyletic,       # 单系性判定
     load_tree,             # 树加载
     cross_validate,        # 交叉验证
     # 标准化异常体系
@@ -769,7 +811,7 @@ from figtreekit import (
 tax = parse_taxonomy("d__Bacteria;p__Cyanobacteriota", mode="reverse")
 # -> {"domain": "Bacteria", "phylum": "Cyanobacteriota", ...}
 
-# 判定单系群（标准化签名）
+# 判定单系性（标准化签名；rooted 参数在当前版本不生效，保留仅为签名兼容）
 mono = is_monophyletic("tree.nwk", "Cyanobacteriota", rooted=True)
 # -> True / False
 
@@ -783,7 +825,7 @@ report = cross_validate("tree.nwk", "sequences.fasta", strict=True)
 
 ---
 
-## 错误码
+## 退出码与异常
 
 | 代码 | 含义 | 描述 |
 |------|------|------|
@@ -800,7 +842,8 @@ report = cross_validate("tree.nwk", "sequences.fasta", strict=True)
 | `FigTreeKitError` | `Exception` | 所有 FigTreeKit 异常的基类 |
 | `ParseError` | `FigTreeKitError` | 树/序列文件解析错误 |
 | `ValidationError` | `FigTreeKitError` | 输入验证失败 |
-| `ExportError` | `FigTreeKitError` | 导出/渲染错误 |
+| `ExportError` | `FigTreeKitError` | Nexus 文件导出失败 |
+| `RenderError` | `ExportError` | FigTree JAR 渲染或渲染器安装失败 |
 | `PhyloFormatError` | `ParseError` | 文件格式错误（库模式 API 别名） |
 | `TaxonomyConflictError` | `ValidationError` | 分类学冲突（库模式 API 别名） |
 | `MonophylyError` | `ValidationError` | 单系性分析错误（库模式 API 别名） |
@@ -824,20 +867,20 @@ figtreekit tree.nwk -o new/dir/output.nex           # 自动创建目录
 
 ### 可移植性设计
 
-- **编码**：UTF-8，带 BOM 和 latin-1 回退透明处理
+- **编码**：先按 UTF-8 读取，自动回退到 utf-8-sig（含 BOM）与 latin-1，对用户透明
 - **换行符**：所有平台使用 Unix `\n`
 - **路径**：全程使用 `pathlib.Path`（平台无关的路径处理）
-- **临时文件**：退出时自动清理，权限设为 0o600（HPC 安全），包括 `Ctrl+C`
+- **临时文件**：退出时自动清理（`Ctrl+C` 中断时同样清理），权限设为 0o600（HPC 安全）
 
-> **注意**：尽管代码使用了平台无关的设计模式，FigTreeKit 仅在 macOS Tahoe 26.5.2 上经过测试。不保证与 Windows 或 Linux 的兼容性。
+> **注意**：尽管代码采用了平台无关的设计模式，完整测试套件仍仅在 CI 中的 macOS 与 Ubuntu（Python 3.11）两种平台上运行，两者都是受支持的部署环境。Windows **未**经验证：从未在 CI 或本地运行过，因此不声称兼容 Windows。
 
 ---
 
 ## 大规模数据
 
 超过 10,000 个末端的树：
-- INFO 日志提示内存需求
-- 使用 `--low-memory` 降低内存模式
+- WARNING 日志提示内存需求
+- 使用 `--low-memory` 降低内存占用（交叉验证时流式读取序列 ID）
 - 安装 `psutil` 获取 DEBUG 级内存日志
 
 ### 资源估算
@@ -853,7 +896,7 @@ figtreekit tree.nwk -o new/dir/output.nex           # 自动创建目录
 
 ## FigTree 渲染设置
 
-> **替代方案提示**：FigTreeKit 的渲染依赖 FigTree JAR，目的是在自动化流程中保留 FigTree 注解与样式。如果你只需要一个**跨平台 GUI/CLI 工具直接渲染超大规模树**（>100,000 taxa），而不需要 FigTree 兼容的 Nexus 注解，可以考虑 [TreeViewer](https://doi.org/10.1002/ece3.10873)。
+> **替代方案提示**：FigTreeKit 的渲染依赖 FigTree JAR，目的是在自动化流程中保留 FigTree 注解与样式。如果你只需要一个**跨平台 GUI/CLI 工具直接渲染超大规模树**（超过 100,000 个末端），而不需要 FigTree 兼容的 Nexus 注解，可以考虑 [TreeViewer](https://doi.org/10.1002/ece3.10873)。
 
 ### 检查状态
 
@@ -878,9 +921,9 @@ figtreekit --setup-figtree --figtree-jar /path/to/figtree.jar
 | 格式 | 扩展名 | 适用场景 |
 |------|--------|---------|
 | PNG | `.png` | 网页、演示、快速预览 |
-| PDF | `.pdf` | 出版、矢量编辑 |
+| PDF | `.pdf` | 出版、矢量编辑（Adobe Illustrator） |
 | SVG | `.svg` | 网页、可缩放矢量图形 |
-| JPEG | `.jpg` | 邮件、小文件大小 |
+| JPEG | `.jpg` | 邮件、小文件大小（有损压缩） |
 
 ```bash
 # PNG（默认，适合大多数场景）
@@ -899,7 +942,7 @@ figtreekit tree.nwk -o tree.nex --render tree.png --render-width 2000 --render-h
 figtreekit tree.nwk -o tree.nex --render tree.out --render-format PNG
 ```
 
-详见 [docs/user_manual_CN.md](docs/user_manual_CN.md) 了解详细编译说明。
+编译步骤的详细说明见 [docs/user_manual_CN.md](docs/user_manual_CN.md)。
 
 ---
 
@@ -939,12 +982,12 @@ figtreekit tree.nwk -o tree.nex --render tree.out --render-format PNG
 
 FigTreeKit 是根据 **GNU 通用公共许可证第 2 版或更高版本（GPL-2.0-or-later）** 授权的自由软件。
 
-本程序按“原样”提供，不附带任何明示或默示担保，包括但不限于对适销性或特定用途适用性的担保。详情请参见 [LICENSE](LICENSE) 文件。
+本程序的发布旨在使其发挥作用，但不提供任何担保，亦不涵盖对适销性或特定用途适用性的默示担保。详情请参见 [LICENSE](LICENSE) 文件。
 
 ### 第三方组件
 
 - **FigTree**（`figtreekit/figtree_patched.jar`、`_figtree_patch/`、修改后的 Java 源码位于 `_figtree_patch/src/figtree/`）：衍生自 Andrew Rambaut 的 [FigTree v1.4.4](http://tree.bio.ed.ac.uk/software/figtree/)，授权为 GPL-2.0-or-later。原始未修改 JAR（`_figtree_patch/figtree_original.jar`）亦一并提供以满足 GPL 源代码提供要求；重建方法见 `_figtree_patch/README.md`。
-- **iText**（打包在 FigTree JAR 中用于 PDF 导出）：授权为 GNU Affero 通用公共许可证第 3 版（AGPL-3.0）。
+- **iText**（打包在各 FigTree JAR 中用于 PDF 导出）：授权为 GNU Affero 通用公共许可证第 3 版（AGPL-3.0）。
 - **Biopython**（运行时依赖）：BSD-3-Clause。
 
 当你再分发 FigTreeKit 或打过补丁的 FigTree JAR 时，须遵守 GPL-2.0-or-later 与 AGPL-3.0 的 copyleft 条款。
@@ -967,15 +1010,17 @@ FigTreeKit 是根据 **GNU 通用公共许可证第 2 版或更高版本（GPL-2
 
 ## 测试环境
 
-本软件仅在以下环境中开发并测试：
+本软件在以下环境中开发并测试：
 
 | 操作系统 | Python | Biopython | 状态 |
 |---------|--------|-----------|------|
-| macOS Tahoe 26.5.2（Apple Silicon） | 3.11 | 1.88 | ✅ 通过 |
+| macOS（Apple Silicon） | 3.11 | 1.87 / 1.88 | ✅ 通过（CI） |
+| Ubuntu Linux（CI 运行器） | 3.11 | 1.87 / 1.88 | ✅ 通过（CI） |
+| Windows | – | – | ⚠️ 未验证 |
 
-> **注意**：FigTreeKit 仅在 macOS Tahoe 26.5.2 + Python 3.11 环境下开发并测试。未验证与其他操作系统（Windows、Linux）或 Python 版本的兼容性。
+> **注意**：CI 中验证的部署环境为 macOS 与 Ubuntu（Python 3.11）。已发表的基准与覆盖率数字产自一个独立的冻结环境（见 `benchmarks/benchmark_meta.json`：macOS、Apple M5、Python 3.14.6、Biopython 1.87、Java 1.8.0_501），因为基准测试的规模梯度（从 50 到 10,000 末端）需要比部署锁定版本更新的解释器；两份 environment 文件随发布物一并提供（`environment.yml` 对应部署环境，`environment-benchmark.yml` 对应基准环境）。Windows，以及除 3.11（部署）与 3.14.6（基准）以外的 Python 版本，其兼容性均未经验证。
 
-复现环境：
+复现完全一致的环境：
 ```bash
 pip install figtreekit==1.1.4 biopython==1.87
 figtreekit --self-test
@@ -985,5 +1030,5 @@ figtreekit --self-test
 
 ## 贡献
 
-欢迎贡献！请参阅 [CONTRIBUTING.md](https://github.com/ZengZichao/FigTreeKit/blob/main/CONTRIBUTING.md) 了解指南。
+欢迎贡献！贡献指南请参阅 [CONTRIBUTING.md](https://github.com/ZengZichao/FigTreeKit/blob/main/CONTRIBUTING.md)。
 

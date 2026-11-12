@@ -90,14 +90,14 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 | `-h`, `--help` | Show help message and exit |
 | `--version` | Show version, git hash, and build date |
 | `--self-test` | Run built-in diagnostic checks (11 tests) |
-| `-v` | Verbose output (DEBUG level logging) |
+| `-v` | Increase verbosity: `-v` = INFO, `-vv` = DEBUG logging |
 | `-q` | Quiet mode (suppress INFO messages) |
 | `-o OUTPUT` | Output Nexus file path (or directory in batch mode) |
 | `--validate` | Validate input file only (no output) |
 | `--config FILE` | JSON configuration file (see Section 5) |
 | `--log-file FILE` | Write log output to file |
 | `--force` | Overwrite existing output file |
-| `--no-clobber` | Never overwrite existing output (error if exists) |
+| `--no-clobber` | Never overwrite an existing output file: skip it, log at INFO, and still report success |
 | `--strip-annotations` | Strip bracket comments (NHX/bootstrap/posterior) to reduce file size |
 | `--low-memory` | Low-memory mode for large trees (>10k tips) |
 
@@ -125,7 +125,7 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 |--------|-------------|
 | `--rooted` | Display tree as rooted |
 | `--unrooted` | Display tree as unrooted |
-| `--rooting-type {user,midpoint}` | Rooting method |
+| `--rooting-type {user,midpoint}` | Rooting method (user selection / mid-point) |
 | `--transform {cladogram,phylogram}` | Transform: cladogram (equal branches) or phylogram (proportional) |
 | `--order {increasing,decreasing}` | Branch ordering by node density |
 | `--order-branches` | Enable branch ordering (increasing node density) |
@@ -139,7 +139,7 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 | `--font-name NAME` | Font family name (e.g. "Arial") |
 | `--font-size PT` | Font size in points (> 0) |
 | `--font-style 0-3` | 0=plain, 1=bold, 2=italic, 3=bold-italic |
-| `--label-color #RRGGBB` | Tip label color |
+| `--label-color #RRGGBB` | Tip label color (internally calls `set_tip_label_colors()`, which writes `!color` annotations; a literal `tipLabels.color` value may not be honored by headless rendering) |
 
 ### 3.6 Node Labels
 
@@ -194,7 +194,7 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 | Option | Description |
 |--------|-------------|
 | `--legend-show` | Show legend |
-| `--legend-position {top,bottom,left,right}` | Legend position (default: bottom) |
+| `--legend-position {top,bottom,left,right}` | Legend position (default: top) |
 
 ### 3.13 Clade Collapse
 
@@ -220,12 +220,12 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 
 | Option | Description |
 |--------|-------------|
-| `--auto-color [RANK]` | Auto-assign colors to all monophyletic groups at rank (default: phylum). Repeatable. |
+| `--auto-color [RANK]` | Auto-assign colors to all monophyletic groups at the given rank (default: phylum). |
 | `--highlight SPEC` | Highlight a clade. Format: `"A,B,C[:#RRGGBB[:width[:offset]]]"`. Repeatable. |
 | `--color-clade SPEC` | Color a clade (MRCA branch only). Format: `"A,B,C:#RRGGBB"`. Repeatable. |
 | `--color-all` | With `--color-clade`, color ALL descendant branches (set_clade_color_all) |
 | `--font-clade SPEC` | Set font for a clade. Format: `"A,B,C:FONTNAME[-STYLE[-SIZE]]"`. Repeatable. |
-| `--clear-hilights` | Clear all highlight annotations |
+| `--clear-hilights` | Clear all hilight (`!hilight`) annotations, preserving color and font annotations |
 
 **Examples:**
 
@@ -248,11 +248,11 @@ figtreekit tree.nwk -o out.nex --font-clade "A,B,C:Arial-BOLD-14"
 | Option | Description |
 |--------|-------------|
 | `--taxonomy-levels SPEC` | Custom rank prefix mapping (e.g. `"d:domain,sp:superphylum,p:phylum,c:class,o:order,f:family,g:genus"`) |
-| `--taxonomy-delimiter-mode {reverse,greedy,segment}` | Taxonomy parsing mode |
-| `--taxonomy-table-sep CHAR` | Separator for table-format taxonomy (Format B) |
-| `--taxonomy-source-priority {embedded,table}` | Priority when both formats present |
+| `--taxonomy-delimiter-mode {reverse,greedy,segment}` | Taxonomy parsing mode (default: `reverse`) |
+| `--taxonomy-table-sep CHAR` | Separator for table-format taxonomy (Format B, default: `;`) |
+| `--taxonomy-source-priority {embedded,table}` | Priority when both formats are present (default: `table`) |
 | `--taxonomy-mapping-file FILE` | External taxonomy mapping file (TSV/CSV) |
-| `--table-sep CHAR` | Alias for `--taxonomy-table-sep` |
+| `--table-sep CHAR` | Force the column delimiter of the taxonomy mapping file (default: auto-detected from the file extension) |
 | `--ignore-malformed` | Skip labels that fail taxonomy parsing |
 | `--analyze-taxonomy [RANK]` | Print monophyly report and exit (default rank: phylum) |
 | `--check-monophyly NAME` | Check if a group is monophyletic. Supports special IDs: LUCA/LACA/LBCA/root. Repeatable. |
@@ -355,7 +355,7 @@ styler = FigTreeStyler()            # Empty, load later
 
 | Method | Parameters | Description |
 |--------|-----------|-------------|
-| `set_tip_labels(**kwargs)` | `is_shown`, `font_name`, `font_size`, `font_style`, `color`, `align` | Tip label settings |
+| `set_tip_labels(**kwargs)` | `is_shown`, `font_name`, `font_size`, `font_style` | Tip label settings. `color` and `align` are not valid mapping keys — they are written out verbatim as unrecognized `tipLabels.*` settings (a literal `tipLabels.color` may not be honored by headless rendering); use `set_tip_label_colors()` for label color and `set_align_tip_labels()` for alignment |
 | `set_node_labels(**kwargs)` | `is_shown`, `display_attribute`, `font_name`, `font_size` | Node label settings |
 | `set_branch_labels(**kwargs)` | `is_shown`, `display_attribute`, `font_name`, `font_size` | Branch label settings |
 | `set_align_tip_labels(align=True)` | — | Align tip labels radially |
@@ -378,7 +378,7 @@ styler = FigTreeStyler()            # Empty, load later
 
 | Method | Parameters | Description |
 |--------|-----------|-------------|
-| `set_trees(rooting, rooting_type, transform, transform_type, order, order_type)` | See enums below | Rooting, transform, ordering |
+| `set_trees(rooting, rooting_type, transform, transform_type, order, order_type)` | See the enums in 4.2 below | Rooting, transform, ordering |
 
 #### Clade Annotations
 
@@ -428,7 +428,7 @@ styler = FigTreeStyler()            # Empty, load later
 | `set_custom_param(key, value)` | Set arbitrary FigTree parameter |
 | `strip_annotations()` | Remove bracket comments from tree content |
 | `export(output_file, include_taxa_block=True, single_tree=False)` | Export to Nexus file |
-| `render(output_file, format=None, width=1200, height=800, jar_path=None, keep_nex=False)` | Render to image via FigTree JAR |
+| `render(output_file, format=None, width=1200, height=800, jar_path=None, include_taxa_block=True, keep_nex=False, timeout=120)` | Render to image via FigTree JAR (`timeout` in seconds) |
 
 ### 4.2 Enumerations
 
@@ -472,9 +472,10 @@ from figtreekit import (
 | `ParseError` | `FigTreeKitError` | Tree/sequence file parsing errors |
 | `ValidationError` | `FigTreeKitError` | Input validation failures |
 | `ExportError` | `FigTreeKitError` | Export/render errors |
-| `PhyloFormatError` | `ParseError` | File format error (Library API alias) |
-| `TaxonomyConflictError` | `ValidationError` | Taxonomy conflict (Library API alias) |
-| `MonophylyError` | `ValidationError` | Monophyly analysis error (Library API alias) |
+| `RenderError` | `ExportError` | Rendering failure (missing Java runtime, failed FigTree source download / Ant compilation, non-zero exit from the headless renderer) |
+| `PhyloFormatError` | `ParseError` | File format error (Library Mode API alias) |
+| `TaxonomyConflictError` | `ValidationError` | Taxonomy conflict (Library Mode API alias) |
+| `MonophylyError` | `ValidationError` | Monophyly analysis error (Library Mode API alias) |
 | `CompatibilityWarning` | `UserWarning` | FigTree compatibility warning |
 
 ---
@@ -507,7 +508,7 @@ figtreekit input.tre -o output.nex --config style.json
 
 ## 6. Rendering
 
-FigTreeKit includes a patched FigTree v1.4.4 JAR for headless rendering. The PyPI package bundles the pre-built JAR — no extra setup needed.
+FigTreeKit includes a patched FigTree v1.4.4 JAR for headless rendering. The PyPI package bundles the pre-built JAR — usually no extra setup is needed.
 
 ### Supported output formats
 
@@ -516,7 +517,7 @@ FigTreeKit includes a patched FigTree v1.4.4 JAR for headless rendering. The PyP
 | PNG | `.png` | Web, presentations, quick preview |
 | PDF | `.pdf` | Publication, vector editing |
 | SVG | `.svg` | Web, scalable vector graphics |
-| JPEG | `.jpg` | Small file size (lossy) |
+| JPEG | `.jpg`, `.jpeg` | Small file size (lossy) |
 
 ### CLI rendering
 
@@ -537,8 +538,15 @@ styler.render("tree.pdf", format="PDF", width=2400, height=1600)
 ```bash
 figtreekit --setup-figtree
 figtreekit --check-figtree
+```
+
+### Use existing FigTree JAR
+
+```bash
 figtreekit --setup-figtree --figtree-jar /path/to/figtree.jar
 ```
+
+This combination does not trigger the source download or the Ant compilation: `setup_figtree()` only checks that the given JAR path exists and then records it in `~/.figtreekit/figtree_path.txt` for subsequent renders.
 
 ---
 
@@ -546,8 +554,8 @@ figtreekit --setup-figtree --figtree-jar /path/to/figtree.jar
 
 FigTreeKit supports two taxonomy label formats:
 
-- **Format A (embedded)**: `GCA_001_d__Archaea_p__Euryarchaeota_c__Methanobacteria_...`
-- **Format B (table)**: `d__Archaea;p__Euryarchaeota;c__Methanobacteria;...`
+- **Format A (embedded)**: `GCA_001_d_Archaea_p_Euryarchaeota_c_Methanobacteria_...` (rank markers wrapped in **single underscores**, e.g. `_d_`, `_p_`)
+- **Format B (table)**: `d__Archaea;p__Euryarchaeota;c__Methanobacteria;...` (GTDB double-underscore markers, semicolon-separated)
 
 ### Complete CLI workflow
 
@@ -626,15 +634,15 @@ figtreekit trees_dir/ -o output_dir/ --layout polar --config style.json --force
 | Problem | Solution |
 |---------|----------|
 | "File not found" | Ensure input path exists and is a regular file |
-| "Multiple trees detected" | Use `--multi-tree first/split/last/random` |
-| "Non-monophyletic group" warning | Use `--strict` to abort, or collapse is skipped |
+| "Multiple trees detected" | Use `--multi-tree first/split/last/random/all` (the default `ask` aborts with exit code 2) |
+| "Non-monophyletic group" warning | The collapse is skipped by default with a warning while the remaining operations continue; use `--strict` to abort and report an error instead of skipping |
 | "Negative branch length" | Fix tree before processing |
 | "Duplicate tip name" | Ensure all tip names are unique |
-| "Control character detected" | Clean input file of malicious characters |
+| "Control character detected" | Remove the control characters from the input file |
 | "Tree-sequence cross-validation FAILED" | Use `--no-cross-check` or fix label mismatches |
-| Large tree slow | Use `--low-memory`; ensure 2–4 GB RAM for >50k tips |
+| Slow processing on large trees | Use `--low-memory`; allow 2–4 GB of RAM for trees with more than 50k tips |
 | FigTree JAR not found | Run `figtreekit --setup-figtree` or set `--figtree-jar` |
-| `ClassCastException` in FigTree | Avoid `set_clade_color` + `highlight_clade` on same taxa; use `set_clade_color_all` |
+| `ClassCastException` in FigTree | Avoid applying `set_clade_color()` + `highlight_clade()` to the same taxa; use `set_clade_color_all()` instead |
 
 ---
 
@@ -648,7 +656,7 @@ Common keys for `--set KEY=VALUE`:
 | `tipLabels.fontName` | string | Tip label font family |
 | `tipLabels.fontSize` | int | Tip label font size |
 | `tipLabels.fontStyle` | int | 0=plain, 1=bold, 2=italic, 3=bold-italic |
-| `tipLabels.color` | color | Tip label color |
+| `tipLabels.color` | color | Tip label color (this literal value may not be honored under headless rendering; annotation-based coloring via `--label-color` / `set_tip_label_colors()` is recommended) |
 | `nodeLabels.isShown` | bool | Show/hide node labels |
 | `nodeLabels.displayAttribute` | string | Node label attribute |
 | `branchLabels.isShown` | bool | Show/hide branch labels |
@@ -657,14 +665,15 @@ Common keys for `--set KEY=VALUE`:
 | `layout.layoutType` | string | RECTILINEAR / POLAR / RADIAL |
 | `layout.expansion` | int | Layout expansion |
 | `layout.zoom` | float | Layout zoom |
-| `polarLayout.angularRange` | int | Angular range (×1000, e.g. 180000 = 180°) |
-| `polarLayout.rootAngle` | int | Root angle (×1000) |
+| `polarLayout.angularRange` | int | Angular range (the stored value is (360 − angle) × 1000, e.g. 180000 = 180°, 0 = 360°) |
+| `polarLayout.rootAngle` | int | Root angle (the stored value is (angle − 180) × 1000, e.g. 90000 = 270°) |
+| `radialLayout.spread` | float | Radial spread factor (>= 0, default: 0.5; corresponds to `--radial-spread`) |
 | `rectilinearLayout.curvature` | int | Branch curvature |
 | `rectilinearLayout.rootLength` | int | Root length (px) |
 | `scaleAxis.isShown` | bool | Show/hide scale axis |
 | `scaleAxis.reverseAxis` | bool | Reverse axis direction |
 | `scaleAxis.fontSize` | int | Axis font size |
-| `scaleAxis.significantDigits` | int | Decimal places |
+| `scaleAxis.significantDigits` | int | Number of significant digits |
 | `scaleBar.isShown` | bool | Show/hide scale bar |
 | `legend.isShown` | bool | Show/hide legend |
 | `trees.rooting` | bool | Rooted/unrooted |
@@ -673,7 +682,7 @@ Common keys for `--set KEY=VALUE`:
 | `trees.order` | bool | Enable branch ordering |
 | `trees.orderType` | string | Increasing/Decreasing Node Density |
 
-> **Note**: Polar layout angles use FigTree's internal ×1000 representation. `--set polarLayout.angularRange=180000` equals 180°. The Python API `set_polar_layout(angular_range=180)` accepts degrees directly.
+> **Note**: Polar layout angles are stored as FigTree's internal slider values. For the angular range the stored value is (360 − angle) × 1000, so `--set polarLayout.angularRange=180000` equals 180° and `--set polarLayout.angularRange=0` equals 360°. The root angle carries an additional offset: the stored value is (angle − 180) × 1000, so `--set polarLayout.rootAngle=90000` equals 270°. The Python API `set_polar_layout(angular_range=180)` accepts degrees directly.
 # FigTreeKit User Manual
 
 ## Installation
@@ -729,7 +738,7 @@ GB_GCA_000252485.1	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Cyanobact
 | Code | Meaning | Description |
 |------|---------|-------------|
 | 0 | Success | All operations completed successfully |
-| 1 | Runtime error | Dependency issues, self-test failures |
+| 1 | Runtime error | Dependency issues, self-test failures, unexpected errors |
 | 2 | Usage error | Invalid command-line arguments, missing input |
 | 3 | Data error | Invalid input data (malformed tree, bad sequences) |
 | 130 | Interrupted | User pressed Ctrl+C (SIGINT) or SIGTERM received |
@@ -813,17 +822,32 @@ figtreekit tree.nwk --validate --sequences sequences.fasta
 ```bash
 figtreekit tree.nwk -o existing.nex --force
 figtreekit tree.nwk -o existing.nex --no-clobber
-  --strip-annotations   Strip bracket comments (NHX/bootstrap/posterior) to reduce file size
 figtreekit tree.nwk -o out.nex --log-file figtreekit.log
+figtreekit tree.nwk -o out.nex --strip-annotations   # Strip bracket comments (NHX/bootstrap/posterior) to reduce file size
 ```
 
 ### Rendering
 
+FigTreeKit renders annotated Nexus files to PNG, PDF, SVG or JPEG through a patched FigTree v1.4.4 JAR that runs headless (no display server required). The PyPI distribution already bundles the pre-built patched JAR (`figtreekit/figtree_patched.jar`), so usually no extra setup is required:
+
 ```bash
 figtreekit input.tre -o out.nex --render tree.png
 figtreekit input.tre -o out.nex --render tree.pdf --render-width 1600 --render-height 1000
+figtreekit input.tre -o out.nex --render tree.pdf --render-width 1600   # height falls back to the default 800
 figtreekit input.tre -o out.nex --render tree.svg
 ```
+
+The format is inferred from the file extension; see Section 6 for the list of supported output formats.
+
+If you install from source or need to rebuild the patched JAR yourself, make sure that Java 8+ and Apache Ant are installed, then run:
+
+```bash
+figtreekit --check-figtree                    # Check whether a JAR is available and print its status
+figtreekit --setup-figtree                    # Download the source, apply the patches and compile
+figtreekit --setup-figtree --figtree-jar /path/to/figtree.jar  # Use an existing JAR
+```
+
+`--setup-figtree` downloads the official FigTree v1.4.4 source from GitHub, copies the four FigTreeKit patches from `_figtree_patch/src/figtree/` into the source tree (`treeviewer/treelayouts/RadialTreeLayout.java`, `treeviewer/decorators/AttributableDecorator.java`, `treeviewer/decorators/DiscreteColourDecorator.java` and `treeviewer/painters/ScaleAxisPainter.java`), patches `build.xml` (source/target levels) and the `javax.activation` dependency for modern JDKs (Java 9+), and finally runs `ant dist`. The compiled JAR defaults to `~/.figtreekit/figtree/dist/figtree.jar`; a JAR passed explicitly with `--figtree-jar` is recorded in `~/.figtreekit/figtree_path.txt`. See `_figtree_patch/README.md` for the equivalent manual build steps.
 
 ### Config File
 
@@ -865,11 +889,6 @@ styler.export("output.nex")
 styler.render("tree.png")
 ```
 
-```python
-# Strip all bracket comments (NHX, bootstrap, posterior, etc.) to reduce output size
-styler.strip_annotations()
-```
-
 ### Loading Trees
 
 ```python
@@ -884,7 +903,7 @@ styler.load_tree("((A:0.1,B:0.2):0.3,C:0.4);")  # detected as inline content
 ```python
 # Get detailed clade information
 info = styler.get_clade_info(["A", "B"])
-# Returns dict with MRCA node, descendant tips, branch lengths, etc.
+# Returns dict with MRCA terminals, terminal count, monophyly status, clade size, etc.
 ```
 
 ### Monophyly & Collapse
@@ -906,6 +925,9 @@ styler.collapse_by_group("Cyanobacteriales", label="Cyano")
 # (automatically sorted by size, processed inner-first)
 styler.collapse_clade(["A", "B"], label="Inner")
 styler.collapse_clade(["A", "B", "C"], label="Outer")  # Both labels appear in output
+
+# Strip all bracket comments (NHX, bootstrap, posterior, etc.) to reduce output size
+styler.strip_annotations()
 ```
 
 ### Validation
@@ -966,6 +988,8 @@ completeness = styler.check_taxonomy_completeness(mapping_file="taxonomy.tsv")
 
 ### Library Mode API
 
+These standardized-signature functions are intended for integration into third-party pipelines (Snakemake/Nextflow):
+
 ```python
 from figtreekit import (
     parse_taxonomy,        # Standardized taxonomy parsing
@@ -980,9 +1004,12 @@ from figtreekit import (
 
 # Parse taxonomy label (standardized signature)
 tax = parse_taxonomy("d__Bacteria;p__Cyanobacteriota", mode="reverse")
+# -> {"domain": "Bacteria", "phylum": "Cyanobacteriota"}
 
-# Detect monophyletic group (standardized signature)
+# Detect monophyletic group (standardized signature; rooted is kept for signature
+# compatibility but currently has no effect)
 mono = is_monophyletic("tree.nwk", "Cyanobacteriota", rooted=True)
+# -> True / False
 
 # Load tree file (standardized signature)
 styler = load_tree("tree.nwk", validate=True)
@@ -992,55 +1019,19 @@ report = cross_validate("tree.nwk", "sequences.fasta", strict=True)
 # -> {"valid": True, "matched": 50, "tree_only": [], "seq_only": [], "errors": []}
 ```
 
-## FigTree Rendering Setup
-
-FigTreeKit can render annotated Nexus files directly to PNG, PDF, SVG or JPEG using a patched FigTree v1.4.4 JAR. The PyPI/conda package already includes a pre-built patched JAR, so no extra setup is required for most users:
-
-```bash
-figtreekit input.tre -o output.nex --render tree.png
-```
-
-If you install from source or want to rebuild the patched JAR yourself, you need Java 8+ and Apache Ant:
-
-```bash
-# Check status
-figtreekit --check-figtree
-
-# Download FigTree v1.4.4 source, apply FigTreeKit patches, and compile
-figtreekit --setup-figtree
-
-# Or point to an existing FigTree JAR
-figtreekit --setup-figtree --figtree-jar /path/to/figtree.jar
-```
-
-`--setup-figtree` downloads the official FigTree v1.4.4 source from GitHub, copies the single FigTreeKit patch (`RadialTreeLayout.java`) from `_figtree_patch/src/figtree/`, applies modern-JDK compatibility fixes, and runs `ant dist`. The resulting JAR is saved to `~/.figtreekit/figtree/dist/figtree.jar`. See `_figtree_patch/README.md` for the equivalent manual build steps.
-
-### Rendering Output Formats
-
-| Format | Extension | Best For |
-|--------|-----------|----------|
-| PNG | `.png` | Web, presentations, quick preview |
-| PDF | `.pdf` | Publication, vector editing |
-| SVG | `.svg` | Web, scalable vector graphics |
-| JPEG | `.jpg` | Small file size (lossy compression) |
-
-```bash
-figtreekit input.tre -o output.nex --render tree.pdf --render-width 1600
-```
-
 ## Troubleshooting
 
 ### "File not found" error
-Ensure the input path exists and is a regular file.
+Ensure the input path exists and is a regular file (outside batch mode, the input must be a single file, not a directory).
 
 ### "Multiple trees detected" error
 Use `--multi-tree` to specify handling strategy:
 - `--multi-tree first` — process only the first tree
 - `--multi-tree split` — process all trees with numeric suffixes
-- `--multi-tree ask` — print summary and exit (default)
+- `--multi-tree ask` — print summary and abort with exit code 2 (default)
 
 ### "Non-monophyletic group" warning
-The specified clade does not form a monophyletic group. Use `--strict` to abort, or the collapse will be skipped.
+The specified clade does not form a monophyletic group. By default the warning is logged, the collapse is skipped, and the remaining operations continue; pass `--strict` to abort instead of skipping (the run then exits with the data-error code 3).
 
 ### "Negative branch length" critical error
 The tree contains negative branch lengths. Fix the tree before processing.
@@ -1049,7 +1040,7 @@ The tree contains negative branch lengths. Fix the tree before processing.
 Tree contains duplicate terminal node labels. Ensure all tip names are unique.
 
 ### "Control character detected" error
-Node names contain malicious characters (control chars or Unicode bidi overrides). Clean the input file.
+Node names contain control characters (C0/C1 control codes or Unicode bidi overrides). Remove these control characters from the input file before processing.
 
 ### "Tree-sequence cross-validation FAILED" error
 Tree tip labels don't match sequence IDs. Use `--no-cross-check` to skip, or fix the labels to match.
@@ -1060,6 +1051,10 @@ For trees with >10,000 tips:
 - Ensure sufficient RAM for FigTree rendering (2-4 GB for >50k tips)
 - Install `psutil` for DEBUG-level memory logging
 
+## Exit Codes and Exceptions
+
+The exit codes are centrally defined by the `ExitCode` (`IntEnum`) in `figtreekit/_cli.py`; see the "Exit Codes" table earlier in this manual for the full list.
+
 ### Exception Hierarchy
 
 | Exception | Base Class | Purpose |
@@ -1068,17 +1063,8 @@ For trees with >10,000 tips:
 | `ParseError` | `FigTreeKitError` | Tree/sequence file parsing errors |
 | `ValidationError` | `FigTreeKitError` | Input validation failures |
 | `ExportError` | `FigTreeKitError` | Export/render errors |
+| `RenderError` | `ExportError` | Rendering failure (missing Java runtime, failed FigTree source download / Ant compilation, non-zero exit from the headless renderer) |
 | `PhyloFormatError` | `ParseError` | File format error (Library Mode API alias) |
 | `TaxonomyConflictError` | `ValidationError` | Taxonomy conflict (Library Mode API alias) |
 | `MonophylyError` | `ValidationError` | Monophyly analysis error (Library Mode API alias) |
 | `CompatibilityWarning` | `UserWarning` | Compatibility warning |
-
-## Error Codes
-
-| Code | Meaning | Description |
-|------|---------|-------------|
-| 0 | Success | All operations completed successfully |
-| 1 | Runtime error | Dependency issues, self-test failures |
-| 2 | Usage error | Invalid command-line arguments, missing input |
-| 3 | Data error | Invalid input data (malformed tree, bad sequences) |
-| 130 | Interrupted | User pressed Ctrl+C (SIGINT) or SIGTERM received |

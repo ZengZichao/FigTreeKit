@@ -175,7 +175,7 @@ def test_set_layout():
 
 ### Test Coverage
 
-代码覆盖率硬门禁为 60%（见 pyproject.toml 的 `--cov-fail-under=60`）；建议新代码尽量达到 80%。查看覆盖率：
+The coverage hard gate is 60% (see `--cov-fail-under=60` in `pyproject.toml`); new code should aim for 80% where possible. To view coverage:
 
 ```bash
 pytest test/ --cov=figtreekit --cov-report=html

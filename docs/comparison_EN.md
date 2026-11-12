@@ -1,6 +1,6 @@
 # Feature Comparison Matrix
 
-Comparison of FigTreeKit with existing phylogenetic tree libraries.
+Comparison of FigTreeKit with existing phylogenetic tree libraries and tools.
 
 ## Summary Table
 
@@ -10,7 +10,7 @@ Comparison of FigTreeKit with existing phylogenetic tree libraries.
 | Newick parsing | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Nexus parsing | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Nexus multi-tree | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
-| PhyloXML | ✅ | ✅ | ❌ | ✅ | ❌ | ❌ |
+| PhyloXML | ⚠️ validated, but not loadable for style injection | ✅ | ❌ | ✅ | ❌ | ❌ |
 | **FigTree Annotations** |  |  |  |  |  |  |
 | `!hilight` injection | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | `!color` injection | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -26,7 +26,7 @@ Comparison of FigTreeKit with existing phylogenetic tree libraries.
 | Clade collapse by group name | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
 | **Validation** |  |  |  |  |  |  |
 | Bracket balance check | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Negative branch detection | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Negative branch length detection | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Duplicate tip name detection | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Self-loop detection | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Control character / bidi override scanning | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -41,9 +41,9 @@ Comparison of FigTreeKit with existing phylogenetic tree libraries.
 | Scale bar/axis | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ |
 | **Export** |  |  |  |  |  |  |
 | Nexus export | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Non-mutating export (reproducible) | ✅ | ❌ | ❌ | ❌ | N/A | ✅ |
+| Non-mutating export (no side effects, reproducible) | ✅ | ❌ | ❌ | ❌ | N/A | ✅ |
 | Preserves existing annotations | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Image rendering (PNG/PDF/SVG) | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ |
+| Image rendering (PNG/PDF/SVG/JPEG) | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ |
 | **Interface** |  |  |  |  |  |  |
 | Python API | ✅ | ✅ | ✅ | ✅ | ❌ (GUI) | ❌ |
 | CLI batch processing | ✅ | ❌ | ✅ | ❌ | ❌ | ✅ |
@@ -52,8 +52,10 @@ Comparison of FigTreeKit with existing phylogenetic tree libraries.
 | Real-time logging (ISO 8601) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Quality** |  |  |  |  |  |  |
 | Type hints (PEP 561) | ✅ | ❌ | ❌ | ❌ | N/A | N/A |
-| Test coverage | ~79% overall; parser/serializer 82–88%, CLI 83%, validators 86% (see CI report) | ~70% | ~60% | ~75% | N/A | N/A |
+| Test coverage | 80.9% overall (statement-weighted); CLI 83.1%, parsing 85.8%, NEXUS serialization 89.3%, styling 83.1%, taxonomy 81.6%, validation 85.9% (see the CI report and `benchmarks/coverage_summary_v1.1.4.json`) | ~70% | ~60% | ~75% | N/A | N/A |
 | Python 3.11 support | ✅ | ✅ | ❌ (3.8 max) | ✅ | N/A | N/A |
+
+> Note: PhyloXML is recognized by format detection and structural validation, but `--validate` rejects it as "not a tree format" (exit code 3), and `FigTreeStyler` cannot load PhyloXML for style injection.
 
 ## Key Differentiators
 
@@ -80,20 +82,20 @@ This enables monophyly detection and clade collapse by taxonomic group name — 
 
 FigTreeKit performs comprehensive validation that other libraries skip:
 
-| Check | FigTreeKit | Others |  |
-| --- | --- | --- | :---: |
-| Bracket balance with position | ✅ | ❌ |  |
-| Negative branch lengths (CRITICAL) | ✅ | ❌ |  |
-| Duplicate tip names (ERROR) | ✅ | ❌ |  |
-| Empty node names (ERROR) | ✅ | ❌ |  |
-| Self-loop detection | ✅ | ❌ | ❌ |
-| Control character / bidi override scanning | ✅ | ❌ | ❌ |
-| FASTA duplicate ID detection | ✅ | ❌ |  |
-| Alphabet validation with line numbers | ✅ | ❌ |  |
+| Check | FigTreeKit | Others |
+| --- | :---: | :---: |
+| Bracket balance with position | ✅ | ❌ |
+| Negative branch lengths (CRITICAL) | ✅ | ❌ |
+| Duplicate tip names (ERROR) | ✅ | ❌ |
+| Empty node names (ERROR) | ✅ | ❌ |
+| Self-loop detection | ✅ | ❌ |
+| Control character / bidi override scanning | ✅ | ❌ |
+| FASTA duplicate ID detection | ✅ | ❌ |
+| Alphabet validation with line numbers | ✅ | ❌ |
 
 ### 4. Non-Mutating Export
 
-FigTreeKit's export process never modifies the internal tree content (`_tree_content`).  Annotations are resolved into a local copy before writing, so calling `export()` multiple times on the same `FigTreeStyler` instance always produces identical output with no side effects.  This guarantees reproducibility in automated pipelines.
+FigTreeKit's export process never modifies the internal tree content (`_tree_content`). Annotations are resolved into a local copy before writing, so calling `export()` multiple times on the same `FigTreeStyler` instance always produces identical output with no side effects. This guarantees reproducibility in automated pipelines.
 
 ### 5. Self-Test Mode
 
@@ -101,7 +103,7 @@ FigTreeKit's export process never modifies the internal tree content (`_tree_con
 - Dependency versions
 - Newick/FASTA parsing
 - Taxonomy extraction (both formats)
-- Monophyly logic (monophyletic + special identifiers)
+- Monophyly logic (monophyly check + special identifiers)
 - Export round-trip
 - Adversarial input detection
 
@@ -109,16 +111,16 @@ No other tree library offers this built-in verification.
 
 ## When to Use Each Tool
 
-| Use Case | Recommended Tool |  |
-| --- | --- | :---: |
-| Script FigTree-styled trees for publication | **FigTreeKit** |  |
-| Taxonomy-aware tree analysis (monophyly, collapse) | **FigTreeKit** |  |
-| Input validation for phylogenetic pipelines | **FigTreeKit** |  |
-| Programmatic phylogenetic analysis (tree manipulation, simulation) | DendroPy |  |
-| Visualization with Python (matplotlib rendering) | ETE3 |  |
-| Simple Newick/Nexus I/O in Bio* workflow | Bio.Phylo |  |
-| Interactive GUI tree editing | TreeGraph2 or FigTree |  |
-| GUI/CLI modular tree plotting (cross-platform, >100k taxa) | TreeViewer |  |
+| Use Case | Recommended Tool |
+| --- | --- |
+| Scripted FigTree-styled trees for publication | **FigTreeKit** |
+| Taxonomy-aware tree analysis (monophyly, collapse) | **FigTreeKit** |
+| Input validation for phylogenetic pipelines | **FigTreeKit** |
+| Programmatic phylogenetic analysis (tree manipulation, simulation) | DendroPy |
+| Visualization with Python (matplotlib rendering) | ETE3 |
+| Simple Newick/Nexus I/O in a Bio* workflow | Bio.Phylo |
+| Interactive GUI tree editing | TreeGraph2 or FigTree |
+| GUI/CLI modular tree plotting (cross-platform, >100k taxa) | TreeViewer |
 
 ## Reproducing the Comparison
 
@@ -134,6 +136,6 @@ figtreekit --self-test
 # Run FigTreeKit benchmark
 python benchmarks/performance.py
 
-# Run FigTreeKit test suite
+# Run FigTreeKit test suite and coverage
 pytest test/ --cov=figtreekit
 ```
