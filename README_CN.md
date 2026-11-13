@@ -4,10 +4,12 @@
 
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
 [![License: GPL v2+](https://img.shields.io/badge/License-GPL%20v2+-blue.svg)](https://spdx.org/licenses/GPL-2.0-or-later.html)
-[![Version](https://img.shields.io/badge/version-1.1.4-green.svg)](https://pypi.org/project/figtreekit/)
+[![PyPI version](https://img.shields.io/pypi/v/figtreekit.svg)](https://pypi.org/project/figtreekit/)
 [![Software DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.22043258-green.svg)](https://doi.org/10.5281/zenodo.22043258)
 [![Preprint DOI](https://img.shields.io/badge/preprint-10.64898/2026.08.27.747475-blue.svg)](https://doi.org/10.64898/2026.08.27.747475)
 [![Bioinformatics](https://img.shields.io/badge/topic-bioinformatics-green.svg)](https://github.com/ZengZichao/FigTreeKit)
+[![CI](https://github.com/ZengZichao/FigTreeKit/actions/workflows/ci.yml/badge.svg)](https://github.com/ZengZichao/FigTreeKit/actions/workflows/ci.yml)
+[![ORCID](https://img.shields.io/badge/ORCID-0000--0001--6553--970X-a6ce39?logo=orcid&logoColor=white)](https://orcid.org/0000-0001-6553-970X)
 
 [English](https://github.com/ZengZichao/FigTreeKit/blob/main/README_EN.md) | [中文文档](#)
 
