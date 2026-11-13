@@ -959,9 +959,13 @@ figtreekit tree.nwk -o tree.nex --render tree.out --render-format PNG
 
 ## 引用
 
-如果您在研究中使用 FigTreeKit，请引用：
+如果您在研究中使用 FigTreeKit，请引用已归档的软件版本（参见 [`CITATION.cff`](CITATION.cff)）：
 
-> Zeng, Zichao & Wang, Yinzhao (2026). *FigTreeKit: A Python toolkit for programmatic FigTree styling, taxonomy-aware clade auditing, and phylogenetic tree rendering.* August 2026. DOI: [10.64898/2026.08.27.747475](https://doi.org/10.64898/2026.08.27.747475). License: CC BY-NC-ND 4.0.
+> Zeng, Zichao & Wang, Yinzhao (2026). *FigTreeKit: A Python toolkit for programmatic FigTree styling, taxonomy-aware clade auditing, and phylogenetic tree rendering.*（版本 1.1.4）[计算机程序]. Zenodo. DOI: [10.5281/zenodo.22043258](https://doi.org/10.5281/zenodo.22043258). 许可证：GPL-2.0-or-later。
+
+上述 Zenodo concept DOI 始终解析到最新发布版本；若要固定到本版本，请使用版本 DOI [10.5281/zenodo.22988773](https://doi.org/10.5281/zenodo.22988773)。
+
+如需引用配套的方法学文本，请使用预印本：Zeng, Zichao & Wang, Yinzhao (2026). *FigTreeKit: A Python toolkit for programmatic FigTree styling, taxonomy-aware clade auditing, and phylogenetic tree rendering.* August 2026. DOI: [10.64898/2026.08.27.747475](https://doi.org/10.64898/2026.08.27.747475). 许可证：CC BY-NC-ND 4.0。
 
 ```bibtex
 @software{figtreekit2026,
@@ -969,14 +973,15 @@ figtreekit tree.nwk -o tree.nex --render tree.out --render-format PNG
   title        = {FigTreeKit: A Python toolkit for programmatic FigTree styling,
                   taxonomy-aware clade auditing, and phylogenetic tree rendering},
   year         = {2026},
-  month        = aug,
-  doi          = {10.64898/2026.08.27.747475},
-  url          = {https://doi.org/10.64898/2026.08.27.747475},
-  note         = {License: CC BY-NC-ND 4.0}
+  version      = {1.1.4},
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.22043258},
+  url          = {https://doi.org/10.5281/zenodo.22043258},
+  note         = {License: GPL-2.0-or-later}
 }
 ```
 
-软件本身采用 GPL-2.0-or-later 授权（见下方[许可证](#许可证)）。
+软件本身采用 GPL-2.0-or-later 授权（见下方[许可证](#许可证)）；预印本则单独采用 CC BY-NC-ND 4.0 授权。
 
 ---
 

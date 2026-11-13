@@ -968,9 +968,13 @@ See [docs/user_manual_EN.md](docs/user_manual_EN.md) for detailed compilation in
 
 ## Citation
 
-If you use FigTreeKit in your research, please cite:
+If you use FigTreeKit in your research, please cite the archived software release (see [`CITATION.cff`](CITATION.cff)):
 
-> Zeng, Zichao & Wang, Yinzhao (2026). *FigTreeKit: A Python toolkit for programmatic FigTree styling, taxonomy-aware clade auditing, and phylogenetic tree rendering.* August 2026. DOI: [10.64898/2026.08.27.747475](https://doi.org/10.64898/2026.08.27.747475). License: CC BY-NC-ND 4.0.
+> Zeng, Zichao & Wang, Yinzhao (2026). *FigTreeKit: A Python toolkit for programmatic FigTree styling, taxonomy-aware clade auditing, and phylogenetic tree rendering.* (Version 1.1.4) [Computer software]. Zenodo. DOI: [10.5281/zenodo.22043258](https://doi.org/10.5281/zenodo.22043258). License: GPL-2.0-or-later.
+
+The Zenodo concept DOI above always resolves to the latest release; to pin this release, use the version DOI [10.5281/zenodo.22988773](https://doi.org/10.5281/zenodo.22988773).
+
+To cite the accompanying methods text, use the preprint: Zeng, Zichao & Wang, Yinzhao (2026). *FigTreeKit: A Python toolkit for programmatic FigTree styling, taxonomy-aware clade auditing, and phylogenetic tree rendering.* August 2026. DOI: [10.64898/2026.08.27.747475](https://doi.org/10.64898/2026.08.27.747475). License: CC BY-NC-ND 4.0.
 
 ```bibtex
 @software{figtreekit2026,
@@ -978,14 +982,15 @@ If you use FigTreeKit in your research, please cite:
   title        = {FigTreeKit: A Python toolkit for programmatic FigTree styling,
                   taxonomy-aware clade auditing, and phylogenetic tree rendering},
   year         = {2026},
-  month        = aug,
-  doi          = {10.64898/2026.08.27.747475},
-  url          = {https://doi.org/10.64898/2026.08.27.747475},
-  note         = {License: CC BY-NC-ND 4.0}
+  version      = {1.1.4},
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.22043258},
+  url          = {https://doi.org/10.5281/zenodo.22043258},
+  note         = {License: GPL-2.0-or-later}
 }
 ```
 
-The software itself is licensed under GPL-2.0-or-later (see [License](#license) below).
+The software itself is licensed under GPL-2.0-or-later (see [License](#license) below); the preprint is separately licensed under CC BY-NC-ND 4.0.
 
 ---
 
