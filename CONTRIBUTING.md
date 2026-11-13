@@ -22,7 +22,7 @@ This project and everyone participating in it is governed by our Code of Conduct
 
 ### Prerequisites
 
-- Python 3.11 (developed and tested on macOS Tahoe 26.5.2)
+- Python 3.11 (CI-tested on macOS (Apple Silicon) and Ubuntu Linux)
 - Git
 - Basic understanding of phylogenetic trees
 

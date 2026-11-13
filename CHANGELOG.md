@@ -7,6 +7,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 Version numbers below match the `vX.Y.Z` git tags and the corresponding PyPI
 and Zenodo releases.
 
+## [Unreleased]
+
+### Fixed
+
+- **`.fas` files were rejected by tree/sequence cross-validation.** The
+  documentation lists `.fas` as a FASTA extension and `validators.py` maps it to
+  the FASTA format, but neither the CLI's cross-validation whitelist nor the
+  FASTA extension set behind `extract_sequence_ids()` included it, so
+  `--sequences alignments.fas` logged "unsupported sequence format" and silently
+  skipped the comparison. Both sets now include `.fas`, matching the docs.
+- **`--log-file` help promised more than the flag delivers.** It read "(UTF-8,
+  all levels)", but the file handler is attached to a logger whose level is set
+  by `-v`/`-q`, so records are filtered before the handler's DEBUG level can see
+  them: the file receives every level only under `-vv`, and only ERROR under
+  `-q`. The help text — and the manuals — now say so.
+
 ## [1.1.4] - 2026-09-27
 
 ### Fixed

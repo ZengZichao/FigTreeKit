@@ -243,7 +243,7 @@ def setup_logger(
     if log_file:
         file_handler = logging.FileHandler(log_file, mode="a", encoding="utf-8")
         file_handler.setFormatter(_FigTreeKitFormatter())
-        file_handler.setLevel(logging.DEBUG)  # file gets all levels
+        file_handler.setLevel(logging.DEBUG)  # logger level still filters first
         log.addHandler(file_handler)
 
     return log
@@ -687,7 +687,8 @@ examples:
     parser.add_argument(
         "--log-file",
         metavar="FILE",
-        help="Write logs to this file (UTF-8, all levels).",
+        help="Write logs to this file (UTF-8; levels are filtered by -v/-q, so all "
+        "levels are captured only with -vv).",
     )
 
     # FigTree setup
@@ -1499,6 +1500,7 @@ def _process_single_tree(
             supported_seq_exts = {
                 ".fasta",
                 ".fa",
+                ".fas",
                 ".fna",
                 ".faa",
                 ".ffn",

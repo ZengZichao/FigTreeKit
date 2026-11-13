@@ -1,5 +1,7 @@
 # Feature Comparison Matrix
 
+[中文文档](https://github.com/ZengZichao/FigTreeKit/blob/main/docs/comparison_CN.md) | [English](#)
+
 Comparison of FigTreeKit with existing phylogenetic tree libraries and tools.
 
 ## Summary Table
@@ -52,7 +54,7 @@ Comparison of FigTreeKit with existing phylogenetic tree libraries and tools.
 | Real-time logging (ISO 8601) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Quality** |  |  |  |  |  |  |
 | Type hints (PEP 561) | ✅ | ❌ | ❌ | ❌ | N/A | N/A |
-| Test coverage | 80.9% overall (statement-weighted); CLI 83.1%, parsing 85.8%, NEXUS serialization 89.3%, styling 83.1%, taxonomy 81.6%, validation 85.9% (see the CI report and `benchmarks/coverage_summary_v1.1.4.json`) | ~70% | ~60% | ~75% | N/A | N/A |
+| Test coverage | 80.9% overall (statement-weighted); package interface 78.5%, CLI 83.1%, parsing 85.8%, NEXUS serialization 89.3%, styling 83.1%, taxonomy 81.6%, validation 85.9%, rendering 73.9%, environment setup 37.6% (see the CI report and `benchmarks/coverage_summary_v1.1.4.json`) | ~70% | ~60% | ~75% | N/A | N/A |
 | Python 3.11 support | ✅ | ✅ | ❌ (3.8 max) | ✅ | N/A | N/A |
 
 > Note: PhyloXML is recognized by format detection and structural validation, but `--validate` rejects it as "not a tree format" (exit code 3), and `FigTreeStyler` cannot load PhyloXML for style injection.
