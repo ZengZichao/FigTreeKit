@@ -1776,7 +1776,12 @@ class FigTreeStyler:
                     rank="genus"
                 )
         """
-        # Create mapper
+        # Create mapper.  If no explicit mapping_file was passed, fall back
+        # to the one configured via configure_taxonomy() — this keeps the
+        # CLI and MCP paths (which wire taxonomy via configure_taxonomy)
+        # single-source and makes the configured mapping actually take effect.
+        if mapping_file is None:
+            mapping_file = self._taxonomy_mapping_file
         mapper = TaxonomyMapper(pattern=pattern, mapping_file=mapping_file)
 
         # Get labels from tree

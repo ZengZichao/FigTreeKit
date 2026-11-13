@@ -2,7 +2,7 @@
 
 **版本**: 1.1.4 | **许可证**: GPL-2.0-or-later | **Python**: 3.11 | **平台**: macOS Tahoe 26.5.2
 
-FigTreeKit 是一个用于系统发育树 FigTree 可视化样式编程的 Python 库。它生成兼容 FigTree 的 Nexus 文件，完整支持 `[&!hilight]`、`[&!color]`、`[&!font]` 注解，支持分类学感知的分支折叠，并集成命令行图片渲染功能。
+FigTreeKit 是一个 Python 库，以编程方式为 FigTree 可视化设置系统发育树的样式。它生成兼容 FigTree 的 Nexus 文件，完整支持 `[&!hilight]`、`[&!color]`、`[&!font]` 注解，支持分类学感知的类群折叠，并集成命令行图片渲染功能。
 
 ---
 
@@ -26,7 +26,7 @@ pip install -e .
 
 | 包 | 版本 | 必需 | 用途 |
 |---|------|------|------|
-| biopython | >=1.80, <2.0 | 是 | 树解析（Bio.Phylo）；bracket-comment 保留依赖 ≥1.80 |
+| biopython | >=1.80, <2.0 | 是 | 树解析（Bio.Phylo）；保留括号注释需要 ≥1.80 |
 | psutil | 任意 | 否 | 内存日志 |
 | tqdm | 任意 | 否 | 进度条（批量模式） |
 | Java 8+ | 任意 | 否 | 通过 FigTree JAR 渲染图片 |
@@ -50,7 +50,7 @@ figtreekit --version
 | Nexus | `.nex`, `.nexus`, `.nx` | 带元数据块的扩展格式 |
 | PhyloXML | `.xml`, `.phyloxml` | 基于 XML 的系统发育格式 |
 
-### 序列文件（用于交叉验证）
+### 序列文件（可验证的格式；其中仅 FASTA/FASTQ 用于交叉验证）
 
 | 格式 | 扩展名 |
 |------|--------|
@@ -88,16 +88,16 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 | 选项 | 描述 |
 |------|------|
 | `-h`, `--help` | 显示帮助信息并退出 |
-| `--version` | 显示版本号、git hash 与构建日期 |
+| `--version` | 显示版本号、Git 提交哈希、Python 与依赖版本 |
 | `--self-test` | 运行内置诊断检查（11 项测试） |
-| `-v` | 详细输出（DEBUG 级日志） |
-| `-q` | 安静模式（抑制 INFO 消息） |
+| `-v` | 详细输出（`-v` 为 INFO 级日志，`-vv` 为 DEBUG 级日志） |
+| `-q` | 安静模式（将日志级别提升至 ERROR，即同时抑制 WARNING 与 INFO；默认级别为 WARNING） |
 | `-o OUTPUT` | 输出 Nexus 文件路径（批量模式下为目录） |
 | `--validate` | 仅验证输入文件（不生成输出） |
 | `--config FILE` | JSON 配置文件（见第 5 节） |
-| `--log-file FILE` | 将日志输出写入文件 |
+| `--log-file FILE` | 将日志输出写入文件（UTF-8）。文件处理器本身设为 DEBUG，但记录会先按 `-v`/`-q` 决定的记录器级别过滤：仅在 `-vv` 下文件才包含全部级别，`-q` 时文件同样只保留 ERROR |
 | `--force` | 覆盖已存在的输出文件 |
-| `--no-clobber` | 绝不覆盖已存在的输出（存在则报错） |
+| `--no-clobber` | 不覆盖已存在的输出（同时给出 `--force` 时以其为准）：输出文件已存在时跳过该文件并记录 INFO，整体仍判成功 |
 | `--strip-annotations` | 移除括号注释（NHX/bootstrap/posterior）以减小文件体积 |
 | `--low-memory` | 低内存模式（适用于 >10k 末端的大树） |
 
@@ -106,8 +106,8 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 | 选项 | 取值 | 默认值 | 描述 |
 |------|------|--------|------|
 | `--layout` | `rectilinear`, `polar`, `radial` | `rectilinear` | 树布局类型 |
-| `--expansion INT` | >= 0 | — | 布局扩展值 |
-| `--zoom FLOAT` | > 0 | — | 布局缩放因子 |
+| `--expansion INT` | >= 0 | `50` | 布局扩展值 |
+| `--zoom FLOAT` | > 0 | `1.0` | 布局缩放因子 |
 
 ### 3.3 外观选项
 
@@ -138,8 +138,8 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 | `--tip-labels-hide` | 隐藏末端标签 |
 | `--font-name NAME` | 字体族名（如 "Arial"） |
 | `--font-size PT` | 字号（磅，> 0） |
-| `--font-style 0-3` | 0=常规, 1=粗体, 2=斜体, 3=粗斜体 |
-| `--label-color #RRGGBB` | 末端标签颜色 |
+| `--font-style 0-3` | 0=正常, 1=粗体, 2=斜体, 3=粗斜体 |
+| `--label-color #RRGGBB` | 末端标签颜色（内部通过 `set_tip_label_colors()` 写入 `!color` 注解；`tipLabels.color` 字面值在无头渲染下可能不生效） |
 
 ### 3.6 节点标签
 
@@ -165,7 +165,7 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 | `--scale-bar-hide` | 隐藏比例尺 |
 | `--scale-axis-show` | 显示刻度轴（时间轴） |
 | `--scale-axis-hide` | 隐藏刻度轴 |
-| `--root-age FLOAT` | 根年龄（>= 0） |
+| `--root-age FLOAT` | 时间轴的根年龄（>= 0） |
 | `--scale-factor FLOAT` | 缩放因子（> 0） |
 
 ### 3.9 极坐标布局
@@ -174,7 +174,7 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 |------|------|
 | `--angular-range DEG` | 角度范围（0–360°，默认 360） |
 | `--root-angle DEG` | 根角度（0–360°） |
-| `--align-tip-labels` | 径向对齐末端标签 |
+| `--align-tip-labels` | 径向对齐末端标签（作用于 `--layout` 当前选定的布局：矩形、放射状或极坐标） |
 
 ### 3.10 放射状布局
 
@@ -194,17 +194,17 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 | 选项 | 描述 |
 |------|------|
 | `--legend-show` | 显示图例 |
-| `--legend-position {top,bottom,left,right}` | 图例位置（默认 bottom） |
+| `--legend-position {top,bottom,left,right}` | 图例位置（默认 top） |
 
-### 3.13 分支折叠
+### 3.13 类群折叠
 
 | 选项 | 描述 |
 |------|------|
-| `--clade NAME` | 按分类群名称折叠分支。先检查单系性；非单系则警告并跳过（配合 `--strict` 则终止）。可重复指定。 |
+| `--clade NAME` | 按分类群名称折叠对应的类群。先检查单系性；非单系则警告并跳过（配合 `--strict` 则终止）。可重复指定。 |
 | `--strict` | 遇到非单系群时终止（而非跳过） |
 | `--collapse-taxa TAXA` | 按指定分类单元名折叠（逗号分隔）。支持 `label=NAME` 和 `type=TYPE` 标记。可重复指定。 |
 | `--collapse-rank RANK` | 折叠指定分类级别的**所有**单系群（如 `phylum`, `class`）。需要分类学信息。 |
-| `--collapse-style {collapse,cartoon}` | 折叠样式：`collapse`（三角+标签）/ `cartoon`（三角保留分支跨度）。默认 `collapse`。 |
+| `--collapse-style {collapse,cartoon}` | 折叠样式，仅作用于 `--collapse-rank`（`--clade` 与 `--collapse-taxa` 忽略该选项）：`collapse`（三角+标签）/ `cartoon`（三角保留分支跨度）。默认 `collapse`。 |
 
 **`--collapse-taxa` 格式示例：**
 
@@ -216,16 +216,16 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 --collapse-taxa "TaxonA,TaxonB,label=MyClade,type=cartoon"
 ```
 
-### 3.14 分支着色与高亮
+### 3.14 类群着色与高亮
 
 | 选项 | 描述 |
 |------|------|
-| `--auto-color [RANK]` | 自动为指定级别的所有单系群分配颜色（默认 phylum）。可重复。 |
-| `--highlight SPEC` | 高亮分支。格式：`"A,B,C[:#RRGGBB[:width[:offset]]]"`。可重复。 |
-| `--color-clade SPEC` | 着色分支（仅 MRCA 分支）。格式：`"A,B,C:#RRGGBB"`。可重复。 |
+| `--auto-color [RANK]` | 自动为指定分类级别的所有单系群分配颜色（默认 phylum）。 |
+| `--highlight SPEC` | 高亮类群。格式：`"A,B,C[:#RRGGBB[:width[:offset]]]"`。可重复。 |
+| `--color-clade SPEC` | 对类群着色（仅 MRCA 分支）。格式：`"A,B,C:#RRGGBB"`。可重复。 |
 | `--color-all` | 配合 `--color-clade` 使用，着色**所有**后代分支（set_clade_color_all） |
-| `--font-clade SPEC` | 设置分支字体。格式：`"A,B,C:FONTNAME[-STYLE[-SIZE]]"`。可重复。 |
-| `--clear-hilights` | 清除所有高亮注解 |
+| `--font-clade SPEC` | 设置类群字体。格式：`"A,B,C:FONTNAME[-STYLE[-SIZE]]"`。可重复。 |
+| `--clear-hilights` | 清除所有高亮（`!hilight`）注解，保留着色与字体注解 |
 
 **示例：**
 
@@ -236,10 +236,10 @@ figtreekit tree.nwk -o out.nex --auto-color phylum
 # 自定义颜色和宽度的高亮
 figtreekit tree.nwk -o out.nex --highlight "A,B,C:#FF0000:6:2"
 
-# 着色某分支的所有后代
+# 着色某类群的所有后代
 figtreekit tree.nwk -o out.nex --color-clade "A,B,C:#2196F3" --color-all
 
-# 设置粗体字体
+# 为某类群设置粗体字体
 figtreekit tree.nwk -o out.nex --font-clade "A,B,C:Arial-BOLD-14"
 ```
 
@@ -247,14 +247,14 @@ figtreekit tree.nwk -o out.nex --font-clade "A,B,C:Arial-BOLD-14"
 
 | 选项 | 描述 |
 |------|------|
-| `--taxonomy-levels SPEC` | 自定义等级前缀映射（如 `"d:domain,sp:superphylum,p:phylum,c:class,o:order,f:family,g:genus"`） |
-| `--taxonomy-delimiter-mode {reverse,greedy,segment}` | 分类学解析模式 |
-| `--taxonomy-table-sep CHAR` | 表格式分类学的分隔符（格式 B） |
-| `--taxonomy-source-priority {embedded,table}` | 两种格式并存时的优先级 |
+| `--taxonomy-levels SPEC` | 自定义分类级别前缀映射（如 `"d:domain,sp:superphylum,p:phylum,c:class,o:order,f:family,g:genus"`） |
+| `--taxonomy-delimiter-mode {reverse,greedy,segment}` | 分类学解析模式（默认 `reverse`） |
+| `--taxonomy-table-sep CHAR` | 表格式分类学的分隔符（格式 B，默认 `;`） |
+| `--taxonomy-source-priority {embedded,table}` | 两种格式并存时的优先级（默认 `table`） |
 | `--taxonomy-mapping-file FILE` | 外部分类学映射文件（TSV/CSV） |
-| `--table-sep CHAR` | `--taxonomy-table-sep` 的别名 |
+| `--table-sep CHAR` | 强制指定分类学映射文件的列分隔符（默认按扩展名自动检测） |
 | `--ignore-malformed` | 跳过解析失败的标签 |
-| `--analyze-taxonomy [RANK]` | 打印单系群报告并退出（默认级别：phylum） |
+| `--analyze-taxonomy [RANK]` | 打印单系性报告并退出（默认分类级别：phylum） |
 | `--check-monophyly NAME` | 检查指定群是否为单系群。支持特殊标识符：LUCA/LACA/LBCA/root。可重复。 |
 | `--check-taxonomy` | 检查所有末端的分类学完整性并退出 |
 
@@ -269,7 +269,7 @@ figtreekit tree.nwk -o out.nex --font-clade "A,B,C:Arial-BOLD-14"
 
 | 选项 | 描述 |
 |------|------|
-| `--sequences FILE` | 用于与树末端交叉验证的序列文件 |
+| `--sequences FILE` | 用于与树末端交叉验证的序列文件（仅 FASTA/FASTQ） |
 | `--mol-type {DNA,RNA,protein}` | 验证时的预期分子类型 |
 | `--no-cross-check` | 跳过树-序列交叉验证 |
 | `--skip-length-check` | 跳过序列长度一致性检查 |
@@ -278,7 +278,7 @@ figtreekit tree.nwk -o out.nex --font-clade "A,B,C:Arial-BOLD-14"
 
 | 选项 | 描述 |
 |------|------|
-| `--render FILE` | 渲染输出为图片文件（按扩展名判断格式） |
+| `--render FILE` | 将输出渲染为图片文件（按扩展名判断格式：PNG/PDF/SVG/JPEG） |
 | `--render-format {PNG,PDF,SVG,JPEG}` | 显式指定渲染格式（覆盖扩展名检测） |
 | `--render-width PX` | 渲染宽度（像素，默认 1200） |
 | `--render-height PX` | 渲染高度（像素，默认 800） |
@@ -355,10 +355,10 @@ styler = FigTreeStyler()            # 空实例，稍后加载
 
 | 方法 | 参数 | 描述 |
 |------|------|------|
-| `set_tip_labels(**kwargs)` | `is_shown`, `font_name`, `font_size`, `font_style`, `color`, `align` | 末端标签设置 |
+| `set_tip_labels(**kwargs)` | `is_shown`, `font_name`, `font_size`, `font_style` | 末端标签设置。`color`、`align` 不是有效的映射键——它们会被原样写出为 FigTree 不识别的 `tipLabels.*` 设置（其中 `tipLabels.color` 字面值在无头渲染下可能不生效）；标签着色请用 `set_tip_label_colors()`，对齐请用 `set_align_tip_labels()` |
 | `set_node_labels(**kwargs)` | `is_shown`, `display_attribute`, `font_name`, `font_size` | 节点标签设置 |
 | `set_branch_labels(**kwargs)` | `is_shown`, `display_attribute`, `font_name`, `font_size` | 分支标签设置 |
-| `set_align_tip_labels(align=True)` | — | 径向对齐末端标签 |
+| `set_align_tip_labels(align=True)` | — | 按当前布局（矩形 / 放射状 / 极坐标）径向对齐末端标签 |
 
 #### 比例尺
 
@@ -378,9 +378,9 @@ styler = FigTreeStyler()            # 空实例，稍后加载
 
 | 方法 | 参数 | 描述 |
 |------|------|------|
-| `set_trees(rooting, rooting_type, transform, transform_type, order, order_type)` | 见枚举类型 | 根性、变换、排序 |
+| `set_trees(rooting, rooting_type, transform, transform_type, order, order_type)` | 见下方 4.2 枚举类型 | 根性、变换、排序 |
 
-#### 分支注解
+#### 类群注解
 
 | 方法 | 描述 |
 |------|------|
@@ -394,7 +394,7 @@ styler = FigTreeStyler()            # 空实例，稍后加载
 | `clear_clade_hilights()` | 移除所有高亮注解 |
 | `clear_annotations()` | 移除**所有**注解 |
 
-#### 分支折叠
+#### 类群折叠
 
 | 方法 | 描述 |
 |------|------|
@@ -408,12 +408,12 @@ styler = FigTreeStyler()            # 空实例，稍后加载
 
 | 方法 | 描述 |
 |------|------|
-| `configure_taxonomy(delimiter_mode, table_sep, source_priority, mapping_file, ignore_malformed, file_delimiter)` | 配置分类学解析 |
+| `configure_taxonomy(*, delimiter_mode, table_sep, source_priority, mapping_file, ignore_malformed, file_delimiter)` | 配置分类学解析（仅接受关键字参数） |
 | `parse_label_taxonomy(pattern)` | 用正则表达式解析所有标签 |
-| `analyze_taxonomy(pattern, mapping_file, rank, style_monophyletic, color, highlight_color)` | 完整分类学分析（含单系群检测） |
+| `analyze_taxonomy(pattern, mapping_file, rank, style_monophyletic, color, highlight_color)` | 完整分类学分析（含单系性检测） |
 | `analyze_taxonomy_from_mapping(mapping_file, rank, style_monophyletic)` | 从外部映射文件分析 |
 | `check_monophyly(taxon_names)` | 检查指定分类单元是否构成单系群 |
-| `check_monophyly_by_group(group_name, pattern, mapping_file)` | 按群名检查单系性 |
+| `check_monophyly_by_group(group_name, pattern, mapping_file)` | 按分类群名称检查单系性 |
 | `check_taxonomy_completeness(pattern, mapping_file, required_ranks)` | 报告缺失的分类学数据 |
 
 #### 验证与导出
@@ -428,7 +428,7 @@ styler = FigTreeStyler()            # 空实例，稍后加载
 | `set_custom_param(key, value)` | 设置任意 FigTree 参数 |
 | `strip_annotations()` | 移除树内容中的括号注释 |
 | `export(output_file, include_taxa_block=True, single_tree=False)` | 导出为 Nexus 文件 |
-| `render(output_file, format=None, width=1200, height=800, jar_path=None, keep_nex=False)` | 通过 FigTree JAR 渲染为图片 |
+| `render(output_file, format=None, width=1200, height=800, jar_path=None, include_taxa_block=True, keep_nex=False, timeout=120)` | 通过 FigTree JAR 渲染为图片（`timeout` 单位为秒） |
 
 ### 4.2 枚举类型
 
@@ -454,11 +454,11 @@ from figtreekit import (
     parse_taxonomy,         # parse_taxonomy(label, mode="reverse")
     parse_taxonomy_auto,    # 自动检测格式
     detect_taxonomy_format, # 检测格式 A 或 B
-    is_monophyletic,        # is_monophyletic(tree, group_name, rooted=True)
+    is_monophyletic,        # is_monophyletic(tree, taxon_label, rooted=True)
     load_tree,              # load_tree(path, validate=True)
     cross_validate,         # cross_validate(tree_path, seq_path, strict=True)
     validate_input_file,    # validate_input_file(path)
-    deep_validate_newick,   # deep_validate_newick(content, label="")
+    deep_validate_newick,   # deep_validate_newick(content, label="<string>")
     deep_validate_fasta,    # deep_validate_fasta(path, expected_alphabet=None)
     apply_cli_args,         # apply_cli_args(styler, args)
 )
@@ -472,6 +472,7 @@ from figtreekit import (
 | `ParseError` | `FigTreeKitError` | 树/序列文件解析错误 |
 | `ValidationError` | `FigTreeKitError` | 输入验证失败 |
 | `ExportError` | `FigTreeKitError` | 导出/渲染错误 |
+| `RenderError` | `ExportError` | 渲染失败（Java 运行时缺失、FigTree 源码下载/Ant 编译失败、无头渲染非零退出） |
 | `PhyloFormatError` | `ParseError` | 文件格式错误（库模式 API 别名） |
 | `TaxonomyConflictError` | `ValidationError` | 分类学冲突（库模式 API 别名） |
 | `MonophylyError` | `ValidationError` | 单系性分析错误（库模式 API 别名） |
@@ -516,7 +517,7 @@ FigTreeKit 内置基于 FigTree v1.4.4 修改的 JAR，支持无头渲染。PyPI
 | PNG | `.png` | 网页、演示、快速预览 |
 | PDF | `.pdf` | 出版、矢量编辑 |
 | SVG | `.svg` | 网页、可缩放矢量图形 |
-| JPEG | `.jpg` | 小文件体积（有损压缩） |
+| JPEG | `.jpg`, `.jpeg` | 小文件体积（有损压缩） |
 
 ### CLI 渲染
 
@@ -537,8 +538,15 @@ styler.render("tree.pdf", format="PDF", width=2400, height=1600)
 ```bash
 figtreekit --setup-figtree
 figtreekit --check-figtree
+```
+
+### 使用已有的 FigTree JAR
+
+```bash
 figtreekit --setup-figtree --figtree-jar /path/to/figtree.jar
 ```
+
+该组合不触发源码下载与 Ant 编译：`setup_figtree()` 只校验给定 JAR 路径存在，并把该路径登记到 `~/.figtreekit/figtree_path.txt` 供后续渲染使用。
 
 ---
 
@@ -546,8 +554,8 @@ figtreekit --setup-figtree --figtree-jar /path/to/figtree.jar
 
 FigTreeKit 支持两种分类学标签格式：
 
-- **格式 A（嵌入式）**：`GCA_001_d__Archaea_p__Euryarchaeota_c__Methanobacteria_...`
-- **格式 B（表格式）**：`d__Archaea;p__Euryarchaeota;c__Methanobacteria;...`
+- **格式 A（嵌入式）**：`GCA_001_d_Archaea_p_Euryarchaeota_c_Methanobacteria_...`（分类级别标记用**单下划线**包裹，如 `_d_`、`_p_`）
+- **格式 B（表格式）**：`d__Archaea;p__Euryarchaeota;c__Methanobacteria;...`（GTDB 双下划线标记，以分号分隔）
 
 ### 完整 CLI 工作流
 
@@ -555,7 +563,7 @@ FigTreeKit 支持两种分类学标签格式：
 # 1. 检查分类学完整性
 figtreekit tree.nwk --check-taxonomy --taxonomy-levels "d:domain,p:phylum,c:class,o:order,f:family,g:genus"
 
-# 2. 分析门级单系群
+# 2. 分析门级单系性
 figtreekit tree.nwk --analyze-taxonomy phylum --taxonomy-levels "d:domain,p:phylum,c:class"
 
 # 3. 检查特定群
@@ -626,15 +634,15 @@ figtreekit trees_dir/ -o output_dir/ --layout polar --config style.json --force
 | 问题 | 解决方案 |
 |------|----------|
 | "File not found" | 确保输入路径存在且是常规文件 |
-| "Multiple trees detected" | 使用 `--multi-tree first/split/last/random` |
-| "Non-monophyletic group" 警告 | 使用 `--strict` 终止，或折叠被跳过 |
+| "Multiple trees detected" | 使用 `--multi-tree first/split/last/random/all`（默认 `ask`，会以退出码 2 中止） |
+| "Non-monophyletic group" 警告 | 默认跳过该折叠并记录警告，其余操作继续；加 `--strict` 时中止并报错 |
 | "Negative branch length" | 处理前修复树 |
 | "Duplicate tip name" | 确保所有末端名唯一 |
-| "Control character detected" | 清理输入文件中的恶意字符 |
+| "Control character detected" | 清理输入文件中的控制字符 |
 | "Tree-sequence cross-validation FAILED" | 使用 `--no-cross-check` 或修复标签不匹配 |
 | 大树处理缓慢 | 使用 `--low-memory`；>50k 末端需 2–4 GB 内存 |
 | FigTree JAR 未找到 | 运行 `figtreekit --setup-figtree` 或设置 `--figtree-jar` |
-| FigTree 中 `ClassCastException` | 避免对相同分类群同时使用 `set_clade_color` + `highlight_clade`；改用 `set_clade_color_all` |
+| FigTree 中 `ClassCastException` | 避免对相同分类单元同时使用 `set_clade_color()` + `highlight_clade()`；改用 `set_clade_color_all()` |
 
 ---
 
@@ -647,8 +655,8 @@ figtreekit trees_dir/ -o output_dir/ --layout polar --config style.json --force
 | `tipLabels.isShown` | bool | 显示/隐藏末端标签 |
 | `tipLabels.fontName` | string | 末端标签字体族 |
 | `tipLabels.fontSize` | int | 末端标签字号 |
-| `tipLabels.fontStyle` | int | 0=常规, 1=粗体, 2=斜体, 3=粗斜体 |
-| `tipLabels.color` | color | 末端标签颜色 |
+| `tipLabels.fontStyle` | int | 0=正常, 1=粗体, 2=斜体, 3=粗斜体 |
+| `tipLabels.color` | color | 末端标签颜色（无头渲染下该字面值可能不生效，推荐改用注解着色方式：`--label-color` / `set_tip_label_colors()`） |
 | `nodeLabels.isShown` | bool | 显示/隐藏节点标签 |
 | `nodeLabels.displayAttribute` | string | 节点标签属性 |
 | `branchLabels.isShown` | bool | 显示/隐藏分支标签 |
@@ -657,8 +665,9 @@ figtreekit trees_dir/ -o output_dir/ --layout polar --config style.json --force
 | `layout.layoutType` | string | RECTILINEAR / POLAR / RADIAL |
 | `layout.expansion` | int | 布局扩展 |
 | `layout.zoom` | float | 布局缩放 |
-| `polarLayout.angularRange` | int | 角度范围（×1000，如 180000 = 180°） |
-| `polarLayout.rootAngle` | int | 根角度（×1000） |
+| `polarLayout.angularRange` | int | 角度范围（存储值为 (360 − 角度) × 1000，例如 180000 = 180°、0 = 360°） |
+| `polarLayout.rootAngle` | int | 根角度（实际存储值为 (角度−180)×1000，例如 90000 表示 270°） |
+| `radialLayout.spread` | float | 放射展开因子（>= 0，默认 0.5；对应 `--radial-spread`） |
 | `rectilinearLayout.curvature` | int | 分支曲率 |
 | `rectilinearLayout.rootLength` | int | 根长度（像素） |
 | `scaleAxis.isShown` | bool | 显示/隐藏刻度轴 |
@@ -673,7 +682,7 @@ figtreekit trees_dir/ -o output_dir/ --layout polar --config style.json --force
 | `trees.order` | bool | 启用分支排序 |
 | `trees.orderType` | string | Increasing/Decreasing Node Density |
 
-> **注意**：极坐标角度使用 FigTree 内部的 ×1000 表示。`--set polarLayout.angularRange=180000` 等于 180°。Python API 的 `set_polar_layout(angular_range=180)` 直接接受角度值。
+> **注意**：极坐标角度以 FigTree 内部的滑块值存储。角度范围的存储值为 (360 − 角度) × 1000，因此 `--set polarLayout.angularRange=180000` 等于 180°，`--set polarLayout.angularRange=0` 等于 360°。根角度的内部表示另有偏移：实际存储值为 (角度 − 180) × 1000，因此 `--set polarLayout.rootAngle=90000` 等于 270°。Python API 的 `set_polar_layout(angular_range=180)` 直接接受角度值。
 # FigTreeKit 用户手册
 
 ## 安装
@@ -697,12 +706,12 @@ figtreekit --self-test
 | Nexus | `.nex`, `.nexus`, `.nx` | 带元数据块的扩展格式 |
 | PhyloXML | `.xml`, `.phyloxml` | 基于 XML 的系统发育格式 |
 
-### 序列文件
+### 序列文件（可验证的格式；其中仅 FASTA/FASTQ 用于交叉验证）
 
 | 格式 | 扩展名 | 描述 |
 |------|--------|------|
 | FASTA | `.fasta`, `.fa`, `.fas`, `.fna`, `.faa`, `.ffn`, `.frn` | 标准序列格式 |
-| FASTQ | `.fastq`, `.fq` | 带质量值的测序 reads |
+| FASTQ | `.fastq`, `.fq` | 带质量值的测序读段 |
 | GenBank | `.gb`, `.gbk`, `.genbank` | GenBank 注释格式 |
 | EMBL | `.embl` | EMBL 序列格式 |
 | Stockholm | `.stockholm`, `.sto` | 多序列比对格式 |
@@ -729,12 +738,12 @@ GB_GCA_000252485.1	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Cyanobact
 | 代码 | 含义 | 描述 |
 |------|------|------|
 | 0 | 成功 | 所有操作成功完成 |
-| 1 | 运行时错误 | 依赖问题、自检失败 |
+| 1 | 运行时错误 | 依赖问题、自检失败、意外错误 |
 | 2 | 用法错误 | 无效命令行参数、缺少输入 |
 | 3 | 数据错误 | 无效输入数据（格式错误的树、错误序列） |
 | 130 | 中断 | 用户按 Ctrl+C（SIGINT）或收到 SIGTERM |
 
-> 这些退出码由 `figtreekit/_cli.py` 中的 `ExitCode`（`IntEnum`）统一管理，数值与下表完全一致。
+> 这些退出码由 `figtreekit/_cli.py` 中的 `ExitCode`（`IntEnum`）统一管理，数值与上表完全一致。
 
 ## 命令行用法
 
@@ -743,7 +752,7 @@ GB_GCA_000252485.1	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Cyanobact
 ```bash
 figtreekit input.tre -o output.nex
 figtreekit input.tre --validate
-figtreekit --version    # 显示版本号、git hash 与构建日期
+figtreekit --version    # 显示版本号、Git 提交哈希、Python 与依赖版本
 figtreekit --self-test
 figtreekit --help
 ```
@@ -757,13 +766,13 @@ figtreekit input.tre -o out.nex --font-name Arial --font-size 12
 figtreekit input.tre -o out.nex --node-labels-show --node-display-attribute height
 ```
 
-### 分支折叠
+### 类群折叠
 
 ```bash
 figtreekit tree.nwk -o out.nex --clade Cyanobacteriota
 figtreekit tree.nwk -o out.nex --clade Cyanobacteriota --strict
 figtreekit tree.nwk -o out.nex --clade Cyanobacteriota --clade Proteobacteria
-# 嵌套折叠：同时折叠内外分支
+# 嵌套折叠：同时折叠内外类群
 figtreekit tree.nwk -o out.nex --clade Phylum --clade Class
 ```
 
@@ -814,27 +823,31 @@ figtreekit tree.nwk --validate --sequences sequences.fasta
 figtreekit tree.nwk -o existing.nex --force
 figtreekit tree.nwk -o existing.nex --no-clobber
 figtreekit tree.nwk -o out.nex --log-file figtreekit.log
-figtreekit tree.nwk -o out.nex --strip-annotations   # 移除括号注释以减小文件体积
+figtreekit tree.nwk -o out.nex --strip-annotations   # 移除括号注释（NHX/bootstrap/posterior）以减小文件体积
 ```
 
 ### 渲染
 
-FigTreeKit 使用基于 FigTree v1.4.4 修改的 JAR 进行无头渲染。安装包已内置打过补丁的 JAR，通常无需额外设置：
+FigTreeKit 通过基于 FigTree v1.4.4 修改的 JAR，将添加了注解的 Nexus 文件以无头方式（无需显示服务器）渲染为 PNG、PDF、SVG 或 JPEG。从 PyPI 安装的发行包已内置打过补丁的 JAR（`figtreekit/figtree_patched.jar`），通常无需额外设置：
 
 ```bash
 figtreekit input.tre -o out.nex --render tree.png
 figtreekit input.tre -o out.nex --render tree.pdf --render-width 1600 --render-height 1000
+figtreekit input.tre -o out.nex --render tree.pdf --render-width 1600   # 高度取默认 800
 figtreekit input.tre -o out.nex --render tree.svg
 ```
+
+渲染格式根据输出文件的扩展名自动推断；支持的格式列表见第 6 节。
 
 若从源码安装或需要重新编译 FigTree JAR，请确保已安装 Java 8+ 与 Apache Ant，然后运行：
 
 ```bash
+figtreekit --check-figtree                    # 检查 JAR 是否可用并打印状态
 figtreekit --setup-figtree                    # 下载源码、应用补丁并编译
-figtreekit --setup-figtree --path /path/to/figtree.jar  # 使用已有的 JAR
+figtreekit --setup-figtree --figtree-jar /path/to/figtree.jar  # 使用已有的 JAR
 ```
 
-`--setup-figtree` 会从 GitHub 下载 FigTree v1.4.4 官方源码，将 `_figtree_patch/src/figtree/` 中的单一补丁（`RadialTreeLayout.java`）写入源码树，再执行 `ant dist` 编译。手动编译步骤参见 `_figtree_patch/README.md`。
+`--setup-figtree` 会从 GitHub 下载 FigTree v1.4.4 官方源码，将 `_figtree_patch/src/figtree/` 中的四个补丁文件写入源码树（`treeviewer/treelayouts/RadialTreeLayout.java`、`treeviewer/decorators/AttributableDecorator.java`、`treeviewer/decorators/DiscreteColourDecorator.java`、`treeviewer/painters/ScaleAxisPainter.java`），并针对现代 JDK（Java 9+）修补 `build.xml` 的 source/target 与 `javax.activation` 依赖，再执行 `ant dist` 编译。编译产物默认保存到 `~/.figtreekit/figtree/dist/figtree.jar`；用 `--figtree-jar` 显式指定的 JAR 会被记录到 `~/.figtreekit/figtree_path.txt`。手动编译步骤参见 `_figtree_patch/README.md`。
 
 ### 配置文件
 
@@ -865,7 +878,7 @@ styler.set_appearance(background_color="#FFFFFF", branch_line_width=2.0)
 styler.highlight_clade(["A", "B"], color="#FF0000")
 styler.set_clade_color(["A", "B"], color="#2196F3")
 styler.set_clade_color_all(["A", "B"], color="#2196F3")  # 子树全部分支着色
-# 注意：set_clade_color + highlight_clade 作用于相同分类群时，
+# 注意：set_clade_color + highlight_clade 作用于相同分类单元时，
 # MRCA 级别的颜色会被丢弃以避免 FigTree ClassCastException。
 # 推荐使用 set_clade_color_all() 替代。
 styler.set_clade_font(["A"], font_name="Arial", font_style=FontStyle.BOLD, font_size=14)
@@ -885,15 +898,15 @@ styler.load_tree("tree.nwk")  # 自动检测为文件路径
 styler.load_tree("((A:0.1,B:0.2):0.3,C:0.4);")  # 自动检测为内联内容
 ```
 
-### Clade 信息查询
+### 类群信息查询
 
 ```python
-# 获取 clade 详细信息
+# 获取类群详细信息
 info = styler.get_clade_info(["A", "B"])
-# 返回包含 MRCA 节点、后代末端、分支长度等信息的字典
+# 返回包含 MRCA 末端列表、末端数量、单系性、类群大小等信息的字典
 ```
 
-### 单系群与折叠
+### 单系性与折叠
 
 ```python
 # 按精确分类单元检查单系性
@@ -903,12 +916,12 @@ result = styler.check_monophyly(["A", "B", "C"])
 result = styler.check_monophyly_by_group("Cyanobacteriales")
 result = styler.check_monophyly_by_group("LUCA")
 
-# 折叠分支
+# 折叠类群
 styler.collapse_clade(["A", "B"], label="Clade1")
 styler.collapse_by_group("Cyanobacteriales")
 styler.collapse_by_group("Cyanobacteriales", label="Cyano")
 
-# 嵌套折叠：同时折叠内外分支（自动按大小排序处理）
+# 嵌套折叠：同时折叠内外类群（自动按类群大小排序，内层优先处理）
 styler.collapse_clade(["A", "B"], label="Inner")
 styler.collapse_clade(["A", "B", "C"], label="Outer")  # Inner 和 Outer 都会出现在输出中
 
@@ -961,9 +974,9 @@ styler.configure_taxonomy(
     ignore_malformed=False,
 )
 
-# 分类学分析并自动识别单系群（需提供 pattern 或 mapping_file）
+# 分类学分析并自动检测单系性（pattern 与 mapping_file 均可省略：省略 mapping_file 时回退到 configure_taxonomy() 设定的映射文件）
 groups = styler.analyze_taxonomy(mapping_file="taxonomy.tsv", rank="phylum")
-# 返回各门的单系群信息
+# 返回各门的单系性信息
 
 # 从映射文件分析（等价便捷方法）
 groups = styler.analyze_taxonomy_from_mapping("taxonomy.tsv", rank="phylum")
@@ -972,14 +985,14 @@ groups = styler.analyze_taxonomy_from_mapping("taxonomy.tsv", rank="phylum")
 completeness = styler.check_taxonomy_completeness(mapping_file="taxonomy.tsv")
 ```
 
-### 库模式 API（Library Mode API）
+### 库模式 API
 
 以下标准化签名函数适用于第三方工作流（Snakemake/Nextflow）集成：
 
 ```python
 from figtreekit import (
     parse_taxonomy,        # 标准化分类学解析
-    is_monophyletic,       # 单系群判定
+    is_monophyletic,       # 单系性判定
     load_tree,             # 树加载
     cross_validate,        # 交叉验证
     # 标准化异常体系
@@ -990,9 +1003,9 @@ from figtreekit import (
 
 # 解析分类学标签（标准化签名）
 tax = parse_taxonomy("d__Bacteria;p__Cyanobacteriota", mode="reverse")
-# -> {"domain": "Bacteria", "phylum": "Cyanobacteriota", ...}
+# -> {"domain": "Bacteria", "phylum": "Cyanobacteriota"}
 
-# 判定单系群（标准化签名）
+# 判定单系性（标准化签名；rooted 参数在当前版本不生效，保留仅为签名兼容）
 mono = is_monophyletic("tree.nwk", "Cyanobacteriota", rooted=True)
 # -> True / False
 
@@ -1007,16 +1020,16 @@ report = cross_validate("tree.nwk", "sequences.fasta", strict=True)
 ## 故障排除
 
 ### "File not found" 错误
-确保输入路径存在且是常规文件（单文件模式不是目录）。
+确保输入路径存在且是常规文件（非批量模式下，输入须为单个文件而非目录）。
 
 ### "Multiple trees detected" 错误
 使用 `--multi-tree` 指定处理策略：
 - `--multi-tree first` — 仅处理第一棵树
 - `--multi-tree split` — 处理所有树，输出带数字后缀
-- `--multi-tree ask` — 打印摘要并退出（默认行为）
+- `--multi-tree ask` — 打印摘要并以退出码 2 中止（默认行为）
 
 ### "Non-monophyletic group" 警告
-指定的 clade 不构成单系群。使用 `--strict` 终止，或跳过折叠。
+指定的类群不构成单系群。默认行为是记录警告并跳过该折叠，其余操作继续；加 `--strict` 时中止，并以数据错误退出码 3 退出。
 
 ### "Negative branch length" 严重错误
 树包含负分支长度。处理前修复树。
@@ -1025,7 +1038,7 @@ report = cross_validate("tree.nwk", "sequences.fasta", strict=True)
 树包含重复的末端节点标签。确保所有末端名唯一。
 
 ### "Control character detected" 错误
-节点名包含恶意字符（控制字符或 Unicode 双向文本覆盖）。清理输入文件。
+节点名包含控制字符（C0/C1 控制码）或 Unicode 双向文本覆盖字符。请在处理前从输入文件中移除这些字符。
 
 ### "Tree-sequence cross-validation FAILED" 错误
 树末端标签与序列 ID 不匹配。使用 `--no-cross-check` 跳过，或修复标签使其一致。
@@ -1036,15 +1049,9 @@ report = cross_validate("tree.nwk", "sequences.fasta", strict=True)
 - 确保 FigTree 渲染有足够内存（>50k 末端需 2-4 GB）
 - 安装 `psutil` 获取 DEBUG 级内存日志
 
-## 错误码
+## 退出码与异常
 
-| 代码 | 含义 | 描述 |
-|------|------|------|
-| 0 | 成功 | 所有操作成功完成 |
-| 1 | 运行时错误 | 依赖问题、自检失败 |
-| 2 | 用法错误 | 无效命令行参数、缺少输入 |
-| 3 | 数据错误 | 无效输入数据（格式错误的树、错误序列） |
-| 130 | 中断 | 用户按 Ctrl+C（SIGINT）或收到 SIGTERM |
+退出码定义见本文「退出码」一节（由 `figtreekit/_cli.py` 中的 `ExitCode`（`IntEnum`）统一管理）。
 
 ### 异常体系
 
@@ -1054,7 +1061,8 @@ report = cross_validate("tree.nwk", "sequences.fasta", strict=True)
 | `ParseError` | `FigTreeKitError` | 树/序列文件解析错误 |
 | `ValidationError` | `FigTreeKitError` | 输入验证失败 |
 | `ExportError` | `FigTreeKitError` | 导出/渲染错误 |
+| `RenderError` | `ExportError` | 渲染失败（Java 运行时缺失、FigTree 源码下载/Ant 编译失败、无头渲染非零退出） |
 | `PhyloFormatError` | `ParseError` | 文件格式错误（库模式 API 别名） |
 | `TaxonomyConflictError` | `ValidationError` | 分类学冲突（库模式 API 别名） |
 | `MonophylyError` | `ValidationError` | 单系性分析错误（库模式 API 别名） |
-| `CompatibilityWarning` | `UserWarning` | 兼容性警告 |
+| `CompatibilityWarning` | `UserWarning` | FigTree 兼容性警告 |

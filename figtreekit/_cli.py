@@ -1115,7 +1115,7 @@ examples:
     lg.add_argument(
         "--legend-position",
         choices=["top", "bottom", "left", "right"],
-        help="Legend position (default: bottom)",
+        help="Legend position (default: top)",
     )
 
     return parser
