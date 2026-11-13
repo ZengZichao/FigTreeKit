@@ -30,12 +30,12 @@ FigTreeKit 是一个 Python 库，用于系统发育树的程序化出版级样�
 - **分类学感知分析**：自动从标签提取分类信息（嵌入式 `_d_`/`_p_`/`_g_`/`_s_`/`_ss_` 格式和表格 `d__`/`p__` 格式）
 - **单系性检测**：检测相关末端分类单元是否构成单系群，支持特殊标识符（LUCA/LACA/LBCA）
 - **类群折叠**：按分类群名称折叠目标类群，折叠前先验证其单系性
-- **多树处理**：检测并处理多棵树，支持 `split`/`first`/`last`/`random` 模式
-- **深度输入验证**：结构检查、负分支检测、重复末端名、控制字符与双向文本覆盖扫描
+- **多树处理**：检测并处理多棵树，支持 `ask`/`split`/`first`/`last`/`random`/`all` 模式
+- **深度输入验证**：结构检查、负分支检测、重复末端名、控制字符与 Unicode 双向文本覆盖扫描
 - **实时日志**：ISO 8601 时间戳、stdout 刷新、可选日志文件输出
 - **自检模式**：`--self-test` 验证依赖、解析、分类学和单系性逻辑
 - **批量处理**：通过 CLI 处理多个树文件
-- **图片渲染**：无需打开 FigTree GUI 即可导出 PNG/PDF/SVG/JPEG（需要 FigTree JAR）；若只需在命令行渲染大规模树，也可考虑 [TreeViewer](https://doi.org/10.1002/ece3.10873)
+- **图片渲染**：无需打开 FigTree GUI 即可导出 PNG/PDF/SVG/JPEG（需要 FigTree JAR）；在命令行渲染大规模树时，也可考虑 [TreeViewer](https://doi.org/10.1002/ece3.10873)
 
 ---
 
@@ -171,7 +171,7 @@ from figtreekit import FigTreeStyler
 
 styler = FigTreeStyler("tree.nwk")
 
-# 按类群名检查单系性（自动检测格式）
+# 按分类群名称检查单系性（自动检测格式）
 result = styler.check_monophyly_by_group("Cyanobacteriales")
 print(result["is_monophyletic"])  # True/False
 print(result["resolved_taxa"])    # 分类单元列表
@@ -318,7 +318,7 @@ begin trees;
 end;
 begin figtree;
     set appearance.backgroundColour=#ffffff;
-    set layout.layoutType=POLAR;
+    set layout.layoutType="POLAR";
     set tipLabels.isShown=true;
 end;
 ```
@@ -426,7 +426,7 @@ RS_GCF_000013425.1	d__Archaea;p__Euryarchaeota;c__Methanomicrobia;o__Methanosarc
 | 序列 | Clustal | `.clustal`, `.aln` |
 | 分类学 | TSV/CSV | `.tsv`, `.csv` |
 
-> **† 格式支持范围：** 树的*样式化与渲染*（`FigTreeStyler` 与 Nexus 导出）**仅支持 Newick 与 Nexus**。PhyloXML 可被输入*校验器*（`--validate`）识别，但树样式器**不会**加载、样式化或渲染它。序列格式（FASTA、FASTQ、GenBank、EMBL、Stockholm、Phylip、Clustal）仅用于**输入校验与树↔序列交叉验证**（`--validate` / `--sequences`），而非树样式化。
+> **† 格式支持范围：** 树的*样式化与渲染*（`FigTreeStyler` 与 Nexus 导出）**仅支持 Newick 与 Nexus**。PhyloXML 可被输入*校验器*（`--validate`）识别，但树样式器**不会**加载、样式化或渲染它。序列格式（FASTA、FASTQ、GenBank、EMBL、Stockholm、Phylip、Clustal）仅用于**输入校验**（`--validate`），而非树样式化；树↔序列交叉验证（`--sequences`）仅支持 FASTA/FASTQ。
 
 ### 处理流程
 
@@ -464,7 +464,7 @@ RS_GCF_000013425.1	d__Archaea;p__Euryarchaeota;c__Methanomicrobia;o__Methanosarc
 - **引号分类单元名**：含空格或特殊字符的名称必须在 Newick 中单引号包裹：`('Species A':0.1,'Species B':0.2);`
 - **缺失分支长度**：无分支长度的树有效；FigTree 将显示等长分支
 - **多歧分支**：未解析节点（超过 2 个子节点）完全支持
-- **Translate block**：BEAST 风格的数字分类 ID 自动解析
+- **Translate block**：BEAST 风格的数字分类单元 ID 自动解析
 - **编码**：带 BOM（UTF-8-sig）或旧编码（latin-1）的文件透明处理
 - **大树**：超过 10,000 个末端的树触发资源警告；使用 `--low-memory` 模式
 - **空分类单元名**：检测并拒绝为 ERROR（无法映射分类学）
@@ -497,7 +497,7 @@ RS_GCF_000013425.1	d__Archaea;p__Euryarchaeota;c__Methanomicrobia;o__Methanosarc
 ### 日志文件
 
 ```bash
-# 将日志写入文件（全部级别，UTF-8）
+# 将日志写入文件（UTF-8；写入的级别随 -v/-q 而定，仅 -vv 时包含全部级别）
 figtreekit tree.nwk -o out.nex --log-file figtreekit.log
 ```
 
@@ -528,10 +528,10 @@ figtreekit --help
   --validate            仅检查兼容性不导出
   -v, --verbose         增加详细度 (-v INFO, -vv DEBUG)（默认: WARNING）
   -q, --quiet           抑制所有非错误输出
-  --version             显示版本、Git 提交哈希、日期和依赖
+  --version             显示版本、Git 提交哈希、Python 与依赖版本
   --self-test           运行自诊断检查
   --config FILE         JSON 配置文件
-  --log-file FILE       将日志写入文件（UTF-8, 所有级别）
+  --log-file FILE       将日志写入文件（UTF-8，级别随 -v/-q 过滤；仅 -vv 时包含全部级别）
   --force               覆盖已有输出文件
   --no-clobber          输出存在时跳过
   --strip-annotations   移除树中的括号注释（NHX/bootstrap/posterior）以减小文件体积
@@ -781,7 +781,7 @@ mapper.load_mapping("taxonomy.tsv")
 labels = [t.name for t in styler.parse_tree().get_terminals()]
 groups = mapper.identify_groups(labels, rank="genus")
 
-# 分类学分析并自动检测单系性（需提供 pattern 或 mapping_file）
+# 分类学分析并自动检测单系性（pattern 与 mapping_file 均可省略：省略 mapping_file 时回退到 configure_taxonomy() 设定的映射文件）
 result = styler.analyze_taxonomy(mapping_file="taxonomy.tsv", rank="phylum")
 # 便捷方法：等价于 analyze_taxonomy(mapping_file=...)
 result = styler.analyze_taxonomy_from_mapping("taxonomy.tsv", rank="phylum")
@@ -989,6 +989,7 @@ FigTreeKit 是根据 **GNU 通用公共许可证第 2 版或更高版本（GPL-2
 - **FigTree**（`figtreekit/figtree_patched.jar`、`_figtree_patch/`、修改后的 Java 源码位于 `_figtree_patch/src/figtree/`）：衍生自 Andrew Rambaut 的 [FigTree v1.4.4](http://tree.bio.ed.ac.uk/software/figtree/)，授权为 GPL-2.0-or-later。原始未修改 JAR（`_figtree_patch/figtree_original.jar`）亦一并提供以满足 GPL 源代码提供要求；重建方法见 `_figtree_patch/README.md`。
 - **iText**（打包在各 FigTree JAR 中用于 PDF 导出）：授权为 GNU Affero 通用公共许可证第 3 版（AGPL-3.0）。
 - **Biopython**（运行时依赖）：BSD-3-Clause。
+- **FigTree JAR 内的其他第三方库**：Apache Batik（Apache-2.0）、JEBL、JAM 及 JavaHelp 相关组件；其许可证原文保留在 JAR 内的 `license/` 与 `META-INF/` 条目中（见 `NOTICE` 第 4 节）。
 
 当你再分发 FigTreeKit 或打过补丁的 FigTree JAR 时，须遵守 GPL-2.0-or-later 与 AGPL-3.0 的 copyleft 条款。
 

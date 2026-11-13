@@ -30,7 +30,7 @@ Typical use cases include:
 - **Taxonomy-Aware Analysis**: Automatic taxonomy extraction from labels (embedded `_d_`/`_p_`/`_g_`/`_s_`/`_ss_` format and table `d__`/`p__` format)
 - **Monophyly Detection**: Check whether the relevant terminal taxa form monophyletic groups, with support for the special identifiers (LUCA/LACA/LBCA)
 - **Clade Collapse**: Collapse clades by taxonomic group name with monophyly validation
-- **Multi-Tree Handling**: Detect and process multiple trees with `split`/`first`/`last`/`random` modes
+- **Multi-Tree Handling**: Detect and process multiple trees with `ask`/`split`/`first`/`last`/`random`/`all` modes
 - **Deep Input Validation**: Structural checks, negative branch detection, duplicate tip names, control-character and Unicode bidi-override scanning
 - **Real-Time Logging**: ISO 8601 timestamps, stdout flush, optional log file output
 - **Self-Test Mode**: `--self-test` verifies dependencies, parsing, taxonomy, and monophyly logic
@@ -327,7 +327,7 @@ begin trees;
 end;
 begin figtree;
     set appearance.backgroundColour=#ffffff;
-    set layout.layoutType=POLAR;
+    set layout.layoutType="POLAR";
     set tipLabels.isShown=true;
 end;
 ```
@@ -435,7 +435,7 @@ RS_GCF_000013425.1	d__Archaea;p__Euryarchaeota;c__Methanomicrobia;o__Methanosarc
 | Sequence | Clustal | `.clustal`, `.aln` |
 | Taxonomy | TSV/CSV | `.tsv`, `.csv` |
 
-> **† Format support scope:** Tree *styling and rendering* (`FigTreeStyler` and Nexus export) support **Newick and Nexus only**. PhyloXML is recognized by the input *validator* (`--validate`) but is **not** loaded, styled, or rendered by the tree styler. Sequence formats (FASTA, FASTQ, GenBank, EMBL, Stockholm, Phylip, Clustal) are supported for **input validation and tree↔sequence cross-validation** (`--validate` / `--sequences`), not for tree styling.
+> **† Format support scope:** Tree *styling and rendering* (`FigTreeStyler` and Nexus export) support **Newick and Nexus only**. PhyloXML is recognized by the input *validator* (`--validate`) but is **not** loaded, styled, or rendered by the tree styler. Sequence formats (FASTA, FASTQ, GenBank, EMBL, Stockholm, Phylip, Clustal) are supported for **input validation** (`--validate`), not for tree styling; tree↔sequence cross-validation (`--sequences`) is limited to FASTA/FASTQ.
 
 ### Processing Flow
 
@@ -506,7 +506,7 @@ All operations produce real-time log output with ISO 8601 timestamps:
 ### Log File
 
 ```bash
-# Write logs to file (all levels, UTF-8)
+# Write logs to file (UTF-8; which levels are captured follows -v/-q — all levels only with -vv)
 figtreekit tree.nwk -o out.nex --log-file figtreekit.log
 ```
 
@@ -537,10 +537,10 @@ options:
   --validate            Check compatibility without exporting
   -v, --verbose         Increase verbosity (-v INFO, -vv DEBUG) (default: WARNING)
   -q, --quiet           Suppress all non-error output
-  --version             Show version, git commit hash, date and dependencies
+  --version             Show version, git commit hash, python and dependency versions
   --self-test           Run self-diagnostic checks
   --config FILE         JSON config file
-  --log-file FILE       Write logs to file (UTF-8, all levels)
+  --log-file FILE       Write logs to file (UTF-8, filtered by -v/-q; all levels only with -vv)
   --force               Overwrite existing output files
   --no-clobber          Skip if output exists
   --strip-annotations   Strip bracket comments (NHX/bootstrap/posterior) to reduce file size
@@ -637,7 +637,7 @@ styler.set_scale(root_age=1.0)
 styler.set_radial_layout(spread=1.0)
 styler.set_rectilinear_layout(curvature=0, root_length=0)
 
-# Trees
+# Tree properties
 styler.set_trees(rooting=True, transform=True, transform_type=TransformType.PHYLOGRAM)
 
 # Legend / node decorations
@@ -786,11 +786,11 @@ styler.configure_taxonomy(
 # Direct mapper usage
 mapper = TaxonomyMapper()
 mapper.load_mapping("taxonomy.tsv")
-# labels are the terminal taxa to be grouped (parsed from the loaded tree)
+# labels are the tip labels to be grouped (parsed from the loaded tree)
 labels = [t.name for t in styler.parse_tree().get_terminals()]
 groups = mapper.identify_groups(labels, rank="genus")
 
-# Taxonomy analysis with automatic monophyly detection (requires pattern or mapping_file)
+# Taxonomy analysis with automatic monophyly detection (pattern and mapping_file are both optional; an omitted mapping_file falls back to the one set via configure_taxonomy())
 result = styler.analyze_taxonomy(mapping_file="taxonomy.tsv", rank="phylum")
 # Convenience method: equivalent to analyze_taxonomy(mapping_file=...)
 result = styler.analyze_taxonomy_from_mapping("taxonomy.tsv", rank="phylum")
@@ -998,6 +998,7 @@ This program is distributed in the hope that it will be useful, but WITHOUT ANY 
 - **FigTree** (`figtreekit/figtree_patched.jar`, `_figtree_patch/`, modified Java sources in `_figtree_patch/src/figtree/`): derived from [FigTree v1.4.4](http://tree.bio.ed.ac.uk/software/figtree/) by Andrew Rambaut, licensed under GPL-2.0-or-later. The original unmodified JAR (`_figtree_patch/figtree_original.jar`) is also provided to satisfy GPL source-provision requirements; see `_figtree_patch/README.md` for rebuild instructions.
 - **iText** (bundled inside the FigTree JARs for PDF export): licensed under the GNU Affero General Public License v3 (AGPL-3.0).
 - **Biopython** (runtime dependency): BSD-3-Clause.
+- **Other libraries bundled inside the FigTree JARs**: Apache Batik (Apache-2.0), JEBL, JAM, and JavaHelp-related components; their license texts are preserved inside the JARs under the `license/` and `META-INF/` entries (see `NOTICE`, section 4).
 
 When you redistribute FigTreeKit or the patched FigTree JAR, the copyleft terms of GPL-2.0-or-later and AGPL-3.0 apply.
 

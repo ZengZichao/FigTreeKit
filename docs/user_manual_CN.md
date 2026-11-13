@@ -50,7 +50,7 @@ figtreekit --version
 | Nexus | `.nex`, `.nexus`, `.nx` | 带元数据块的扩展格式 |
 | PhyloXML | `.xml`, `.phyloxml` | 基于 XML 的系统发育格式 |
 
-### 序列文件（用于交叉验证）
+### 序列文件（可验证的格式；其中仅 FASTA/FASTQ 用于交叉验证）
 
 | 格式 | 扩展名 |
 |------|--------|
@@ -88,16 +88,16 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 | 选项 | 描述 |
 |------|------|
 | `-h`, `--help` | 显示帮助信息并退出 |
-| `--version` | 显示版本号、git hash 与构建日期 |
+| `--version` | 显示版本号、Git 提交哈希、Python 与依赖版本 |
 | `--self-test` | 运行内置诊断检查（11 项测试） |
 | `-v` | 详细输出（`-v` 为 INFO 级日志，`-vv` 为 DEBUG 级日志） |
-| `-q` | 安静模式（抑制 INFO 消息） |
+| `-q` | 安静模式（将日志级别提升至 ERROR，即同时抑制 WARNING 与 INFO；默认级别为 WARNING） |
 | `-o OUTPUT` | 输出 Nexus 文件路径（批量模式下为目录） |
 | `--validate` | 仅验证输入文件（不生成输出） |
 | `--config FILE` | JSON 配置文件（见第 5 节） |
-| `--log-file FILE` | 将日志输出写入文件 |
+| `--log-file FILE` | 将日志输出写入文件（UTF-8）。文件处理器本身设为 DEBUG，但记录会先按 `-v`/`-q` 决定的记录器级别过滤：仅在 `-vv` 下文件才包含全部级别，`-q` 时文件同样只保留 ERROR |
 | `--force` | 覆盖已存在的输出文件 |
-| `--no-clobber` | 不覆盖已存在的输出：输出文件已存在时跳过该文件并记录 INFO，整体仍判成功 |
+| `--no-clobber` | 不覆盖已存在的输出（同时给出 `--force` 时以其为准）：输出文件已存在时跳过该文件并记录 INFO，整体仍判成功 |
 | `--strip-annotations` | 移除括号注释（NHX/bootstrap/posterior）以减小文件体积 |
 | `--low-memory` | 低内存模式（适用于 >10k 末端的大树） |
 
@@ -106,8 +106,8 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 | 选项 | 取值 | 默认值 | 描述 |
 |------|------|--------|------|
 | `--layout` | `rectilinear`, `polar`, `radial` | `rectilinear` | 树布局类型 |
-| `--expansion INT` | >= 0 | — | 布局扩展值 |
-| `--zoom FLOAT` | > 0 | — | 布局缩放因子 |
+| `--expansion INT` | >= 0 | `50` | 布局扩展值 |
+| `--zoom FLOAT` | > 0 | `1.0` | 布局缩放因子 |
 
 ### 3.3 外观选项
 
@@ -174,7 +174,7 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 |------|------|
 | `--angular-range DEG` | 角度范围（0–360°，默认 360） |
 | `--root-angle DEG` | 根角度（0–360°） |
-| `--align-tip-labels` | 径向对齐末端标签 |
+| `--align-tip-labels` | 径向对齐末端标签（作用于 `--layout` 当前选定的布局：矩形、放射状或极坐标） |
 
 ### 3.10 放射状布局
 
@@ -204,7 +204,7 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 | `--strict` | 遇到非单系群时终止（而非跳过） |
 | `--collapse-taxa TAXA` | 按指定分类单元名折叠（逗号分隔）。支持 `label=NAME` 和 `type=TYPE` 标记。可重复指定。 |
 | `--collapse-rank RANK` | 折叠指定分类级别的**所有**单系群（如 `phylum`, `class`）。需要分类学信息。 |
-| `--collapse-style {collapse,cartoon}` | 折叠样式：`collapse`（三角+标签）/ `cartoon`（三角保留分支跨度）。默认 `collapse`。 |
+| `--collapse-style {collapse,cartoon}` | 折叠样式，仅作用于 `--collapse-rank`（`--clade` 与 `--collapse-taxa` 忽略该选项）：`collapse`（三角+标签）/ `cartoon`（三角保留分支跨度）。默认 `collapse`。 |
 
 **`--collapse-taxa` 格式示例：**
 
@@ -239,7 +239,7 @@ figtreekit tree.nwk -o out.nex --highlight "A,B,C:#FF0000:6:2"
 # 着色某类群的所有后代
 figtreekit tree.nwk -o out.nex --color-clade "A,B,C:#2196F3" --color-all
 
-# 设置粗体字体
+# 为某类群设置粗体字体
 figtreekit tree.nwk -o out.nex --font-clade "A,B,C:Arial-BOLD-14"
 ```
 
@@ -269,7 +269,7 @@ figtreekit tree.nwk -o out.nex --font-clade "A,B,C:Arial-BOLD-14"
 
 | 选项 | 描述 |
 |------|------|
-| `--sequences FILE` | 用于与树末端交叉验证的序列文件 |
+| `--sequences FILE` | 用于与树末端交叉验证的序列文件（仅 FASTA/FASTQ） |
 | `--mol-type {DNA,RNA,protein}` | 验证时的预期分子类型 |
 | `--no-cross-check` | 跳过树-序列交叉验证 |
 | `--skip-length-check` | 跳过序列长度一致性检查 |
@@ -355,10 +355,10 @@ styler = FigTreeStyler()            # 空实例，稍后加载
 
 | 方法 | 参数 | 描述 |
 |------|------|------|
-| `set_tip_labels(**kwargs)` | `is_shown`, `font_name`, `font_size`, `font_style` | 末端标签设置。`color`、`align` 不是有效的映射键——它们会被原样写出为 FigTree 不识别的 `tipLabels.*` 设置（无头渲染下可能不生效）；标签着色请用 `set_tip_label_colors()`，对齐请用 `set_align_tip_labels()` |
+| `set_tip_labels(**kwargs)` | `is_shown`, `font_name`, `font_size`, `font_style` | 末端标签设置。`color`、`align` 不是有效的映射键——它们会被原样写出为 FigTree 不识别的 `tipLabels.*` 设置（其中 `tipLabels.color` 字面值在无头渲染下可能不生效）；标签着色请用 `set_tip_label_colors()`，对齐请用 `set_align_tip_labels()` |
 | `set_node_labels(**kwargs)` | `is_shown`, `display_attribute`, `font_name`, `font_size` | 节点标签设置 |
 | `set_branch_labels(**kwargs)` | `is_shown`, `display_attribute`, `font_name`, `font_size` | 分支标签设置 |
-| `set_align_tip_labels(align=True)` | — | 径向对齐末端标签 |
+| `set_align_tip_labels(align=True)` | — | 按当前布局（矩形 / 放射状 / 极坐标）径向对齐末端标签 |
 
 #### 比例尺
 
@@ -408,12 +408,12 @@ styler = FigTreeStyler()            # 空实例，稍后加载
 
 | 方法 | 描述 |
 |------|------|
-| `configure_taxonomy(delimiter_mode, table_sep, source_priority, mapping_file, ignore_malformed, file_delimiter)` | 配置分类学解析 |
+| `configure_taxonomy(*, delimiter_mode, table_sep, source_priority, mapping_file, ignore_malformed, file_delimiter)` | 配置分类学解析（仅接受关键字参数） |
 | `parse_label_taxonomy(pattern)` | 用正则表达式解析所有标签 |
 | `analyze_taxonomy(pattern, mapping_file, rank, style_monophyletic, color, highlight_color)` | 完整分类学分析（含单系性检测） |
 | `analyze_taxonomy_from_mapping(mapping_file, rank, style_monophyletic)` | 从外部映射文件分析 |
 | `check_monophyly(taxon_names)` | 检查指定分类单元是否构成单系群 |
-| `check_monophyly_by_group(group_name, pattern, mapping_file)` | 按群名检查单系性 |
+| `check_monophyly_by_group(group_name, pattern, mapping_file)` | 按分类群名称检查单系性 |
 | `check_taxonomy_completeness(pattern, mapping_file, required_ranks)` | 报告缺失的分类学数据 |
 
 #### 验证与导出
@@ -454,11 +454,11 @@ from figtreekit import (
     parse_taxonomy,         # parse_taxonomy(label, mode="reverse")
     parse_taxonomy_auto,    # 自动检测格式
     detect_taxonomy_format, # 检测格式 A 或 B
-    is_monophyletic,        # is_monophyletic(tree, group_name, rooted=True)
+    is_monophyletic,        # is_monophyletic(tree, taxon_label, rooted=True)
     load_tree,              # load_tree(path, validate=True)
     cross_validate,         # cross_validate(tree_path, seq_path, strict=True)
     validate_input_file,    # validate_input_file(path)
-    deep_validate_newick,   # deep_validate_newick(content, label="")
+    deep_validate_newick,   # deep_validate_newick(content, label="<string>")
     deep_validate_fasta,    # deep_validate_fasta(path, expected_alphabet=None)
     apply_cli_args,         # apply_cli_args(styler, args)
 )
@@ -706,7 +706,7 @@ figtreekit --self-test
 | Nexus | `.nex`, `.nexus`, `.nx` | 带元数据块的扩展格式 |
 | PhyloXML | `.xml`, `.phyloxml` | 基于 XML 的系统发育格式 |
 
-### 序列文件
+### 序列文件（可验证的格式；其中仅 FASTA/FASTQ 用于交叉验证）
 
 | 格式 | 扩展名 | 描述 |
 |------|--------|------|
@@ -752,7 +752,7 @@ GB_GCA_000252485.1	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Cyanobact
 ```bash
 figtreekit input.tre -o output.nex
 figtreekit input.tre --validate
-figtreekit --version    # 显示版本号、git hash 与构建日期
+figtreekit --version    # 显示版本号、Git 提交哈希、Python 与依赖版本
 figtreekit --self-test
 figtreekit --help
 ```
@@ -974,7 +974,7 @@ styler.configure_taxonomy(
     ignore_malformed=False,
 )
 
-# 分类学分析并自动检测单系性（需提供 pattern 或 mapping_file）
+# 分类学分析并自动检测单系性（pattern 与 mapping_file 均可省略：省略 mapping_file 时回退到 configure_taxonomy() 设定的映射文件）
 groups = styler.analyze_taxonomy(mapping_file="taxonomy.tsv", rank="phylum")
 # 返回各门的单系性信息
 
@@ -1065,4 +1065,4 @@ report = cross_validate("tree.nwk", "sequences.fasta", strict=True)
 | `PhyloFormatError` | `ParseError` | 文件格式错误（库模式 API 别名） |
 | `TaxonomyConflictError` | `ValidationError` | 分类学冲突（库模式 API 别名） |
 | `MonophylyError` | `ValidationError` | 单系性分析错误（库模式 API 别名） |
-| `CompatibilityWarning` | `UserWarning` | 兼容性警告 |
+| `CompatibilityWarning` | `UserWarning` | FigTree 兼容性警告 |

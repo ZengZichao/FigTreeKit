@@ -23,7 +23,7 @@ Comparison of FigTreeKit with existing phylogenetic tree libraries and tools.
 | Mixed format support | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Monophyly detection | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | Special identifiers (LUCA/LACA/LBCA) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
-| Clade collapse by group name | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
+| Clade collapse by taxonomic group name | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ |
 | **Validation** |  |  |  |  |  |  |
 | Bracket balance check | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Negative branch length detection | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |

@@ -50,7 +50,7 @@ figtreekit --version
 | Nexus | `.nex`, `.nexus`, `.nx` | Extended format with metadata blocks |
 | PhyloXML | `.xml`, `.phyloxml` | XML-based phylogenetic format |
 
-### Sequence Files (for cross-validation)
+### Sequence Files (validated formats; only FASTA/FASTQ are used for cross-validation)
 
 | Format | Extensions |
 |--------|-----------|
@@ -88,16 +88,16 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 | Option | Description |
 |--------|-------------|
 | `-h`, `--help` | Show help message and exit |
-| `--version` | Show version, git hash, and build date |
+| `--version` | Show version, git commit hash, python and dependency versions |
 | `--self-test` | Run built-in diagnostic checks (11 tests) |
 | `-v` | Increase verbosity: `-v` = INFO, `-vv` = DEBUG logging |
-| `-q` | Quiet mode (suppress INFO messages) |
+| `-q` | Quiet mode (raise the log level to ERROR, suppressing WARNING as well as INFO; the default level is WARNING) |
 | `-o OUTPUT` | Output Nexus file path (or directory in batch mode) |
 | `--validate` | Validate input file only (no output) |
 | `--config FILE` | JSON configuration file (see Section 5) |
-| `--log-file FILE` | Write log output to file |
+| `--log-file FILE` | Write log output to file (UTF-8). The file handler itself is set to DEBUG, but records are first filtered by the logger level chosen with `-v`/`-q`: the file sees every level only with `-vv`, and `-q` limits it to ERROR |
 | `--force` | Overwrite existing output file |
-| `--no-clobber` | Never overwrite an existing output file: skip it, log at INFO, and still report success |
+| `--no-clobber` | Do not overwrite an existing output file (unless `--force` is also given, which wins): skip it, log at INFO, and still report success |
 | `--strip-annotations` | Strip bracket comments (NHX/bootstrap/posterior) to reduce file size |
 | `--low-memory` | Low-memory mode for large trees (>10k tips) |
 
@@ -106,8 +106,8 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 | Option | Values | Default | Description |
 |--------|--------|---------|-------------|
 | `--layout` | `rectilinear`, `polar`, `radial` | `rectilinear` | Tree layout type |
-| `--expansion INT` | >= 0 | — | Layout expansion value |
-| `--zoom FLOAT` | > 0 | — | Layout zoom factor |
+| `--expansion INT` | >= 0 | `50` | Layout expansion value |
+| `--zoom FLOAT` | > 0 | `1.0` | Layout zoom factor |
 
 ### 3.3 Appearance Options
 
@@ -174,7 +174,7 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 |--------|-------------|
 | `--angular-range DEG` | Angular range in degrees (0–360, default: 360) |
 | `--root-angle DEG` | Root angle in degrees (0–360) |
-| `--align-tip-labels` | Align tip labels radially |
+| `--align-tip-labels` | Align tip labels radially (applies to the layout selected with `--layout`: rectilinear, radial, or polar) |
 
 ### 3.10 Radial Layout
 
@@ -204,7 +204,7 @@ figtreekit [input] [-o OUTPUT] [OPTIONS]
 | `--strict` | Abort on non-monophyletic clades instead of skipping |
 | `--collapse-taxa TAXA` | Collapse by specific taxon names (comma-separated). Supports `label=NAME` and `type=TYPE` tokens. Repeatable. |
 | `--collapse-rank RANK` | Collapse ALL monophyletic groups at the given taxonomic rank (e.g. `phylum`, `class`). Requires taxonomy info. |
-| `--collapse-style {collapse,cartoon}` | Collapse style: `collapse` (triangle + label) or `cartoon` (triangle preserving branch span). Default: `collapse`. |
+| `--collapse-style {collapse,cartoon}` | Collapse style for `--collapse-rank` only (ignored by `--clade` and `--collapse-taxa`): `collapse` (triangle + label) or `cartoon` (triangle preserving branch span). Default: `collapse`. |
 
 **`--collapse-taxa` format examples:**
 
@@ -269,7 +269,7 @@ figtreekit tree.nwk -o out.nex --font-clade "A,B,C:Arial-BOLD-14"
 
 | Option | Description |
 |--------|-------------|
-| `--sequences FILE` | Sequence file for cross-validation with tree tips |
+| `--sequences FILE` | Sequence file (only FASTA/FASTQ) for cross-validation with tree tips |
 | `--mol-type {DNA,RNA,protein}` | Expected molecule type for validation |
 | `--no-cross-check` | Skip tree-sequence cross-validation |
 | `--skip-length-check` | Skip sequence length uniformity check |
@@ -358,7 +358,7 @@ styler = FigTreeStyler()            # Empty, load later
 | `set_tip_labels(**kwargs)` | `is_shown`, `font_name`, `font_size`, `font_style` | Tip label settings. `color` and `align` are not valid mapping keys — they are written out verbatim as unrecognized `tipLabels.*` settings (a literal `tipLabels.color` may not be honored by headless rendering); use `set_tip_label_colors()` for label color and `set_align_tip_labels()` for alignment |
 | `set_node_labels(**kwargs)` | `is_shown`, `display_attribute`, `font_name`, `font_size` | Node label settings |
 | `set_branch_labels(**kwargs)` | `is_shown`, `display_attribute`, `font_name`, `font_size` | Branch label settings |
-| `set_align_tip_labels(align=True)` | — | Align tip labels radially |
+| `set_align_tip_labels(align=True)` | — | Align tip labels radially for the currently active layout (rectilinear / radial / polar) |
 
 #### Scale
 
@@ -408,7 +408,7 @@ styler = FigTreeStyler()            # Empty, load later
 
 | Method | Description |
 |--------|-------------|
-| `configure_taxonomy(delimiter_mode, table_sep, source_priority, mapping_file, ignore_malformed, file_delimiter)` | Configure taxonomy parsing |
+| `configure_taxonomy(*, delimiter_mode, table_sep, source_priority, mapping_file, ignore_malformed, file_delimiter)` | Configure taxonomy parsing (keyword-only arguments) |
 | `parse_label_taxonomy(pattern)` | Parse all labels with regex pattern |
 | `analyze_taxonomy(pattern, mapping_file, rank, style_monophyletic, color, highlight_color)` | Full taxonomy analysis with monophyly detection |
 | `analyze_taxonomy_from_mapping(mapping_file, rank, style_monophyletic)` | Analyze from external mapping file |
@@ -454,11 +454,11 @@ from figtreekit import (
     parse_taxonomy,         # parse_taxonomy(label, mode="reverse")
     parse_taxonomy_auto,    # Auto-detect format
     detect_taxonomy_format, # Detect Format A vs B
-    is_monophyletic,        # is_monophyletic(tree, group_name, rooted=True)
+    is_monophyletic,        # is_monophyletic(tree, taxon_label, rooted=True)
     load_tree,              # load_tree(path, validate=True)
     cross_validate,         # cross_validate(tree_path, seq_path, strict=True)
     validate_input_file,    # validate_input_file(path)
-    deep_validate_newick,   # deep_validate_newick(content, label="")
+    deep_validate_newick,   # deep_validate_newick(content, label="<string>")
     deep_validate_fasta,    # deep_validate_fasta(path, expected_alphabet=None)
     apply_cli_args,         # apply_cli_args(styler, args)
 )
@@ -706,7 +706,7 @@ figtreekit --self-test
 | Nexus | `.nex`, `.nexus`, `.nx` | Extended format with metadata blocks |
 | PhyloXML | `.xml`, `.phyloxml` | XML-based phylogenetic format |
 
-### Sequence Files
+### Sequence Files (validated formats; only FASTA/FASTQ are used for cross-validation)
 
 | Format | Extensions | Description |
 |--------|-----------|-------------|
@@ -752,7 +752,7 @@ GB_GCA_000252485.1	d__Bacteria;p__Cyanobacteriota;c__Cyanobacteriia;o__Cyanobact
 ```bash
 figtreekit input.tre -o output.nex
 figtreekit input.tre --validate
-figtreekit --version    # Show version, git hash, and build date
+figtreekit --version    # Show version, git commit hash, python and dependency versions
 figtreekit --self-test
 figtreekit --help
 ```
@@ -975,7 +975,7 @@ styler.configure_taxonomy(
     ignore_malformed=False,
 )
 
-# Taxonomy analysis with automatic monophyly detection (requires pattern or mapping_file)
+# Taxonomy analysis with automatic monophyly detection (pattern and mapping_file are both optional; an omitted mapping_file falls back to the one set via configure_taxonomy())
 groups = styler.analyze_taxonomy(mapping_file="taxonomy.tsv", rank="phylum")
 # Returns monophyly info for each phylum
 
@@ -1067,4 +1067,4 @@ The exit codes are centrally defined by the `ExitCode` (`IntEnum`) in `figtreeki
 | `PhyloFormatError` | `ParseError` | File format error (Library Mode API alias) |
 | `TaxonomyConflictError` | `ValidationError` | Taxonomy conflict (Library Mode API alias) |
 | `MonophylyError` | `ValidationError` | Monophyly analysis error (Library Mode API alias) |
-| `CompatibilityWarning` | `UserWarning` | Compatibility warning |
+| `CompatibilityWarning` | `UserWarning` | FigTree compatibility warning |
