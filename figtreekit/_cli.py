@@ -45,7 +45,14 @@ from .validators import (
     deep_validate_fastq,
     summarize_nexus_trees,
     extract_sequence_ids,
+    _FASTA_EXTS,
+    _FASTQ_EXTS,
 )
+
+# Cross-validation must accept exactly the extensions extract_sequence_ids()
+# can read; a hand-copied list here once left --sequences silently skipping
+# .fas even though validators maps it to FASTA.
+_CROSS_VALIDATION_SEQ_EXTS = _FASTA_EXTS | _FASTQ_EXTS
 
 # ── Internal exceptions ─────────────────────────────────────────────────
 
@@ -1497,18 +1504,7 @@ def _process_single_tree(
                 logger.error(f"{fname}: sequence file not found: {seq_file}")
                 return False
             seq_ext = seq_path.suffix.lower()
-            supported_seq_exts = {
-                ".fasta",
-                ".fa",
-                ".fas",
-                ".fna",
-                ".faa",
-                ".ffn",
-                ".frn",
-                ".fastq",
-                ".fq",
-            }
-            if seq_ext not in supported_seq_exts:
+            if seq_ext not in _CROSS_VALIDATION_SEQ_EXTS:
                 logger.warning(
                     f"{fname}: unsupported sequence format '{seq_ext}' for cross-validation"
                 )

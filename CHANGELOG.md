@@ -11,12 +11,23 @@ and Zenodo releases.
 
 ### Fixed
 
+- **`analyze_taxonomy()` ignored the mapping file set by `configure_taxonomy()`.**
+  The other taxonomy entry points fall back to the configured `mapping_file`,
+  but `analyze_taxonomy()` built its `TaxonomyMapper` from its own argument
+  alone. The CLI and MCP paths wire taxonomy through `configure_taxonomy()` and
+  never pass that argument, so the mapping they configured had no effect on the
+  analysis they then ran. It now falls back to the configured file.
+- **`--legend-position` advertised the wrong default.** The parser help said
+  `bottom`, while `_defaults.py`, every rendered tree and both language tracks
+  of the manual report `top`.
 - **`.fas` files were rejected by tree/sequence cross-validation.** The
   documentation lists `.fas` as a FASTA extension and `validators.py` maps it to
-  the FASTA format, but neither the CLI's cross-validation whitelist nor the
-  FASTA extension set behind `extract_sequence_ids()` included it, so
-  `--sequences alignments.fas` logged "unsupported sequence format" and silently
-  skipped the comparison. Both sets now include `.fas`, matching the docs.
+  the FASTA format, but neither the reader's FASTA set nor the CLI's
+  cross-validation whitelist included it, so `--sequences alignments.fas` logged
+  "unsupported sequence format" and silently skipped the comparison. The CLI now
+  derives its whitelist from the sets behind `extract_sequence_ids()`, so the
+  two cannot drift apart, and tests pin all three lists — the format map, the
+  reader sets and the CLI whitelist — to each other.
 - **`--log-file` help promised more than the flag delivers.** It read "(UTF-8,
   all levels)", but the file handler is attached to a logger whose level is set
   by `-v`/`-q`, so records are filtered before the handler's DEBUG level can see

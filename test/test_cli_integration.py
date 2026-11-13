@@ -792,6 +792,32 @@ class TestBatchAndFileHandling:
         _run([])
         assert out.exists()
 
+    def test_sequences_accepts_fas_extension(self, monkeypatch, tree_file, tmp_path, capsys):
+        """`.fas` is documented as FASTA, so --sequences must compare against it."""
+        seqs = tmp_path / "seqs.fas"
+        seqs.write_text(
+            ">A_d_Bacteria_p_Firmicutes\nACGT\n>B_d_Bacteria_p_Firmicutes\nACGT\n"
+            ">C_d_Bacteria_p_Cyanobacteriota\nACGT\n>D_d_Archaea_p_Euryarchaeota\nACGT\n"
+        )
+        out = tmp_path / "out.nex"
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "figtreekit",
+                str(tree_file),
+                "-o",
+                str(out),
+                "-v",
+                "--sequences",
+                str(seqs),
+            ],
+        )
+        _run([])
+        logged = capsys.readouterr().out
+        assert "unsupported sequence format" not in logged
+        assert "tree and sequences match" in logged
+
     def test_render_without_jar_fails_gracefully(self, monkeypatch, tree_file, tmp_path):
         """Render request without available JAR/Java must exit non-zero, not crash."""
         out = tmp_path / "out.nex"
