@@ -4,10 +4,15 @@ from unittest.mock import patch
 
 import pytest
 
-from figtreekit import FigTreeStyler
-from figtreekit._cli import _iter_sequence_ids
+from figtreekit import FigTreeStyler, cross_validate
+from figtreekit._cli import _CROSS_VALIDATION_SEQ_EXTS, _iter_sequence_ids
 from figtreekit._renderer import render_with_figtree
-from figtreekit.validators import cross_validate_tree_sequence
+from figtreekit.validators import (
+    _EXT_FORMAT_MAP,
+    _FASTA_EXTS,
+    _FASTQ_EXTS,
+    cross_validate_tree_sequence,
+)
 
 
 class TestRenderWithFigTreeJavaOpts:
@@ -102,6 +107,12 @@ class TestIterSequenceIds:
         f.write_text(">seq_1 extra info\nACGT\n" ">seq_2\nTGCA\n" ">seq_3 with space\nAATT\n")
         assert list(_iter_sequence_ids(f)) == ["seq_1", "seq_2", "seq_3"]
 
+    @pytest.mark.parametrize("ext", sorted(_FASTA_EXTS))
+    def test_every_fasta_alias_is_readable(self, tmp_path, ext):
+        f = tmp_path / f"seqs{ext}"
+        f.write_text(">seq_1 extra info\nACGT\n" ">seq_2\nTGCA\n")
+        assert list(_iter_sequence_ids(f)) == ["seq_1", "seq_2"]
+
     def test_fastq_ids(self, tmp_path):
         f = tmp_path / "reads.fastq"
         f.write_text("@read_1 comment\nACGT\n+\n!!!!\n" "@read_2\nTGCA\n+\n!!!!\n")
@@ -112,6 +123,34 @@ class TestIterSequenceIds:
         f.write_text(">seq_1\nACGT\n")
         with pytest.raises(ValueError, match="unsupported sequence format"):
             list(_iter_sequence_ids(f))
+
+
+class TestSequenceExtensionConsistency:
+    """The three places sequence extensions are listed must agree.
+
+    ``.fas`` was documented as FASTA and mapped to the FASTA format, yet the
+    reader set and the CLI's cross-validation whitelist both left it out, so
+    ``--sequences alignments.fas`` warned and skipped the comparison the user
+    had asked for.
+    """
+
+    @pytest.mark.parametrize("fmt", ["fasta", "fastq"])
+    def test_format_map_agrees_with_reader_sets(self, fmt):
+        mapped = {e for e, f in _EXT_FORMAT_MAP.items() if f == fmt}
+        canonical = _FASTA_EXTS if fmt == "fasta" else _FASTQ_EXTS
+        assert mapped == canonical
+
+    def test_cli_whitelist_matches_reader(self):
+        assert _CROSS_VALIDATION_SEQ_EXTS == _FASTA_EXTS | _FASTQ_EXTS
+
+    def test_library_cross_validates_a_fas_file(self, tmp_path):
+        tree = tmp_path / "tree.nwk"
+        tree.write_text("((A:0.1,B:0.2):0.3);")
+        seq = tmp_path / "seqs.fas"
+        seq.write_text(">A\nACGT\n>B\nTGCA\n")
+        report = cross_validate(str(tree), str(seq))
+        assert report["errors"] == []
+        assert report["matched"] == 2
 
 
 class TestCrossValidateIterable:
