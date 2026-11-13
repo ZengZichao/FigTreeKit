@@ -33,6 +33,12 @@ and Zenodo releases.
   by `-v`/`-q`, so records are filtered before the handler's DEBUG level can see
   them: the file receives every level only under `-vv`, and only ERROR under
   `-q`. The help text — and the manuals — now say so.
+- **The comparison matrix cited evidence readers could not reach.** Both
+  language tracks pointed at `benchmarks/coverage_summary_v1.1.4.json` for the
+  per-module coverage figures, but that file is a manuscript-tool output the
+  repository deliberately gitignores, so the pointer resolved to nothing in a
+  clone. The citation now names the CI test job and its `--cov=figtreekit` run
+  instead.
 
 ## [1.1.4] - 2026-09-27
 
