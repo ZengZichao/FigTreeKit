@@ -1584,7 +1584,7 @@ def deep_validate_fastq(
 # ── Sequence ID extraction (shared by CLI and library API) ──────────────
 # These must stay in sync with _cli._iter_sequence_ids.  To avoid divergence
 # the CLI helper now delegates to this function.
-_FASTA_EXTS = {".fasta", ".fa", ".fna", ".faa", ".ffn", ".frn"}
+_FASTA_EXTS = {".fasta", ".fa", ".fas", ".fna", ".faa", ".ffn", ".frn"}
 _FASTQ_EXTS = {".fastq", ".fq"}
 
 
