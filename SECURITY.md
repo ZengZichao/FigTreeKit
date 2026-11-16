@@ -49,13 +49,16 @@ Out of scope:
   compiled jar. Report upstream issues to the FigTree project.
 - Denial-of-service on pathological but bounded inputs (very large or
   very deep trees) unless it crosses into the memory-corruption class.
-- Vulnerabilities in transitive Python dependencies — Dependabot
-  watches those; report them upstream and they will land here via the
-  weekly updates.
+- Vulnerabilities in transitive Python dependencies. Dependabot is
+  disabled on this repository, for both version and security updates, so
+  a transitive fix lands only through a reviewed commit; report it
+  upstream as well.
 
 ## Automated scanning
 
-- Dependabot security updates and secret scanning with push protection
-  are enabled on this repository.
+- Secret scanning with push protection is enabled on this repository.
+  Dependabot is disabled (version and security updates alike), so no
+  automated dependency PRs are opened; dependency bumps arrive as
+  reviewed commits.
 - CodeQL analyzes Python on every push and pull request and weekly.
 - `v*` release tags cannot be rewritten or deleted once pushed.
