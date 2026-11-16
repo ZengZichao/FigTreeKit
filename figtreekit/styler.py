@@ -3021,16 +3021,11 @@ class FigTreeStyler:
         else:
             import tempfile
 
-            tmp_f = tempfile.NamedTemporaryFile(
-                mode="w",
-                suffix=".nex",
-                delete=False,
-                encoding="utf-8",
-                newline="\n",
-            )
-            nex_file = tmp_f.name
-            tmp_f.close()
-            os.chmod(nex_file, 0o600)
+            # mkstemp, not NamedTemporaryFile: the file must survive this
+            # handle closing because its name is handed to an external
+            # renderer, and it is already created 0600.
+            fd, nex_file = tempfile.mkstemp(suffix=".nex")
+            os.close(fd)
             try:
                 self.export(nex_file, include_taxa_block=include_taxa_block)
             except BaseException:
