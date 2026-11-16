@@ -3,13 +3,12 @@ name: CI
 # ---------------------------------------------------------------------------
 # Action major versions: policy and current state
 # ---------------------------------------------------------------------------
-# .github/dependabot.yml deliberately ignores `version-update:semver-major`
-# for the github-actions ecosystem, so Dependabot will propose minor and
-# patch bumps but never a new major. That ignore rule stays: a major bump
-# swaps the action's Node runtime and the upgrade is not safe to merge
-# unreviewed. The cost is that a fix published only in a new major will
-# never arrive on its own, so majors are caught up by a reviewed commit
-# instead.
+# Automated version-update PRs are disabled (`.github/dependabot.yml` was
+# removed in #19), so every action bump - minor, patch or major - arrives as
+# a reviewed commit rather than an unreviewed PR. Majors are the reason: a
+# major bump swaps the action's Node runtime and is not safe to merge
+# unreviewed. The trade-off is that a fix published only in a new major never
+# arrives on its own, so re-check the actions below when touching CI.
 #
 # Catch-up history:
 #   2026-10-01  actions/checkout        v4 -> v7
@@ -17,9 +16,7 @@ name: CI
 #               actions/upload-artifact v4 -> v7
 #               codecov/codecov-action  v4 -> v7   (input `file` -> `files`,
 #                                    removed in the codecov-action v5 CLI rewrite)
-#   With that, every action here sits on its current major. The next catch-up
-#   is due when a major is published that CI has not yet reviewed; Dependabot
-#   will not surface it, so re-check the four actions above when touching CI.
+#   With that, every action here sits on its current major.
 #
 # actions/setup-java and github/codeql-action are deliberately *not* in that
 # list: both were introduced at their current major on arrival rather than to
@@ -41,11 +38,11 @@ on:
 permissions:
   contents: read
 
-# Superseded runs are cancelled. Without this, a burst of Dependabot PRs each
-# expand a full two-OS matrix plus docker, and the runner queue backs up:
-# on 2026-10-01 four dependabot PRs landed within ten seconds and one
-# docker job waited 22 minutes for a runner while another run sat queued
-# for over an hour.
+# Superseded runs are cancelled. Without this, a burst of PRs each expand a
+# full two-OS matrix plus docker, and the runner queue backs up: on
+# 2026-10-01 four dependency-update PRs landed within ten seconds and one
+# docker job waited 22 minutes for a runner while another run sat queued for
+# over an hour.
 #
 # Tag runs are exempt: cancelling one mid-flight could abort a PyPI publish
 # that has already started, and two release tags in quick succession is a

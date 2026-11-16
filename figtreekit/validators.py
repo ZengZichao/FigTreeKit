@@ -633,7 +633,6 @@ def _validate_flatfile(file_path: str, result: Dict[str, object]) -> None:
 
 def _validate_phylip_file(file_path: str, result: Dict[str, object]) -> None:
     errors: List[str] = result["errors"]  # type: ignore[assignment]
-    warns: List[str] = result["warnings"]  # type: ignore[assignment]
     try:
         with open(file_path, "r", encoding="utf-8", errors="replace") as f:
             first_line = f.readline().strip()
